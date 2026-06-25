@@ -1,0 +1,13 @@
+/ip dhcp-client add interface=ether5 add-default-route=yes use-peer-dns=yes disabled=no
+/interface bridge add name=bridge-LAN
+/interface bridge port add bridge=bridge-LAN interface=ether2
+/interface bridge port add bridge=bridge-LAN interface=ether3
+/interface bridge port add bridge=bridge-LAN interface=ether4
+/ip address add address=10.10.1.1/24 interface=bridge-LAN network=10.10.1.0
+/ip pool add name=pool-LAN ranges=10.10.1.10-10.10.1.250
+/ip dhcp-server network add address=10.10.1.0/24 gateway=10.10.1.1 dns-server=8.8.8.8
+/ip dhcp-server add name=dhcp-LAN interface=bridge-LAN address-pool=pool-LAN disabled=no
+/ip firewall nat add chain=srcnat out-interface=ether5 action=masquerade comment="NAT - Acesso a Internet"
+/ip firewall filter disable [find action=fasttrack-connection]
+/ip hotspot profile add name=hsprof-LAN hotspot-address=10.10.1.1 dns-name=login.rede.local login-by=trial trial-uptime=1h/1d use-mac-protocol=yes
+/ip hotspot add name=hotspot-LAN interface=bridge-LAN profile=hsprof-LAN address-pool=none disabled=no
