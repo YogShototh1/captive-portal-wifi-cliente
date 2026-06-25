@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Conexão Estabelecida - Wi-Fi Liberado</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Estilos adicionais específicos para a página de sucesso para enriquecer o visual Primix */
+        .success-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        /* Círculo do ícone de sucesso em Amarelo/Preto */
+        .icon-success-circle {
+            background-color: var(--color-yellow-main);
+            width: 96px;
+            height: 96px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 15px rgba(255, 209, 0, 0.3);
+            animation: pulse-success 2s infinite ease-in-out;
+        }
+
+        @keyframes pulse-success {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 209, 0, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 15px rgba(255, 209, 0, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 209, 0, 0);
+            }
+        }
+
+        /* Título de liberação destacado */
+        .status-title {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--color-yellow-main);
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        /* Caixa de detalhes reestilizada em preto e amarelo */
+        .success-box-details {
+            background-color: var(--color-black-input);
+            border-radius: 8px;
+            padding: 16px;
+            width: 100%;
+            margin: 20px 0;
+            font-size: 14px;
+            color: var(--color-white);
+            font-weight: 500;
+            border: 1px solid rgba(255, 209, 0, 0.2);
+        }
+
+        .phone-display {
+            font-size: 18px;
+            font-weight: 750;
+            color: var(--color-yellow-main);
+            letter-spacing: 0.5px;
+            margin-top: 4px;
+        }
+
+        /* Botão para simular retorno ou finalização */
+        .btn-finish {
+            width: 100%;
+            background-color: var(--color-yellow-main);
+            color: var(--color-black-deep);
+            font-size: 16px;
+            font-weight: 750;
+            padding: 16px;
+            border: none;
+            border-radius: var(--border-radius);
+            text-decoration: none;
+            display: inline-block;
+            transition: all var(--transition-fast);
+            margin-top: 10px;
+            box-shadow: 0 4px 12px rgba(255, 209, 0, 0.2);
+        }
+
+        .btn-finish:hover {
+            background-color: var(--color-yellow-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(255, 209, 0, 0.35);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Container Principal Centralizado -->
+    <main class="login-container">
+        
+        <div class="success-wrapper">
+            
+            <!-- Ícone de Sucesso (Checkmark) em Preto sobre Amarelo -->
+            <div class="icon-success-circle">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z" fill="#0a0a0a" stroke="#0a0a0a" stroke-width="0.5"/>
+                </svg>
+            </div>
+
+            <!-- Título Exigido -->
+            <h1 class="status-title">Wi-Fi Liberado</h1>
+
+            <!-- Mensagem Amigável -->
+            <p class="subtitle" style="font-size: 15px; color: var(--color-text-light);">
+                Seu dispositivo foi autenticado com sucesso e agora tem acesso livre à internet.
+            </p>
+
+            <!-- Detalhes do Acesso Registrado -->
+            <div class="success-box-details">
+                <div style="opacity: 0.8;">Conectado com o número:</div>
+                <div id="display-phone" class="phone-display">--</div>
+            </div>
+
+            <!-- Instrução Final para o Usuário -->
+            <p class="subtitle" style="font-size: 13px; margin-bottom: 24px; color: var(--color-text-muted);">
+                Você pode fechar esta página ou navegar normalmente pelo seu dispositivo.
+            </p>
+
+            <!-- Botão de Conclusão / Redirecionamento -->
+            <a href="https://www.google.com" id="btn-finish-navigation" class="btn-finish">Começar a Navegar</a>
+
+        </div>
+
+        <!-- Rodapé Minimalista -->
+        <footer class="portal-footer" style="margin-top: 32px;">
+            <p class="copyright">&copy; 2026 Primix - A loja do coração. Todos os direitos reservados.</p>
+        </footer>
+
+    </main>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Recupera o telefone registrado na sessão para feedback personalizado
+            const userPhone = sessionStorage.getItem("user_phone");
+            const displayElement = document.getElementById("display-phone");
+            
+            if (userPhone) {
+                // Ofusca os dígitos centrais para privacidade do usuário
+                const cleanPhone = userPhone.replace(/\D/g, "");
+                if (cleanPhone.length === 11) {
+                    displayElement.textContent = `(${cleanPhone.slice(0,2)}) ${cleanPhone.slice(2,3)}****-${cleanPhone.slice(7)}`;
+                } else if (cleanPhone.length === 10) {
+                    displayElement.textContent = `(${cleanPhone.slice(0,2)}) ****-${cleanPhone.slice(6)}`;
+                } else {
+                    displayElement.textContent = userPhone;
+                }
+            } else {
+                displayElement.textContent = "(Acesso Direto)";
+            }
+        });
+    </script>
+</body>
+</html>
