@@ -97,30 +97,28 @@ document.addEventListener("DOMContentLoaded", function () {
     // AUTENTICAÇÃO (ÚNICA)
     // ==========================================================================
     function authenticate() {
-        // Proteção contra duplo clique
-        if (btnContinue.disabled) return;
-        btnContinue.disabled = true;
-        adBtnSpinner.style.display = "inline-block";
-        btnContinue.querySelector("span").textContent = "Conectando...";
+    // Proteção contra duplo clique
+    if (btnContinue.disabled) return;
+    btnContinue.disabled = true;
+    adBtnSpinner.style.display = "inline-block";
+    btnContinue.querySelector("span").textContent = "Conectando...";
 
-        const userPhone = sessionStorage.getItem("user_phone") || phoneInput.value;
-        const username = userPhone.replace(/\D/g, "");
+    console.log("Iniciando autenticação Trial...");
 
-        mkUsername.value = username;
-        mkPassword.value = "hotspot_free_access";
-
-        console.log("Iniciando autenticação...");
-
-        if (isMikrotik()) {
-            console.log("Autenticando no MikroTik...");
-            mikrotikLoginForm.submit();
-        } else {
-            console.log("Redirecionando para alogin.html (Ambiente Local)...");
-            setTimeout(function () {
-                window.location.href = "alogin.html";
-            }, 300);
-        }
+    if (isMikrotik()) {
+        // O SEGREDO: No modo Trial não enviamos formulário POST.
+        // Chamamos a URL mágica que o MikroTik injeta na variável $(link-login-only)
+        const trialUrl = "$(link-login-only)?dst=$(link-orig-esc)&username=T-$(mac-esc)";
+        
+        console.log("Redirecionando para URL Trial do MikroTik...");
+        window.location.href = trialUrl;
+    } else {
+        console.log("Redirecionando para alogin.html (Ambiente Local)...");
+        setTimeout(function () {
+            window.location.href = "alogin.html";
+        }, 300);
     }
+}
 
     // ==========================================================================
     // EVENT LISTENERS
