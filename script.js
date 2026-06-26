@@ -6,23 +6,91 @@
  */
 
 document.addEventListener("DOMContentLoaded", function () {
-    // Seletores DOM
-    const form = document.getElementById("hotspot-form");
+    // Seletores DOM das Etapas (Stages)
+    const stagePhone = document.getElementById("stage-phone");
+    const stageAd = document.getElementById("stage-ad");
+
+    // Seletores da Etapa de Telefone
+    const phoneForm = document.getElementById("phone-form");
     const phoneInput = document.getElementById("phone");
     const phoneValidationError = document.getElementById("phone-validation-error");
-    const btnSubmit = document.getElementById("btn-submit");
-    const btnSpinner = document.getElementById("btn-spinner");
+    const btnPhoneSubmit = document.getElementById("btn-phone-submit");
+    const phoneBtnSpinner = document.getElementById("phone-btn-spinner");
+    const termsRequiredCheckbox = document.getElementById("terms-required");
+    // const marketingOptinCheckbox = document.getElementById("marketing-optin"); // Opcional, mantido se precisar salvar na API
+
+    const errorMessageDiv = document.getElementById("error-message");
+    const errorTextSpan = document.getElementById("error-text");
+    
+    // Seletores do Anúncio
+    const timerElement = document.getElementById("countdown-timer");
+    const msgElement = document.getElementById("countdown-msg");
+    const btnContinue = document.getElementById("btn-continue");
+    const adBtnSpinner = document.getElementById("ad-btn-spinner");
+
+    // Seletores do formulário de login MikroTik (oculto)
+    const mikrotikLoginForm = document.getElementById("mikrotik-login-form");
+    const mkUsername = document.getElementById("mk-username");
+    const mkPassword = document.getElementById("mk-password");
+
+    // Verifica se há erro do MikroTik na URL e exibe
+    const urlParams = new URLSearchParams(window.location.search);
+    const errorParam = urlParams.get("error");
+    const errorText = errorTextSpan.textContent.trim();
+    
+    if (errorParam || (errorText !== "" && errorText !== "$(error)")) {
+        errorTextSpan.textContent = errorParam || errorText;
+        errorMessageDiv.style.display = "block";
+    } else {
+        errorMessageDiv.style.display = "none";
+    }
+
+    /**
+     * FUNÇÃO PARA TROCA DE ETAPAS
+     */
+    function showStage(stageToShow, stageToHide) {
+        stageToHide.style.display = "none";
+        stageToHide.classList.remove("active");
+        stageToShow.style.display = "flex"; // Flex para centralizar conteúdo
+        stageToShow.classList.add("active");
+    }
+
+    /**
+     * LÓGICA DO CRONÔMETRO DO ANÚNCIO
+     */
+    function startAdCountdown() {
+        let timeLeft = 10;
+        
+        const countdownInterval = setInterval(function() {
+            timeLeft--;
+            timerElement.textContent = timeLeft;
+            btnContinue.querySelector("span").textContent = `Aguarde (${timeLeft}s)`;
+            
+            if (timeLeft <= 0) {
+                clearInterval(countdownInterval);
+                timerElement.style.display = "none";
+                msgElement.textContent = "Internet liberada! Clique abaixo para conectar.";
+                msgElement.className = "ad-liberated-msg";
+                btnContinue.disabled = false;
+                btnContinue.querySelector("span").textContent = "Conectar Agora";
+            }
+        }, 1000);
+    }
     
     // Seletores do Modal
     const modal = document.getElementById("legal-modal");
     const modalTitle = document.getElementById("modal-title");
     const modalContent = document.getElementById("modal-content");
-    const btnTerms = document.getElementById("btn-terms");
-    const btnPrivacy = document.getElementById("btn-privacy");
     const modalClose = document.getElementById("modal-close");
     const modalCloseFooter = document.getElementById("modal-close-footer");
 
-    // Conteúdos Textuais dos Termos e Políticas em HTML Puro (Visual Elegante)
+    // Botões que abrem o modal (identificados em login.html)
+    const btnTermsModal = document.getElementById("btn-terms-modal");
+    const btnPrivacyModal = document.getElementById("btn-privacy-modal");
+    const btnTermsFooter = document.getElementById("btn-terms-footer");
+    const btnPrivacyFooter = document.getElementById("btn-privacy-footer");
+
+    // Conteúdos Textuais dos Termos e Políticas em HTML Puro
     const texts = {
         terms: `
             <h3>1. Aceite dos Termos</h3>
@@ -45,7 +113,7 @@ document.addEventListener("DOMContentLoaded", function () {
             <p>Seus dados são armazenados de forma segura e exclusiva para garantir a autenticidade dos acessos, conformidade com a legislação local (Marco Civil da Internet) e, se expressamente autorizado, contato corporativo.</p>
             
             <h3>3. Compartilhamento de Dados</h3>
-            <p>Não comercializamos ou transferimos suas informações pessoais para terceiros, exceto mediante ordens judiciais formais emitidas por autoridades governamentais ou reguladoras competentes.</p>
+            <p>Não comercializamos ou transferimos suas informações pessoais para terceiros, excte mediante ordens judiciais formais emitidas por autoridades governamentais ou reguladoras competentes.</p>
             
             <h3>4. Segurança da Informação</h3>
             <p>Empregamos práticas de segurança de ponta e firewalls em nossos roteadores MikroTik para assegurar que seus dados coletados permaneçam confidenciais e protegidos contra vazamentos ou acessos não autorizados.</p>
@@ -53,137 +121,140 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     /**
-     * MÁSCARA DINÂMICA DE TELEFONE (Padrão Brasileiro e Internacional)
-     * Formata automaticamente enquanto o usuário digita: (99) 99999-9999 ou (99) 9999-9999
+     * MÁSCARA DINÂMICA DE TELEFONE
      */
     phoneInput.addEventListener("input", function (e) {
         let value = e.target.value;
-        
-        // Remove tudo o que não for número
         value = value.replace(/\D/g, "");
         
-        // Limita a quantidade máxima para 11 dígitos
-        if (value.length > 11) {
-            value = value.slice(0, 11);
-        }
+        if (value.length > 11) value = value.slice(0, 11);
 
-        // Aplica formatação passo a passo
-        if (value.length > 0) {
-            value = "(" + value;
-        }
-        if (value.length > 3) {
-            value = [value.slice(0, 3), ") ", value.slice(3)].join("");
-        }
+        if (value.length > 0) value = "(" + value;
+        if (value.length > 3) value = [value.slice(0, 3), ") ", value.slice(3)].join("");
         if (value.length > 9) {
-            // Se tiver 11 dígitos (celular moderno), coloca o hífen na posição 10. Se 10 dígitos, coloca na posição 9.
             let hyphenPosition = value.length === 14 ? 10 : 9;
             value = [value.slice(0, hyphenPosition), "-", value.slice(hyphenPosition)].join("");
         }
-
         e.target.value = value;
     });
 
     /**
-     * VALIDAÇÃO BÁSICA DO TELEFONE
-     * Verifica se possui os dígitos mínimos necessários (DDD de 2 dígitos + número de 8 ou 9 dígitos)
+     * VALIDAÇÃO DO TELEFONE
      */
     function isValidPhone(phone) {
-        // Remove formatação para validar os dígitos limpos
         const cleanPhone = phone.replace(/\D/g, "");
-        // Números residenciais têm 10 dígitos; celulares têm 11. Ambos são válidos.
         return cleanPhone.length === 10 || cleanPhone.length === 11;
     }
 
     /**
-     * SUBMISSÃO DO FORMULÁRIO COM FEEDBACK DE CARREGAMENTO
+     * SUBMISSÃO DO FORMULÁRIO DE TELEFONE
      */
-    form.addEventListener("submit", function (e) {
-        e.preventDefault(); // Impede a ação padrão para fazermos a validação antes
+    phoneForm.addEventListener("submit", function (e) {
+        e.preventDefault();
 
         const phoneValue = phoneInput.value;
 
+        // Validação de Telefone
         if (!isValidPhone(phoneValue)) {
-            // Exibe mensagem de erro visual
             phoneInput.parentElement.classList.add("error");
             phoneValidationError.style.display = "block";
             phoneInput.focus();
             return;
         }
 
-        // Se o telefone for válido, remove as classes de erro
+        // Validação LGPD (Obrigatório)
+        if (!termsRequiredCheckbox.checked) {
+            alert("Você precisa aceitar os Termos e a Política de Privacidade para continuar.");
+            return;
+        }
+
+        // Remove erros visuais
         phoneInput.parentElement.classList.remove("error");
         phoneValidationError.style.display = "none";
 
-        // Feedback visual do botão (efeito de carregamento)
-        btnSubmit.disabled = true;
-        btnSpinner.style.display = "inline-block";
-        btnSubmit.querySelector("span").textContent = "Verificando...";
+        // Feedback visual do botão
+        btnPhoneSubmit.disabled = true;
+        phoneBtnSpinner.style.display = "inline-block";
+        btnPhoneSubmit.querySelector("span").textContent = "Verificando...";
 
-        // Em ambientes reais MikroTik, este script coletaria o telefone
-        // e enviaria os dados ao formulário oculto do MikroTik, que por sua vez
-        // autentica o usuário no roteador.
-        
-        // Exemplo de integração nativa MikroTik:
-        /*
-        if (document.sendin) {
-            // Atribui o telefone limpo ou formatado como usuário no MikroTik
-            document.sendin.username.value = phoneValue.replace(/\D/g, "");
-            document.sendin.password.value = "hotspot_free_access"; // Senha padrão opcional
-            
-            // Submete o form interno do roteador para efetivar a liberação do Wi-Fi
-            setTimeout(function() {
-                document.sendin.submit();
-            }, 1000);
-            return;
-        }
-        */
-
-        // Simulação local: aguarda 1.5s para simular verificação de rede e redireciona para liberado.html
+        // Simulação de envio para API e transição para o Anúncio
         setTimeout(function () {
-            // Salva o telefone formatado na sessionStorage para mostrar na página de sucesso
+            // Salva na sessionStorage para exibir em alogin.html
             sessionStorage.setItem("user_phone", phoneValue);
-            // Redireciona para a página liberado.html
-            window.location.href = "anuncio.html";
+            
+            // Troca para a etapa do anúncio (Fluxo MikroTik SPA)
+            showStage(stageAd, stagePhone);
+            
+            // Inicia o contador do anúncio
+            startAdCountdown();
         }, 1200);
     });
 
     /**
-     * CONTROLE DE MODAL - ABERTURA E FECHAMENTO ELEGANTES
+     * CLIQUE NO BOTÃO DE CONTINUAR (APÓS ANÚNCIO)
+     * Realiza a autenticação oficial no MikroTik ou redireciona para alogin.html localmente
+     */
+    btnContinue.addEventListener("click", function() {
+        // Feedback visual no botão do anúncio
+        btnContinue.disabled = true;
+        adBtnSpinner.style.display = "inline-block";
+        btnContinue.querySelector("span").textContent = "Conectando...";
+
+        // Pega o telefone da sessão (ou do input) para usar como usuário
+        const userPhone = sessionStorage.getItem("user_phone") || phoneInput.value;
+        const username = userPhone.replace(/\D/g, "");
+
+        // Preenche o formulário oficial do MikroTik
+        mkUsername.value = username;
+        mkPassword.value = "hotspot_free_access"; // Senha padrão para login via telefone
+
+        // Verifica se está rodando no ambiente MikroTik (action contém link) 
+        // ou localmente (action é vazio ou arquivo)
+        const action = mikrotikLoginForm.getAttribute("action");
+        if (action && !action.includes("$")) {
+            // Ambiente de Teste Local: Redireciona para alogin.html
+            window.location.href = "alogin.html";
+        } else {
+            // Ambiente Hotspot MikroTik: Submete o formulário oficial
+            setTimeout(function() {
+                mikrotikLoginForm.submit();
+            }, 1000);
+            window.location.href = "alogin.html";
+        }
+    });
+
+    /**
+     * CONTROLE DE MODAL
      */
     function openModal(title, contentHTML) {
         modalTitle.textContent = title;
         modalContent.innerHTML = contentHTML;
         modal.classList.add("active");
         modal.setAttribute("aria-hidden", "false");
-        document.body.style.overflow = "hidden"; // Impede scroll no fundo
+        document.body.style.overflow = "hidden";
         modalClose.focus();
     }
 
     function closeModal() {
         modal.classList.remove("active");
         modal.setAttribute("aria-hidden", "true");
-        document.body.style.overflow = ""; // Restaura scroll
-        btnTerms.focus();
+        document.body.style.overflow = "";
     }
 
-    // Eventos do Modal
-    btnTerms.addEventListener("click", () => openModal("Termos e Condições de Uso", texts.terms));
-    btnPrivacy.addEventListener("click", () => openModal("Política de Privacidade", texts.privacy));
+    // Eventos de Abertura do Modal
+    if (btnTermsModal) btnTermsModal.addEventListener("click", () => openModal("Termos e Condições de Uso", texts.terms));
+    if (btnPrivacyModal) btnPrivacyModal.addEventListener("click", () => openModal("Política de Privacidade", texts.privacy));
+    if (btnTermsFooter) btnTermsFooter.addEventListener("click", () => openModal("Termos e Condições de Uso", texts.terms));
+    if (btnPrivacyFooter) btnPrivacyFooter.addEventListener("click", () => openModal("Política de Privacidade", texts.privacy));
     
     modalClose.addEventListener("click", closeModal);
     modalCloseFooter.addEventListener("click", closeModal);
 
-    // Fechar ao clicar fora da área interna do modal (na overlay)
     modal.addEventListener("click", function (e) {
-        if (e.target === modal) {
-            closeModal();
-        }
+        if (e.target === modal) closeModal();
     });
 
-    // Fechar com a tecla ESC
     document.addEventListener("keydown", function (e) {
-        if (e.key === "Escape" && modal.classList.contains("active")) {
-            closeModal();
-        }
+        if (e.key === "Escape" && modal.classList.contains("active")) closeModal();
     });
 });

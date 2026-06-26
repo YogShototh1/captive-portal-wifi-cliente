@@ -98,7 +98,6 @@
 
     <!-- Container Principal Centralizado -->
     <main class="login-container">
-        
         <div class="success-wrapper">
             
             <!-- Ícone de Sucesso (Checkmark) em Preto sobre Amarelo -->
@@ -127,8 +126,8 @@
                 Você pode fechar esta página ou navegar normalmente pelo seu dispositivo.
             </p>
 
-            <!-- Botão de Conclusão / Redirecionamento -->
-            <a href="https://www.google.com" id="btn-finish-navigation" class="btn-finish">Começar a Navegar</a>
+            <!-- Botão de Conclusão / Redirecionamento para URL original -->
+            <a href="$(link-orig)" id="btn-finish-navigation" class="btn-finish">Começar a Navegar</a>
 
         </div>
 
@@ -136,6 +135,11 @@
         <footer class="portal-footer" style="margin-top: 32px;">
             <p class="copyright">&copy; 2026 Primix - A loja do coração. Todos os direitos reservados.</p>
         </footer>
+
+        <!-- Formulário de Logout Oficial MikroTik -->
+        <form name="logout" action="$(link-logout)" method="post" style="display: none;">
+            <input type="hidden" name="dst" value="$(link-orig)" />
+        </form>
 
     </main>
 
