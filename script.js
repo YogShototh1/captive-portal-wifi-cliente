@@ -108,7 +108,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (isMikrotik()) {
         // O SEGREDO: No modo Trial não enviamos formulário POST.
         // Chamamos a URL mágica que o MikroTik injeta na variável $(link-login-only)
-        const trialUrl = "$(link-login-only)?dst=$(link-orig-esc)&username=T-$(mac-esc)";
+        const trialUrl = "http://login.rede.local/login?dst=http%3A%2F%2Fwww.msftconnecttest.com%2Fredirect&amp;username=T-DC%3A21%3A5C%3AE9%3AE2%3AB5";
         
         console.log("Redirecionando para URL Trial do MikroTik...");
         window.location.href = trialUrl;
