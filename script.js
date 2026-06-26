@@ -1,12 +1,11 @@
 /**
  * ==========================================================================
  * CONTROLE PORTAL CAPTIVE - MIKROTIK HOTSPOT
- * Validação de telefone, formatação de máscara de telefone e controle de modais.
  * ==========================================================================
  */
 
 document.addEventListener("DOMContentLoaded", function () {
-    // Seletores DOM das Etapas (Stages)
+    // Seletores DOM das Etapas
     const stagePhone = document.getElementById("stage-phone");
     const stageAd = document.getElementById("stage-ad");
 
@@ -17,7 +16,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const btnPhoneSubmit = document.getElementById("btn-phone-submit");
     const phoneBtnSpinner = document.getElementById("phone-btn-spinner");
     const termsRequiredCheckbox = document.getElementById("terms-required");
-    // const marketingOptinCheckbox = document.getElementById("marketing-optin"); // Opcional, mantido se precisar salvar na API
 
     const errorMessageDiv = document.getElementById("error-message");
     const errorTextSpan = document.getElementById("error-text");
@@ -33,7 +31,26 @@ document.addEventListener("DOMContentLoaded", function () {
     const mkUsername = document.getElementById("mk-username");
     const mkPassword = document.getElementById("mk-password");
 
-    // Verifica se há erro do MikroTik na URL e exibe
+    // ==========================================================================
+    // DETECÇÃO DE AMBIENTE (ÚNICA)
+    // ==========================================================================
+    function isMikrotik() {
+        const action = mikrotikLoginForm.getAttribute("action");
+        // Se a action for nula, contiver o placeholder $(), é ambiente de desenvolvimento
+        if (!action || action.includes("$(")) {
+            return false;
+        }
+        // Em ambiente MikroTik, a action é substituída (ex: /login)
+        return true;
+    }
+
+    // Log de Desenvolvimento
+    console.log("========== PORTAL ==========");
+    console.log("Environment: " + (isMikrotik() ? "MikroTik RouterOS" : "Local/Development"));
+    console.log("Action: " + mikrotikLoginForm.getAttribute("action"));
+    console.log("MikroTik Detected: " + isMikrotik());
+
+    // Verifica erros na URL
     const urlParams = new URLSearchParams(window.location.search);
     const errorParam = urlParams.get("error");
     const errorText = errorTextSpan.textContent.trim();
@@ -41,25 +58,24 @@ document.addEventListener("DOMContentLoaded", function () {
     if (errorParam || (errorText !== "" && errorText !== "$(error)")) {
         errorTextSpan.textContent = errorParam || errorText;
         errorMessageDiv.style.display = "block";
-    } else {
-        errorMessageDiv.style.display = "none";
     }
 
-    /**
-     * FUNÇÃO PARA TROCA DE ETAPAS
-     */
+    // ==========================================================================
+    // FUNÇÕES DE FLUXO
+    // ==========================================================================
     function showStage(stageToShow, stageToHide) {
         stageToHide.style.display = "none";
         stageToHide.classList.remove("active");
-        stageToShow.style.display = "flex"; // Flex para centralizar conteúdo
+        stageToShow.style.display = "flex";
         stageToShow.classList.add("active");
     }
 
-    /**
-     * LÓGICA DO CRONÔMETRO DO ANÚNCIO
-     */
     function startAdCountdown() {
         let timeLeft = 10;
+        timerElement.textContent = timeLeft;
+        btnContinue.disabled = true;
+        btnContinue.querySelector("span").textContent = `Aguarde (${timeLeft}s)`;
+        adBtnSpinner.style.display = "none";
         
         const countdownInterval = setInterval(function() {
             timeLeft--;
@@ -76,21 +92,81 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }, 1000);
     }
-    
-    // Seletores do Modal
+
+    // ==========================================================================
+    // AUTENTICAÇÃO (ÚNICA)
+    // ==========================================================================
+    function authenticate() {
+        // Proteção contra duplo clique
+        if (btnContinue.disabled) return;
+        btnContinue.disabled = true;
+        adBtnSpinner.style.display = "inline-block";
+        btnContinue.querySelector("span").textContent = "Conectando...";
+
+        const userPhone = sessionStorage.getItem("user_phone") || phoneInput.value;
+        const username = userPhone.replace(/\D/g, "");
+
+        mkUsername.value = username;
+        mkPassword.value = "hotspot_free_access";
+
+        console.log("Iniciando autenticação...");
+
+        if (isMikrotik()) {
+            console.log("Autenticando no MikroTik...");
+            mikrotikLoginForm.submit();
+        } else {
+            console.log("Redirecionando para alogin.html (Ambiente Local)...");
+            setTimeout(function () {
+                window.location.href = "alogin.html";
+            }, 300);
+        }
+    }
+
+    // ==========================================================================
+    // EVENT LISTENERS
+    // ==========================================================================
+    phoneForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        // Validação básica
+        const phoneValue = phoneInput.value;
+        const cleanPhone = phoneValue.replace(/\D/g, "");
+        if (cleanPhone.length !== 10 && cleanPhone.length !== 11) {
+            phoneInput.parentElement.classList.add("error");
+            phoneValidationError.style.display = "block";
+            return;
+        }
+
+        if (!termsRequiredCheckbox.checked) {
+            alert("Você precisa aceitar os Termos e a Política de Privacidade para continuar.");
+            return;
+        }
+
+        // Proteção contra duplo clique
+        btnPhoneSubmit.disabled = true;
+        phoneBtnSpinner.style.display = "inline-block";
+        btnPhoneSubmit.querySelector("span").textContent = "Verificando...";
+
+        // Transição
+        sessionStorage.setItem("user_phone", phoneValue);
+        showStage(stageAd, stagePhone);
+        startAdCountdown();
+    });
+
+    btnContinue.addEventListener("click", authenticate);
+
+    // Modal Logic
     const modal = document.getElementById("legal-modal");
     const modalTitle = document.getElementById("modal-title");
     const modalContent = document.getElementById("modal-content");
     const modalClose = document.getElementById("modal-close");
     const modalCloseFooter = document.getElementById("modal-close-footer");
 
-    // Botões que abrem o modal (identificados em login.html)
     const btnTermsModal = document.getElementById("btn-terms-modal");
     const btnPrivacyModal = document.getElementById("btn-privacy-modal");
     const btnTermsFooter = document.getElementById("btn-terms-footer");
     const btnPrivacyFooter = document.getElementById("btn-privacy-footer");
 
-    // Conteúdos Textuais dos Termos e Políticas em HTML Puro
     const texts = {
         terms: `
             <h3>1. Aceite dos Termos</h3>
@@ -120,112 +196,6 @@ document.addEventListener("DOMContentLoaded", function () {
         `
     };
 
-    /**
-     * MÁSCARA DINÂMICA DE TELEFONE
-     */
-    phoneInput.addEventListener("input", function (e) {
-        let value = e.target.value;
-        value = value.replace(/\D/g, "");
-        
-        if (value.length > 11) value = value.slice(0, 11);
-
-        if (value.length > 0) value = "(" + value;
-        if (value.length > 3) value = [value.slice(0, 3), ") ", value.slice(3)].join("");
-        if (value.length > 9) {
-            let hyphenPosition = value.length === 14 ? 10 : 9;
-            value = [value.slice(0, hyphenPosition), "-", value.slice(hyphenPosition)].join("");
-        }
-        e.target.value = value;
-    });
-
-    /**
-     * VALIDAÇÃO DO TELEFONE
-     */
-    function isValidPhone(phone) {
-        const cleanPhone = phone.replace(/\D/g, "");
-        return cleanPhone.length === 10 || cleanPhone.length === 11;
-    }
-
-    /**
-     * SUBMISSÃO DO FORMULÁRIO DE TELEFONE
-     */
-    phoneForm.addEventListener("submit", function (e) {
-        e.preventDefault();
-
-        const phoneValue = phoneInput.value;
-
-        // Validação de Telefone
-        if (!isValidPhone(phoneValue)) {
-            phoneInput.parentElement.classList.add("error");
-            phoneValidationError.style.display = "block";
-            phoneInput.focus();
-            return;
-        }
-
-        // Validação LGPD (Obrigatório)
-        if (!termsRequiredCheckbox.checked) {
-            alert("Você precisa aceitar os Termos e a Política de Privacidade para continuar.");
-            return;
-        }
-
-        // Remove erros visuais
-        phoneInput.parentElement.classList.remove("error");
-        phoneValidationError.style.display = "none";
-
-        // Feedback visual do botão
-        btnPhoneSubmit.disabled = true;
-        phoneBtnSpinner.style.display = "inline-block";
-        btnPhoneSubmit.querySelector("span").textContent = "Verificando...";
-
-        // Simulação de envio para API e transição para o Anúncio
-        setTimeout(function () {
-            // Salva na sessionStorage para exibir em alogin.html
-            sessionStorage.setItem("user_phone", phoneValue);
-            
-            // Troca para a etapa do anúncio (Fluxo MikroTik SPA)
-            showStage(stageAd, stagePhone);
-            
-            // Inicia o contador do anúncio
-            startAdCountdown();
-        }, 1200);
-    });
-
-    /**
-     * CLIQUE NO BOTÃO DE CONTINUAR (APÓS ANÚNCIO)
-     * Realiza a autenticação oficial no MikroTik ou redireciona para alogin.html localmente
-     */
-    btnContinue.addEventListener("click", function() {
-        // Feedback visual no botão do anúncio
-        btnContinue.disabled = true;
-        adBtnSpinner.style.display = "inline-block";
-        btnContinue.querySelector("span").textContent = "Conectando...";
-
-        // Pega o telefone da sessão (ou do input) para usar como usuário
-        const userPhone = sessionStorage.getItem("user_phone") || phoneInput.value;
-        const username = userPhone.replace(/\D/g, "");
-
-        // Preenche o formulário oficial do MikroTik
-        mkUsername.value = username;
-        mkPassword.value = "hotspot_free_access"; // Senha padrão para login via telefone
-
-        // Verifica se está rodando no ambiente MikroTik (action contém link) 
-        // ou localmente (action é vazio ou arquivo)
-        const action = mikrotikLoginForm.getAttribute("action");
-        if (action && !action.includes("$")) {
-            // Ambiente de Teste Local: Redireciona para alogin.html
-            window.location.href = "alogin.html";
-        } else {
-            // Ambiente Hotspot MikroTik: Submete o formulário oficial
-            setTimeout(function() {
-                mikrotikLoginForm.submit();
-            }, 1000);
-            window.location.href = "alogin.html";
-        }
-    });
-
-    /**
-     * CONTROLE DE MODAL
-     */
     function openModal(title, contentHTML) {
         modalTitle.textContent = title;
         modalContent.innerHTML = contentHTML;
@@ -241,7 +211,6 @@ document.addEventListener("DOMContentLoaded", function () {
         document.body.style.overflow = "";
     }
 
-    // Eventos de Abertura do Modal
     if (btnTermsModal) btnTermsModal.addEventListener("click", () => openModal("Termos e Condições de Uso", texts.terms));
     if (btnPrivacyModal) btnPrivacyModal.addEventListener("click", () => openModal("Política de Privacidade", texts.privacy));
     if (btnTermsFooter) btnTermsFooter.addEventListener("click", () => openModal("Termos e Condições de Uso", texts.terms));
@@ -250,11 +219,16 @@ document.addEventListener("DOMContentLoaded", function () {
     modalClose.addEventListener("click", closeModal);
     modalCloseFooter.addEventListener("click", closeModal);
 
-    modal.addEventListener("click", function (e) {
-        if (e.target === modal) closeModal();
-    });
-
-    document.addEventListener("keydown", function (e) {
-        if (e.key === "Escape" && modal.classList.contains("active")) closeModal();
+    // Máscara de telefone mantida igual
+    phoneInput.addEventListener("input", function (e) {
+        let value = e.target.value.replace(/\D/g, "");
+        if (value.length > 11) value = value.slice(0, 11);
+        if (value.length > 0) value = "(" + value;
+        if (value.length > 3) value = [value.slice(0, 3), ") ", value.slice(3)].join("");
+        if (value.length > 9) {
+            let hyphenPosition = value.length === 14 ? 10 : 9;
+            value = [value.slice(0, hyphenPosition), "-", value.slice(hyphenPosition)].join("");
+        }
+        e.target.value = value;
     });
 });
