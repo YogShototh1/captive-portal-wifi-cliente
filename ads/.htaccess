@@ -1,0 +1,10 @@
+# As imagens de anúncio são servidas apenas pelo /ad.php (que aplica o
+# Content-Type correto e o isolamento por roteador). Acesso HTTP direto a
+# esta pasta fica bloqueado.
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+</IfModule>

@@ -1,0 +1,9 @@
+# Nada desta pasta é servido pela web (config com senha do banco, conexão,
+# sessão, validação). O PHP continua incluindo os arquivos normalmente.
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+</IfModule>

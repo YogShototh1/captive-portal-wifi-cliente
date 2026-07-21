@@ -1,0 +1,16 @@
+# Segredos — NUNCA versionar
+inc/config.php
+
+# Estado de produção (anúncios, dst, limites, template, heartbeat) — vive no servidor
+ads/*
+!ads/.htaccess
+
+# Logs gerados pelo servidor
+error_log
+api/error_log
+
+# Dependências e temporários
+node_modules/
+*.old
+*.bak
+.claude/

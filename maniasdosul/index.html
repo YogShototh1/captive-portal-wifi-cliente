@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Manias do Sul — @maniasdosul no Instagram</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
+<style>
+/* Página-ponte do Instagram — identidade Manias do Sul (kraft + bordô).
+   Destino pós-anúncio do hotspot: sempre carrega no CNA do iPhone. */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+    --kraft:#BB823F;        /* mesmo fundo da logo — funde sem emenda */
+    --bordo:#6E1A22;
+    --bordo-escuro:#5A121A;
+    --creme:#F7EFDC;
+    --creme-2:#FDF8EA;
+}
+body{
+    min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:0;padding:26px 20px 18px;text-align:center;
+    font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    /* Fundo CHAPADO na cor exata do fundo da logo (#BB823F): o quadrado da
+       imagem some por completo. Sem gradientes de propósito. */
+    background:var(--kraft);
+    color:var(--bordo);
+}
+.logo{width:118px;height:118px;margin-bottom:10px}
+h1{
+    font-family:'Special Elite',serif;font-weight:400;font-size:27px;
+    color:var(--bordo-escuro);margin-bottom:6px;letter-spacing:.01em;
+}
+.sub{font-size:13px;color:rgba(90,18,26,.85);margin-bottom:18px}
+.sub b{color:var(--bordo-escuro)}
+.card{
+    width:100%;max-width:360px;background:var(--creme-2);
+    border:1px solid rgba(90,18,26,.25);border-radius:16px;
+    box-shadow:0 14px 34px -14px rgba(60,25,5,.5);
+    padding:26px 18px;margin-bottom:16px;
+}
+.ig-ic{width:64px;height:64px;color:var(--bordo);margin-bottom:12px}
+.arroba{
+    font-family:'Special Elite',serif;font-size:19px;color:var(--bordo-escuro);
+    margin-bottom:8px;word-break:break-all;
+}
+.chamada{font-size:12.5px;color:rgba(90,18,26,.75);line-height:1.55;max-width:270px;margin:0 auto}
+.btn{
+    display:flex;align-items:center;justify-content:center;gap:10px;width:100%;max-width:360px;
+    min-height:52px;padding:14px 20px;border-radius:12px;cursor:pointer;text-decoration:none;
+    font-family:'Special Elite',serif;font-size:14px;letter-spacing:.14em;text-transform:uppercase;
+    border:1.5px solid var(--bordo-escuro);
+    background:var(--bordo);color:var(--creme);box-shadow:0 10px 22px -10px rgba(60,10,15,.6);
+}
+.btn:active{background:var(--bordo-escuro)}
+.btn svg{width:18px;height:18px;flex:0 0 auto}
+.rodape{
+    margin-top:22px;font-family:'Special Elite',serif;font-size:11px;
+    letter-spacing:.22em;text-transform:uppercase;color:rgba(90,18,26,.8);
+}
+</style>
+</head>
+<body>
+    <img class="logo" src="logo.png" alt="Manias do Sul — A Casa dos Frios">
+    <h1>Siga @maniasdosul</h1>
+    <p class="sub"><b>Wi-Fi liberado!</b> Aproveite e siga a gente no Instagram.</p>
+
+    <div class="card">
+        <svg class="ig-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+        <div class="arroba">@maniasdosul</div>
+        <p class="chamada">Novidades, promoções e bastidores — siga o perfil e fique por dentro.</p>
+    </div>
+
+    <a class="btn" href="https://www.instagram.com/maniasdosul/">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+        Abrir no Instagram
+    </a>
+    <footer class="rodape">Manias do Sul &#10022; A Casa dos Frios</footer>
+</body>
+</html>

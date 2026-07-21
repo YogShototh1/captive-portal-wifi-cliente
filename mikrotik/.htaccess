@@ -1,0 +1,9 @@
+# O script do MikroTik contém o admin_token em texto claro.
+# Jamais pode ser baixado pela web.
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+</IfModule>

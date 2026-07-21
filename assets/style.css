@@ -1,0 +1,1341 @@
+:root {
+    --bg: #0B0B0B;
+    --bg2: #1a1a1a;
+    --gold: #FFD54A;
+    --txt: #FFD54A;
+    --line: rgba(255, 213, 74, 0.2);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+
+body {
+    background: radial-gradient(circle at center, #1a1a1a 0%, #0B0B0B 100%);
+    color: var(--txt);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+/* --- Login --- */
+.tela-login { display: flex; align-items: center; justify-content: center; }
+
+.card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 36px 28px;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+}
+
+.marca { font-size: 26px; font-weight: 800; text-transform: uppercase; letter-spacing: -0.5px; }
+.sub { color: rgba(255, 213, 74, 0.75); font-size: 14px; margin-top: 4px; }
+
+.card form { display: flex; flex-direction: column; gap: 16px; margin-top: 22px; }
+.card label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600; }
+
+input[type="email"], input[type="password"] {
+    padding: 14px 16px;
+    font-size: 16px;
+    color: var(--gold);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    outline: none;
+}
+input:focus { border-color: var(--gold); }
+
+.btn {
+    display: inline-block;
+    padding: 14px 20px;
+    font-size: 15px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--gold);
+    background: rgba(255, 213, 74, 0.1);
+    border: 1px solid rgba(255, 213, 74, 0.3);
+    border-radius: 12px;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+.btn:hover { background: rgba(255, 213, 74, 0.2); border-color: var(--gold); }
+.btn-sec { font-size: 13px; padding: 10px 16px; }
+
+.alerta {
+    color: #ff6b6b;
+    font-weight: 700;
+    font-size: 14px;
+    margin-top: 14px;
+    text-align: center;
+}
+
+/* --- Painel --- */
+.topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    max-width: 1100px;
+    margin: 0 auto 24px;
+}
+
+.cards-resumo {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    max-width: 1100px;
+    margin: 0 auto 20px;
+}
+.resumo {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 16px 22px;
+    min-width: 140px;
+}
+.resumo .num { display: block; font-size: 30px; font-weight: 800; }
+.resumo .rot { font-size: 13px; color: rgba(255, 213, 74, 0.7); }
+
+.tabela-wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    overflow-x: auto;
+}
+table { width: 100%; border-collapse: collapse; min-width: 640px; }
+th, td { padding: 14px 16px; text-align: left; border-bottom: 1px solid rgba(255, 213, 74, 0.1); font-size: 14px; }
+th { text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; color: rgba(255, 213, 74, 0.85); position: sticky; top: 0; background: #141414; }
+td { color: #f3f3f3; }
+tbody tr:hover { background: rgba(255, 213, 74, 0.05); }
+
+.vazio { padding: 40px; text-align: center; color: rgba(255, 213, 74, 0.7); }
+
+/* --- Administração --- */
+.acoes-topo { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+.badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: rgba(255, 213, 74, 0.15);
+    border: 1px solid rgba(255, 213, 74, 0.4);
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+td.acoes { white-space: nowrap; }
+.acoes .link, .inline-form { display: inline-block; margin-right: 12px; }
+.inline-form { margin: 0; }
+
+.link {
+    background: none;
+    border: none;
+    color: var(--gold);
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0;
+    font-family: inherit;
+}
+.link:hover { color: #fff; }
+.link-perigo { color: #ff6b6b; }
+.link-perigo:hover { color: #ff9a9a; }
+
+.card-larga { max-width: 460px; }
+.form-acoes { display: flex; gap: 12px; margin-top: 8px; }
+.form-acoes .btn { flex: 1; }
+
+label.check {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    color: rgba(255, 213, 74, 0.85);
+}
+label.check input { width: auto; }
+
+/* ============================================================
+   Tela de login do cliente (index.php) — tema escuro/glass.
+   Escopo total em body.login-screen: NÃO afeta as demais páginas.
+   ============================================================ */
+body.login-screen {
+    background: #0a0e17;
+    color: #fff;
+    padding: 0;
+    /* dvh acompanha o teclado/barras do navegador no celular; 100vh fica
+       como fallback. Evita que a tela "perca a proporção" ao abrir/fechar
+       o teclado e mostre faixas pretas arrastáveis. */
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    /* Rolagem vertical LIBERADA: cartões maiores que a tela (ex.: editar
+       usuário em notebook baixo) precisam rolar até os botões. Os fundos
+       decorativos são fixed e não criam scroll sozinhos. */
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: none;
+}
+
+/* --- Camadas de fundo (fixed: cobrem a viewport sem inflar o layout) --- */
+.login-screen .lp-bg-gradient {
+    position: fixed; inset: 0; z-index: 0;
+    background: linear-gradient(180deg, #0e1524 0%, #0a0e17 60%, #070a12 100%);
+}
+.login-screen .lp-bg-noise {
+    position: fixed; inset: 0; z-index: 0;
+    opacity: 0.03; mix-blend-mode: soft-light;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    background-size: 200px 200px;
+}
+.login-screen .lp-glow {
+    position: fixed; left: 50%; transform: translateX(-50%);
+    z-index: 0; pointer-events: none; filter: blur(70px);
+    background: rgba(34,211,238,0.20);
+}
+.login-screen .lp-glow-top {
+    top: -30vh; width: 120vh; height: 60vh; border-radius: 0 0 50% 50%;
+    animation: lp-pulse 8s ease-in-out infinite;
+}
+.login-screen .lp-glow-bottom {
+    bottom: -40vh; width: 90vh; height: 90vh; border-radius: 50% 50% 0 0;
+    animation: lp-pulse 6s ease-in-out infinite 1s;
+}
+@keyframes lp-pulse { 0%, 100% { opacity: .25; } 50% { opacity: .45; } }
+
+/* --- Cartão --- */
+.login-screen .lp-card-wrap {
+    position: relative; z-index: 10;
+    width: 100%; max-width: 360px; padding: 20px;
+    /* margin:auto (e não só o flex-center): quando o cartão é MAIOR que a
+       tela, o flex centrado esconderia o topo/rodapé; com margin auto ele
+       centraliza quando cabe e rola do início ao fim quando não cabe. */
+    margin: auto;
+    animation: lp-rise .8s ease-out;
+}
+@keyframes lp-rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+.login-screen .lp-card { position: relative; }
+
+.login-screen .lp-card-inner {
+    position: relative;
+    background: rgba(17,25,42,0.85);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    padding: 28px 24px;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7);
+    overflow: hidden;
+}
+
+/* --- Feixes de luz na borda --- */
+.login-screen .lp-beams {
+    position: absolute; inset: -1px; border-radius: 16px;
+    overflow: hidden; pointer-events: none;
+}
+.login-screen .lp-beam { position: absolute; opacity: 0.7; }
+.login-screen .lp-beam-top {
+    top: 0; left: 0; height: 2px; width: 50%;
+    background: linear-gradient(to right, transparent, #fff, transparent);
+    animation: lp-beam-x 3.5s ease-in-out infinite;
+}
+.login-screen .lp-beam-right {
+    top: 0; right: 0; width: 2px; height: 50%;
+    background: linear-gradient(to bottom, transparent, #fff, transparent);
+    animation: lp-beam-y 3.5s ease-in-out infinite .9s;
+}
+.login-screen .lp-beam-bottom {
+    bottom: 0; right: 0; height: 2px; width: 50%;
+    background: linear-gradient(to right, transparent, #fff, transparent);
+    animation: lp-beam-x-rev 3.5s ease-in-out infinite 1.8s;
+}
+.login-screen .lp-beam-left {
+    bottom: 0; left: 0; width: 2px; height: 50%;
+    background: linear-gradient(to bottom, transparent, #fff, transparent);
+    animation: lp-beam-y-rev 3.5s ease-in-out infinite 2.7s;
+}
+@keyframes lp-beam-x { 0% { left: -50%; } 100% { left: 100%; } }
+@keyframes lp-beam-y { 0% { top: -50%; } 100% { top: 100%; } }
+@keyframes lp-beam-x-rev { 0% { right: -50%; } 100% { right: 100%; } }
+@keyframes lp-beam-y-rev { 0% { bottom: -50%; } 100% { bottom: 100%; } }
+
+/* --- Cabeçalho --- */
+.login-screen .lp-header { text-align: center; margin-bottom: 20px; }
+.login-screen .lp-logo {
+    width: 44px; height: 44px; margin: 0 auto 12px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; border: 1px solid rgba(255,255,255,0.12);
+    background: linear-gradient(to bottom right, rgba(255,255,255,0.10), transparent);
+    color: #fff;
+}
+.login-screen .lp-logo svg { width: 20px; height: 20px; }
+.login-screen .lp-title { font-size: 20px; font-weight: 700; color: #fff; letter-spacing: -0.2px; }
+.login-screen .lp-subtitle { font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 4px; }
+
+/* --- Formulário (apenas e-mail, senha e botão) --- */
+.login-screen .lp-form { display: flex; flex-direction: column; gap: 14px; }
+.login-screen .lp-field { position: relative; display: flex; align-items: center; }
+.login-screen .lp-field-icon {
+    position: absolute; left: 12px; width: 16px; height: 16px;
+    color: rgba(255,255,255,0.4); pointer-events: none; transition: color .3s;
+}
+.login-screen .lp-field input {
+    width: 100%; height: 44px; padding: 0 14px 0 38px;
+    font-size: 15px; color: #fff;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid transparent; border-radius: 10px;
+    outline: none; transition: background .3s, border-color .3s;
+}
+.login-screen .lp-field input::placeholder { color: rgba(255,255,255,0.35); }
+.login-screen .lp-field input:focus { background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.20); }
+.login-screen .lp-field:focus-within .lp-field-icon { color: #fff; }
+
+/* --- Botão Entrar --- */
+.login-screen .lp-submit {
+    position: relative; display: flex; align-items: center; justify-content: center; gap: 6px;
+    width: 100%; height: 44px; margin-top: 6px;
+    background: #fff; color: #000; font-weight: 600; font-size: 14px;
+    border: none; border-radius: 10px; cursor: pointer;
+    transition: transform .2s, box-shadow .3s;
+}
+.login-screen .lp-submit:hover { transform: scale(1.02); box-shadow: 0 0 20px rgba(255,255,255,0.15); }
+.login-screen .lp-submit:active { transform: scale(.98); }
+.login-screen .lp-submit svg { width: 14px; height: 14px; transition: transform .3s; }
+.login-screen .lp-submit:hover svg { transform: translateX(3px); }
+
+/* --- Mensagem de erro --- */
+.login-screen .lp-alerta {
+    margin-bottom: 14px; padding: 10px 12px;
+    border-radius: 8px; text-align: center; font-size: 13px;
+    color: #ff9b9b; background: rgba(255,80,80,0.10); border: 1px solid rgba(255,80,80,0.30);
+}
+
+/* Acessibilidade: respeita quem prefere menos movimento */
+@media (prefers-reduced-motion: reduce) {
+    .login-screen .lp-card-wrap,
+    .login-screen .lp-glow,
+    .login-screen .lp-beam { animation: none; }
+}
+
+/* ============================================================
+   Painel do CLIENTE (painel.php) — tema roxo/glass + tabela
+   espaçada com efeito de luz na borda seguindo o mouse.
+   Escopo total em body.painel-cliente: NÃO afeta admin.
+   ============================================================ */
+@property --start {
+    syntax: '<number>';
+    inherits: false;
+    initial-value: 0;
+}
+
+body.painel-cliente {
+    background: #0a0e17;
+    color: #fff;
+    padding: 0;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* --- Camadas de fundo (fixas enquanto a página rola) --- */
+.painel-cliente .pc-bg-gradient,
+.painel-cliente .pc-bg-noise,
+.painel-cliente .pc-glow { position: fixed; }
+
+.painel-cliente .pc-bg-gradient {
+    inset: 0; z-index: 0;
+    background: radial-gradient(80% 60% at 15% 0%, rgba(6,182,212,0.08), transparent 60%), radial-gradient(70% 50% at 95% 5%, rgba(34,211,238,0.06), transparent 60%), #0a0e17;
+}
+.painel-cliente .pc-bg-noise {
+    inset: 0; z-index: 0; opacity: 0.03; mix-blend-mode: soft-light;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    background-size: 200px 200px;
+}
+.painel-cliente .pc-glow {
+    left: 50%; transform: translateX(-50%);
+    z-index: 0; pointer-events: none; filter: blur(70px); background: rgba(34,211,238,0.16);
+}
+.painel-cliente .pc-glow-top { top: -30vh; width: 120vh; height: 60vh; border-radius: 0 0 50% 50%; animation: lp-pulse 8s ease-in-out infinite; }
+.painel-cliente .pc-glow-bottom { bottom: -40vh; width: 90vh; height: 90vh; border-radius: 50% 50% 0 0; animation: lp-pulse 6s ease-in-out infinite 1s; }
+
+/* --- Layout --- */
+.painel-cliente .pc-shell { position: relative; z-index: 10; max-width: 1100px; margin: 0 auto; padding: 28px 20px 48px; }
+
+.painel-cliente .pc-topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 16px; flex-wrap: wrap; margin-bottom: 24px;
+}
+.painel-cliente .pc-brand { font-size: 24px; font-weight: 800; color: #fff; letter-spacing: -0.3px; }
+.painel-cliente .pc-sub { font-size: 14px; color: rgba(255,255,255,0.6); margin-top: 4px; }
+.painel-cliente .pc-sub strong { color: #22d3ee; font-weight: 700; }
+.painel-cliente .pc-btn {
+    display: inline-block; padding: 10px 18px; border-radius: 10px;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+    color: #fff; font-size: 14px; font-weight: 600; text-decoration: none;
+    transition: background .2s, border-color .2s;
+}
+.painel-cliente .pc-btn:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.25); }
+
+/* --- Cartão com brilho (base) --- */
+.painel-cliente .glow-card { position: relative; border-radius: 16px; }
+.painel-cliente .glow-body {
+    position: relative; z-index: 1; border-radius: 16px;
+    background: rgba(17,25,42,0.72);
+    /* Sem backdrop-filter de propósito: atrás dos cartões só há o gradiente
+       liso fixo (desfocá-lo não muda nada) e no tema claro o cartão é opaco.
+       Com ele, trocar o tema + rolar deixava uma textura composta velha na
+       tela — o "borrão" gigante sobre os cartões (bug de compositing). */
+    border: 1px solid rgba(255,255,255,0.07);
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.55);
+    overflow: hidden;
+}
+.painel-cliente .glow-fx {
+    display: none; /* efeito de luz na borda ao passar o mouse — removido */
+    position: absolute; inset: 0; z-index: 2; border-radius: 16px;
+    pointer-events: none; padding: 2px;
+    --spread: 40;
+    opacity: var(--active, 0);
+    transition: opacity .3s ease, --start .6s cubic-bezier(0.16, 1, 0.3, 1);
+    background: conic-gradient(
+        from calc((var(--start, 0) - var(--spread)) * 1deg) at 50% 50%,
+        rgba(34,211,238,0) 0deg,
+        #22d3ee calc(var(--spread) * 0.5deg),
+        #ffffff calc(var(--spread) * 1deg),
+        #06b6d4 calc(var(--spread) * 1.5deg),
+        rgba(6,182,212,0) calc(var(--spread) * 2deg)
+    );
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+}
+
+/* --- Cards de resumo (clicáveis: filtram a tabela de leads) --- */
+.painel-cliente .pc-summary { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+.painel-cliente .pc-metric { flex: 1; min-width: 160px; text-decoration: none; cursor: pointer; }
+.painel-cliente .pc-metric .glow-body { display: flex; flex-direction: column; gap: 4px; padding: 18px 22px; transition: border-color .2s, box-shadow .2s; }
+.painel-cliente .pc-metric:hover .glow-body { border-color: rgba(34,211,238, 0.45); }
+/* Cartão selecionado = filtro ativo da tabela */
+.painel-cliente .pc-metric.atual .glow-body {
+    border-color: rgba(6,182,212, 0.75);
+    box-shadow: 0 0 0 1px rgba(6,182,212, 0.55), 0 0 26px -6px rgba(6,182,212, 0.6);
+}
+.painel-cliente .pc-metric.atual .pc-metric-label { color: #22d3ee; font-weight: 700; }
+.painel-cliente .pc-metric-num { font-size: 32px; font-weight: 800; color: #fff; line-height: 1; }
+.painel-cliente .pc-metric-label { font-size: 13px; color: rgba(255,255,255,0.55); }
+
+/* --- Tabela --- */
+.painel-cliente .pc-table-card > .glow-body { padding: 6px; }
+.painel-cliente .pc-table-wrap { overflow-x: auto; border-radius: 12px; }
+.painel-cliente table { width: 100%; border-collapse: collapse; min-width: 640px; }
+.painel-cliente thead th {
+    position: static; background: transparent;
+    padding: 16px 24px; text-align: left;
+    font-size: 12px; text-transform: uppercase; letter-spacing: 0.6px;
+    color: rgba(255,255,255,0.5); font-weight: 700;
+    border-bottom: 1px solid rgba(255,255,255,0.10);
+}
+.painel-cliente tbody td {
+    padding: 18px 24px; text-align: left; font-size: 14px;
+    color: rgba(255,255,255,0.9);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.painel-cliente tbody tr { transition: background .2s ease; }
+.painel-cliente tbody tr:hover { background: rgba(6,182,212,0.10); }
+.painel-cliente tbody tr:last-child td { border-bottom: none; }
+.painel-cliente .pc-vazio { padding: 48px 24px; text-align: center; color: rgba(255,255,255,0.55); }
+
+/* Acessibilidade: respeita quem prefere menos movimento */
+@media (prefers-reduced-motion: reduce) {
+    .painel-cliente .pc-glow { animation: none; }
+    .painel-cliente .glow-fx { transition: opacity .3s ease; }
+}
+
+/* --- Elementos exclusivos das telas de admin (reaproveitam o tema roxo) --- */
+.painel-cliente .pc-topbar-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+.painel-cliente .pc-btn-primary {
+    display: inline-block; padding: 10px 18px; border-radius: 10px;
+    background: #fff; color: #000; font-size: 14px; font-weight: 700; text-decoration: none;
+    border: 1px solid #fff; transition: transform .2s, box-shadow .3s;
+}
+.painel-cliente .pc-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 0 20px rgba(255,255,255,0.18); }
+
+.painel-cliente .pc-badge {
+    display: inline-block; padding: 2px 10px; border-radius: 999px;
+    background: rgba(34,211,238,0.15); border: 1px solid rgba(34,211,238,0.45);
+    color: #67e8f9; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+}
+.painel-cliente .pc-tipo-cliente { color: rgba(255,255,255,0.55); font-size: 13px; }
+
+.painel-cliente td.pc-actions { white-space: nowrap; }
+.painel-cliente .pc-link {
+    display: inline-block; margin-right: 14px;
+    background: none; border: none; padding: 0; cursor: pointer;
+    color: #22d3ee; font-family: inherit; font-size: 13px; font-weight: 700;
+    text-decoration: underline; transition: color .2s;
+}
+.painel-cliente .pc-link:hover { color: #fff; }
+.painel-cliente .pc-link-danger { color: #ff8a8a; }
+.painel-cliente .pc-link-danger:hover { color: #ffb3b3; }
+.painel-cliente .pc-inline-form { display: inline-block; margin: 0; }
+
+/* --- Colunas ao vivo: tempo conectado (online) + limite editável --- */
+.painel-cliente .pc-th-hint {
+    font-weight: 400; text-transform: none; letter-spacing: 0;
+    color: rgba(255, 255, 255, 0.35); font-size: 11px;
+}
+.painel-cliente .pc-dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    background: rgba(255, 255, 255, 0.22); margin-right: 8px; vertical-align: middle;
+}
+.painel-cliente tr[data-online="1"] .pc-dot { background: #34d399; box-shadow: 0 0 8px rgba(52, 211, 153, 0.9); }
+.painel-cliente tr[data-online="1"] .pc-tempo { color: #fff; }
+.painel-cliente tr:not([data-online="1"]) .pc-tempo { color: rgba(255, 255, 255, 0.55); }
+
+.painel-cliente td.pc-limite { cursor: pointer; color: #22d3ee; white-space: nowrap; }
+.painel-cliente td.pc-limite:hover { color: #fff; text-decoration: underline dotted; }
+.painel-cliente td.pc-limite.editing { text-decoration: none; }
+.painel-cliente td.pc-limite input,
+.painel-cliente td.pc-banda input {
+    width: 90px; padding: 7px 9px; font-size: 13px; font-family: inherit;
+    color: #fff; background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(34,211,238, 0.55); border-radius: 8px; outline: none;
+}
+
+.painel-cliente td.pc-uso { color: rgba(255, 255, 255, 0.8); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pc-conex-uso { font-variant-numeric: tabular-nums; color: rgba(255, 255, 255, 0.8); }
+.painel-cliente td.pc-banda { cursor: pointer; color: #38bdf8; white-space: nowrap; }
+.painel-cliente td.pc-banda:hover { color: #fff; text-decoration: underline dotted; }
+.painel-cliente td.pc-banda.editing { text-decoration: none; }
+.painel-cliente td.pc-banda input { border-color: rgba(56, 189, 248, 0.55); }
+
+/* --- Aparelho + botão "ver conexões" --- */
+.painel-cliente .pc-aparelho { color: rgba(255, 255, 255, 0.85); white-space: nowrap; }
+/* Célula da conexão: ícone (abre o pop-up) + data em cima / hora embaixo */
+.painel-cliente .pc-conex-cel { display: inline-flex; align-items: center; gap: 10px; }
+.painel-cliente .pc-ver-conexoes {
+    position: relative; flex: 0 0 auto; width: 34px; height: 34px; border-radius: 8px;
+    display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+    background: rgba(34, 211, 238, 0.12); border: 1px solid rgba(34, 211, 238, 0.28);
+    color: #22d3ee; padding: 0; transition: background .2s, border-color .2s;
+}
+.painel-cliente .pc-ver-conexoes:hover { background: rgba(34, 211, 238, 0.22); border-color: rgba(34, 211, 238, 0.55); }
+.painel-cliente .pc-conex-ic { width: 17px; height: 17px; }
+/* contador de conexões: badge no canto do ícone */
+.painel-cliente .pc-ver-conexoes .pc-total {
+    position: absolute; top: -6px; right: -6px; min-width: 16px; height: 16px; padding: 0 4px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 999px; background: #22d3ee; color: #0a0e17;
+    font-size: 10px; font-weight: 800; line-height: 1;
+}
+.painel-cliente .pc-dh { display: inline-flex; flex-direction: column; line-height: 1.25; }
+.painel-cliente .pc-data { color: rgba(255, 255, 255, 0.9); white-space: nowrap; }
+.painel-cliente .pc-hora { color: rgba(255, 255, 255, 0.5); font-size: 11px; white-space: nowrap; }
+
+/* --- Número clicável que abre o WhatsApp (celular e computador) --- */
+/* Célula do lead: quadradinho do WhatsApp (clicável) + nome/número */
+.painel-cliente .pc-lead-cel { display: inline-flex; align-items: center; gap: 10px; }
+.painel-cliente .pc-wa-box {
+    flex: 0 0 auto; width: 30px; height: 30px; border-radius: 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: rgba(37, 211, 102, 0.14); border: 1px solid rgba(37, 211, 102, 0.30);
+    transition: background .2s, border-color .2s;
+}
+.painel-cliente .pc-wa-box:hover { background: rgba(37, 211, 102, 0.25); border-color: rgba(37, 211, 102, 0.55); }
+.painel-cliente .pc-wa-ic { width: 15px; height: 15px; fill: #25d366; }
+.painel-cliente .pc-lead-txt { display: inline-flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+.painel-cliente .pc-lead-nome { color: #34d399; font-weight: 600; }
+.painel-cliente .pc-lead-tel { color: rgba(255, 255, 255, 0.45); font-size: 11px; font-variant-numeric: tabular-nums; margin-top: 1px; }
+
+/* --- Pop-up (modal) histórico de conexões --- */
+.pc-modal { position: fixed; inset: 0; z-index: 100; display: none; align-items: center; justify-content: center; padding: 20px; touch-action: none; }
+.pc-modal.aberto { display: flex; }
+/* Pop-up aberto = fundo travado: nem roda do mouse nem arrastar o dedo rolam
+   o site por trás (o touch-action acima corta o gesto no próprio modal). */
+html:has(.pc-modal.aberto) { overflow: hidden; }
+.pc-modal-backdrop { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.65); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+.pc-modal-card { position: relative; z-index: 1; width: 100%; max-width: 440px; }
+.pc-modal-card .glow-body { padding: 0; max-height: 80vh; display: flex; flex-direction: column; }
+.pc-modal-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 22px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.pc-modal-title { font-size: 16px; font-weight: 700; color: #fff; }
+.pc-modal-title span { color: #22d3ee; }
+.pc-modal-x { background: none; border: none; color: rgba(255, 255, 255, 0.6); font-size: 26px; line-height: 1; cursor: pointer; }
+.pc-modal-x:hover { color: #fff; }
+.pc-modal-body { padding: 6px 0; overflow-y: auto; touch-action: pan-y; overscroll-behavior: contain; }
+.pc-modal-info { padding: 26px; text-align: center; color: rgba(255, 255, 255, 0.6); }
+.pc-conex-head {
+    display: grid; grid-template-columns: 1.25fr 0.8fr 0.7fr 0.7fr; gap: 10px;
+    padding: 10px 22px 8px; font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.05em; color: rgba(255, 255, 255, 0.45);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.pc-conex-head span:last-child { text-align: right; }
+.pc-conex-list { list-style: none; margin: 0; padding: 0; }
+.pc-conex-list li {
+    display: grid; grid-template-columns: 1.25fr 0.8fr 0.7fr 0.7fr; gap: 10px;
+    padding: 12px 22px; border-bottom: 1px solid rgba(255, 255, 255, 0.06); font-size: 14px;
+}
+.pc-conex-list li:last-child { border-bottom: none; }
+.pc-conex-data { color: #fff; white-space: nowrap; }
+.pc-conex-tempo { color: #34d399; font-variant-numeric: tabular-nums; }
+.pc-conex-ap { color: rgba(255, 255, 255, 0.55); text-align: right; }
+
+/* Setas de navegação do pop-up (‹ anterior / › próxima) */
+.pc-conex-nav { display: flex; justify-content: center; gap: 10px; padding: 12px 22px 14px; }
+.pc-conex-seta {
+    width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.14);
+    color: rgba(255, 255, 255, 0.8); font-size: 20px; line-height: 1;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.pc-conex-seta:hover { background: rgba(34,211,238, 0.2); border-color: #22d3ee; color: #fff; }
+
+/* --- Seletor de MikroTik (conta com vários roteadores) ---
+   <details> nativo estilo menu de app: botão com o nome do roteador atual;
+   abre um menuzinho escuro com título, itens, check no selecionado e a opção
+   "Todos (misturado)" separada no fim. */
+.pc-rt-bar { display: flex; margin: 0 0 12px; }
+.rt-sel { position: relative; }
+.rt-sel summary {
+    list-style: none; cursor: pointer; user-select: none; -webkit-user-select: none;
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 14px; border-radius: 12px; font-weight: 600; font-size: 14px;
+    background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.16);
+    color: #fff; transition: border-color 0.2s, background 0.2s;
+}
+.rt-sel summary::-webkit-details-marker { display: none; }
+.rt-sel summary:hover { border-color: #22d3ee; background: rgba(34,211,238, 0.10); }
+.rt-sel summary svg { width: 15px; height: 15px; flex: 0 0 auto; }
+.rt-sel .rt-chev { opacity: 0.6; transition: transform 0.2s; }
+.rt-sel[open] .rt-chev { transform: rotate(180deg); }
+.rt-menu {
+    position: absolute; top: calc(100% + 6px); left: 0; z-index: 40; min-width: 250px;
+    background: #0d1420; border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 14px;
+    box-shadow: 0 18px 46px -16px rgba(0, 0, 0, 0.8); padding: 6px;
+}
+.rt-menu-title {
+    padding: 8px 12px 5px; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.05em; text-transform: uppercase; color: rgba(255, 255, 255, 0.4);
+}
+.rt-item {
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    padding: 9px 12px; border-radius: 9px; font-size: 14px; text-decoration: none;
+    color: rgba(255, 255, 255, 0.85); white-space: nowrap;
+}
+.rt-item:hover { background: rgba(34,211,238, 0.14); color: #fff; }
+.rt-item.atual { color: #fff; font-weight: 600; }
+.rt-item svg { width: 15px; height: 15px; color: #22d3ee; flex: 0 0 auto; }
+.rt-item-all { border-top: 1px solid rgba(255, 255, 255, 0.10); margin-top: 4px; padding-top: 11px; border-radius: 0 0 9px 9px; }
+
+/* --- Menu de contexto da linha do lead (Editar / Excluir) ---
+   Mesmo visual dos menus rt-menu; aberto no botão direito (ou dedo seguro). */
+.ctx-menu {
+    position: fixed; z-index: 130; display: none; min-width: 180px; padding: 6px;
+    background: #0d1420; border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 14px;
+    box-shadow: 0 18px 46px -16px rgba(0, 0, 0, 0.8);
+}
+.ctx-menu.aberto { display: block; }
+.ctx-menu button.rt-item { width: 100%; background: none; border: none; cursor: pointer; font-family: inherit; text-align: left; }
+.ctx-menu .rt-item.perigo { color: #ff8a8a; }
+.ctx-menu .rt-item.perigo:hover { background: rgba(255, 100, 100, 0.12); color: #ffb3b3; }
+/* Segurar o dedo na linha não pode disparar o menu nativo de seleção do iOS */
+.painel-cliente tbody tr[data-id] td { -webkit-touch-callout: none; }
+
+/* --- Pop-up "Editar lead" --- */
+.pc-editar-body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 12px; }
+.pc-ed-label {
+    display: flex; flex-direction: column; gap: 6px; text-align: left;
+    font-size: 12.5px; font-weight: 600; color: rgba(255, 255, 255, 0.65);
+}
+.pc-editar-body .pc-dst-input { min-width: 0; width: 100%; }
+.pc-editar-body .pc-btn-primary { border: none; cursor: pointer; font-family: inherit; height: 44px; }
+
+/* --- Paginação da tabela de leads (1, 2, 3, ...) --- */
+.pc-pag { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; padding: 16px 0 4px; }
+.pc-pag-btn {
+    min-width: 30px; height: 30px; padding: 0 8px; border-radius: 9px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600; text-decoration: none;
+    color: rgba(255, 255, 255, 0.75); background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+a.pc-pag-btn:hover { background: rgba(34,211,238, 0.2); border-color: #22d3ee; color: #fff; }
+.pc-pag-btn.atual { background: #0891b2; border-color: #0891b2; color: #fff; cursor: default; }
+.pc-pag-gap { align-self: center; color: rgba(255, 255, 255, 0.4); padding: 0 2px; }
+
+/* ============================================================
+   Formulário de cadastro/edição de usuário (admin_form.php)
+   Reaproveita o tema da tela de login (escopo em body.login-screen).
+   ============================================================ */
+.login-screen .lp-card-wrap.af-wide { max-width: 420px; }
+
+/* Formulário de usuário COMPACTO em telas baixas (notebooks): encolhe
+   espaçamentos, campos e cabeçalho para o cartão caber INTEIRO na tela,
+   sem rolagem. Só afeta o cartão largo (.af-wide) — o login não muda. */
+@media (max-height: 820px) {
+    .login-screen .lp-card-wrap.af-wide { padding: 10px; }
+    .login-screen .af-wide .lp-card-inner { padding: 16px 22px; }
+    .login-screen .af-wide .lp-header { margin-bottom: 10px; }
+    .login-screen .af-wide .lp-logo { width: 34px; height: 34px; margin-bottom: 6px; }
+    .login-screen .af-wide .lp-logo svg { width: 16px; height: 16px; }
+    .login-screen .af-wide .lp-title { font-size: 17px; }
+    .login-screen .af-wide .lp-subtitle { display: none; }
+    .login-screen .af-wide .af-form { gap: 8px; }
+    .login-screen .af-wide .af-field { gap: 3px; }
+    .login-screen .af-wide .af-field label { font-size: 11px; }
+    .login-screen .af-wide .af-field input { height: 36px; font-size: 14px; }
+    .login-screen .af-wide .af-field textarea { min-height: 52px; font-size: 14px; padding: 7px 14px; }
+    .login-screen .af-wide .af-check { font-size: 12px; margin-top: 0; }
+    .login-screen .af-wide .af-actions { margin-top: 2px; }
+    .login-screen .af-wide .af-btn { height: 38px; }
+    .login-screen .af-wide .lp-alerta { padding: 8px 12px; font-size: 12.5px; }
+}
+.login-screen .af-form { display: flex; flex-direction: column; gap: 14px; }
+.login-screen .af-field { display: flex; flex-direction: column; gap: 6px; }
+.login-screen .af-field label { font-size: 12px; font-weight: 600; color: rgba(255, 255, 255, 0.6); }
+.login-screen .af-field input,
+.login-screen .af-field textarea {
+    width: 100%; height: 44px; padding: 0 14px; font-size: 15px; color: #fff;
+    background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 10px; outline: none; transition: background .3s, border-color .3s;
+}
+.login-screen .af-field textarea { height: auto; min-height: 88px; padding: 10px 14px; resize: vertical; font-family: inherit; line-height: 1.5; }
+.login-screen .af-field input:focus,
+.login-screen .af-field textarea:focus { background: rgba(255, 255, 255, 0.10); border-color: rgba(255, 255, 255, 0.20); }
+.login-screen .af-field input::placeholder,
+.login-screen .af-field textarea::placeholder { color: rgba(255, 255, 255, 0.35); }
+.login-screen .af-check {
+    display: flex; align-items: center; gap: 10px; margin-top: 2px;
+    font-size: 13px; color: rgba(255, 255, 255, 0.7); cursor: pointer;
+}
+.login-screen .af-check input { width: 16px; height: 16px; accent-color: #06b6d4; }
+.login-screen .af-actions { display: flex; gap: 12px; margin-top: 6px; }
+.login-screen .af-btn {
+    flex: 1; height: 44px; border-radius: 10px; font-size: 14px; font-weight: 600;
+    cursor: pointer; border: none; display: flex; align-items: center; justify-content: center;
+    text-decoration: none; transition: transform .2s, box-shadow .3s, background .2s;
+}
+.login-screen .af-btn-primary { background: #fff; color: #000; }
+.login-screen .af-btn-primary:hover { transform: scale(1.02); box-shadow: 0 0 20px rgba(255, 255, 255, 0.15); }
+.login-screen .af-btn-secondary { background: rgba(255, 255, 255, 0.06); color: #fff; border: 1px solid rgba(255, 255, 255, 0.15); }
+.login-screen .af-btn-secondary:hover { background: rgba(255, 255, 255, 0.12); }
+
+/* ============================================================
+   Card de troca do anúncio do captive portal (painel e admin_leads)
+   ============================================================ */
+.painel-cliente .pc-anuncio-card { margin-bottom: 20px; }
+.painel-cliente .pc-anuncio-card > .glow-body { padding: 22px; }
+.painel-cliente .pc-anuncio {
+    display: flex; gap: 22px; align-items: stretch; flex-wrap: wrap;
+}
+.painel-cliente .pc-anuncio-preview {
+    flex: 0 0 200px; width: 200px; min-height: 130px;
+    border-radius: 12px; overflow: hidden; position: relative;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex; align-items: center; justify-content: center;
+}
+.painel-cliente .pc-anuncio-preview img { width: 100%; height: 100%; max-height: 220px; object-fit: contain; display: block; }
+.painel-cliente .pc-anuncio-vazio { color: rgba(255, 255, 255, 0.4); font-size: 13px; text-align: center; line-height: 1.5; }
+.painel-cliente .pc-anuncio-form { flex: 1; min-width: 260px; display: flex; flex-direction: column; gap: 10px; }
+.painel-cliente .pc-anuncio-title { font-size: 17px; font-weight: 800; color: #fff; }
+.painel-cliente .pc-anuncio-desc { font-size: 13px; color: rgba(255, 255, 255, 0.55); line-height: 1.5; }
+.painel-cliente .pc-anuncio-target {
+    font-size: 13px; color: rgba(255, 255, 255, 0.7);
+    background: rgba(34,211,238, 0.10); border: 1px solid rgba(34,211,238, 0.35);
+    border-radius: 8px; padding: 8px 12px;
+}
+.painel-cliente .pc-anuncio-target strong { color: #67e8f9; }
+.painel-cliente .pc-anuncio-msg { font-size: 13px; font-weight: 600; border-radius: 8px; padding: 8px 12px; }
+.painel-cliente .pc-anuncio-msg.ok { color: #6ee7b7; background: rgba(52, 211, 153, 0.10); border: 1px solid rgba(52, 211, 153, 0.35); }
+.painel-cliente .pc-anuncio-msg.err { color: #ff8a8a; background: rgba(255, 80, 80, 0.10); border: 1px solid rgba(255, 120, 120, 0.35); }
+.painel-cliente .pc-anuncio-envio { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 2px; }
+.painel-cliente .pc-file { position: relative; overflow: hidden; display: inline-flex; }
+.painel-cliente .pc-file input[type="file"] { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+.painel-cliente .pc-file-label {
+    display: inline-block; padding: 10px 18px; border-radius: 10px;
+    background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #fff; font-size: 14px; font-weight: 600; max-width: 260px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    transition: background .2s, border-color .2s;
+}
+.painel-cliente .pc-file:hover .pc-file-label { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.25); }
+.painel-cliente .pc-anuncio-envio button { border: none; cursor: pointer; font-family: inherit; }
+
+/* ============================================================
+   Card do site de destino pós-anúncio (painel e admin_leads)
+   ============================================================ */
+.painel-cliente .pc-dst-card { margin-bottom: 20px; }
+.painel-cliente .pc-dst-card > .glow-body { padding: 22px; }
+.painel-cliente .pc-dst { display: flex; flex-direction: column; gap: 10px; }
+.painel-cliente .pc-dst-atual { font-size: 13px; color: rgba(255, 255, 255, 0.7); word-break: break-all; }
+.painel-cliente .pc-dst-atual strong { color: #67e8f9; font-weight: 700; }
+.painel-cliente .pc-dst-form { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 2px; }
+.painel-cliente .pc-dst-input {
+    flex: 1; min-width: 240px; height: 44px; padding: 0 14px; font-size: 15px; color: #fff;
+    background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 10px; outline: none; font-family: inherit;
+    transition: background .3s, border-color .3s;
+}
+.painel-cliente .pc-dst-input:focus { background: rgba(255, 255, 255, 0.10); border-color: rgba(34,211,238, 0.55); }
+.painel-cliente .pc-dst-input::placeholder { color: rgba(255, 255, 255, 0.35); }
+.painel-cliente .pc-dst-form button { border: none; cursor: pointer; font-family: inherit; height: 44px; }
+
+/* ============================================================
+   AJUSTES SÓ PARA CELULAR (largura <= 600px).
+   No computador (telas maiores) NADA muda — tudo continua igual.
+   ============================================================ */
+@media (max-width: 600px) {
+    /* Mais largura útil: reduz a margem lateral do miolo. */
+    .painel-cliente .pc-shell { padding: 18px 10px 40px; }
+
+    /* --- Tabela de leads compacta: cabe mais coluna por tela --- */
+    .painel-cliente .pc-table-card > .glow-body { padding: 4px; }
+    .painel-cliente table { min-width: 0; }               /* remove o piso de 640px */
+    .painel-cliente thead th {
+        padding: 10px 9px; font-size: 11px; letter-spacing: 0.3px; white-space: nowrap;
+    }
+    .painel-cliente tbody td {
+        padding: 11px 9px; font-size: 12.5px; white-space: nowrap;
+    }
+    /* Some com o que rouba largura sem necessidade no celular. */
+    .painel-cliente .pc-th-hint { display: none; }
+    .painel-cliente .pc-dot { width: 6px; height: 6px; margin-right: 5px; }
+    .painel-cliente .pc-ver-conexoes { font-size: 11px; margin-top: 2px; }
+    .painel-cliente .pc-data { font-size: 12.5px; }
+    .painel-cliente td.pc-limite,
+    .painel-cliente td.pc-banda { font-size: 12.5px; }
+
+    /* (1) Inputs a 16px no celular: impede o zoom automático do iOS ao focar. */
+    .login-screen .lp-field input,
+    .login-screen .af-field input,
+    .painel-cliente .pc-dst-input,
+    .painel-cliente td.pc-limite input,
+    .painel-cliente td.pc-banda input { font-size: 16px; }
+
+    /* --- Resumo: os 4 blocos em grade 2x2 no celular --- */
+    .painel-cliente .pc-summary { gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .painel-cliente .pc-metric { flex: 1 1 42%; min-width: 0; }
+    .painel-cliente .pc-metric .glow-body { padding: 10px 8px; }
+    .painel-cliente .pc-metric-num { font-size: 22px; }
+    .painel-cliente .pc-metric-label { font-size: 10.5px; line-height: 1.2; }
+
+    /* --- Cards de anúncio e destino bem mais compactos no celular --- */
+    .painel-cliente .pc-topbar { margin-bottom: 14px; }
+    .painel-cliente .pc-anuncio-card,
+    .painel-cliente .pc-dst-card { margin-bottom: 12px; }
+    .painel-cliente .pc-anuncio-card > .glow-body,
+    .painel-cliente .pc-dst-card > .glow-body { padding: 12px; }
+    .painel-cliente .pc-anuncio { flex-wrap: nowrap; gap: 12px; align-items: flex-start; }
+    .painel-cliente .pc-anuncio-preview { flex: 0 0 84px; width: 84px; min-height: 84px; }
+    .painel-cliente .pc-anuncio-vazio { font-size: 11px; }
+    .painel-cliente .pc-anuncio-form { min-width: 0; gap: 7px; }
+    .painel-cliente .pc-anuncio-title { font-size: 14px; }
+    .painel-cliente .pc-anuncio-desc { font-size: 11px; line-height: 1.4; }
+    .painel-cliente .pc-anuncio-target { font-size: 11px; padding: 6px 9px; }
+    .painel-cliente .pc-anuncio-envio { gap: 8px; }
+    .painel-cliente .pc-file-label,
+    .painel-cliente .pc-anuncio-envio button,
+    .painel-cliente .pc-dst-form button { height: 40px; padding: 9px 14px; font-size: 13px; }
+    .painel-cliente .pc-dst { gap: 7px; }
+    .painel-cliente .pc-dst-atual { font-size: 11px; }
+    .painel-cliente .pc-dst-form { gap: 8px; }
+    .painel-cliente .pc-dst-input { min-width: 0; height: 40px; }
+}
+
+/* Status do MikroTik (coletor) — bloco no topo do painel */
+.mk-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background .3s ease, color .3s ease;
+}
+.mk-status .mk-led {
+    flex: 0 0 auto;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    transition: background .3s ease, box-shadow .3s ease;
+}
+.mk-status.mk-on  { background: rgba(34, 197, 94, 0.10); color: #4ade80; }
+.mk-status.mk-on  .mk-led { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
+.mk-status.mk-off { background: rgba(239, 68, 68, 0.10); color: #f87171; }
+.mk-status.mk-off .mk-led { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+/* pulso no LED offline p/ chamar atenção */
+.mk-status.mk-off .mk-led { animation: mk-pulse 1.2s ease-in-out infinite; }
+@keyframes mk-pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+
+/* Aviso (toast) na transição de estado do MikroTik */
+.mk-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%) translateY(20px);
+    z-index: 9999;
+    padding: 12px 18px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    opacity: 0;
+    transition: opacity .35s ease, transform .35s ease;
+    pointer-events: none;
+}
+.mk-toast.mostrar { opacity: 1; transform: translateX(-50%) translateY(0); }
+.mk-toast-on  { background: #16a34a; }
+.mk-toast-off { background: #dc2626; }
+
+/* ============================================================
+   Menu lateral + abas (painel do cliente e leads do admin)
+   Desktop: sidebar fixa no fluxo, começa aberta; fecha deslizando.
+   Celular: sidebar sobreposta (drawer), começa fechada.
+   ============================================================ */
+.pc-layout { position: relative; z-index: 10; display: flex; align-items: stretch; min-height: 100vh; min-height: 100dvh; }
+/* min-width:0 é obrigatório: sem ele o filho de flex herda a largura intrínseca
+   da tabela (nowrap) e o scroll lateral vaza da tabela para a página inteira. */
+.pc-layout .pc-shell { flex: 1 1 0; min-width: 0; }
+.pc-sidebar {
+    flex: 0 0 232px; width: 232px;
+    position: sticky; top: 0; align-self: flex-start;
+    height: 100vh; height: 100dvh; overflow-y: auto;
+    padding: 22px 14px;
+    display: flex; flex-direction: column; gap: 24px;
+    background: rgba(10,14,23,0.75);
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    transition: margin-left .28s ease;
+}
+body.pc-menu-fechado .pc-sidebar { margin-left: -232px; }
+.pc-side-brand { display: flex; align-items: center; gap: 10px; padding: 0 6px; }
+.pc-side-brand img { width: 34px; height: 34px; border-radius: 9px; }
+.pc-side-brand span { font-size: 16px; font-weight: 800; color: #fff; letter-spacing: -0.2px; }
+.pc-side-nav { display: flex; flex-direction: column; gap: 4px; }
+.pc-side-item {
+    display: flex; align-items: center; gap: 11px;
+    padding: 11px 13px; border-radius: 10px; border: none; background: none;
+    color: rgba(255, 255, 255, 0.65); font-family: inherit; font-size: 14px; font-weight: 600;
+    text-align: left; cursor: pointer; width: 100%;
+    transition: background .2s, color .2s;
+}
+.pc-side-item svg { width: 17px; height: 17px; flex: 0 0 auto; opacity: .85; }
+.pc-side-item:hover { background: rgba(255, 255, 255, 0.07); color: #fff; }
+.pc-side-item.atual { background: rgba(8,145,178, 0.30); color: #fff; }
+.pc-side-item.atual::after {
+    content: ""; margin-left: auto; width: 7px; height: 7px; border-radius: 50%;
+    background: #22d3ee; box-shadow: 0 0 8px rgba(34,211,238, 0.9);
+}
+.pc-side-backdrop { display: none; }
+
+/* Botão hambúrguer no topo */
+.pc-menu-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 40px; height: 40px; border-radius: 10px; cursor: pointer; flex: 0 0 auto;
+    background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #fff; transition: background .2s, border-color .2s;
+}
+.pc-menu-btn:hover { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.25); }
+.pc-menu-btn svg { width: 19px; height: 19px; }
+.pc-topbar-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.pc-topbar-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+/* Abas: uma tela por vez */
+.pc-tela { display: none; }
+.pc-tela.atual { display: block; animation: pc-tela-in .3s ease both; }
+@keyframes pc-tela-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* --- Dashboard do lead: cartões com os hábitos de visita --- */
+.dash-titular { margin-top: 14px; font-size: 14.5px; font-weight: 700; color: #fff; }
+.dash-titular small { color: rgba(255, 255, 255, 0.55); font-weight: 600; font-size: 12.5px; }
+.dash-grid, .dash-cards { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+.dash-card {
+    flex: 1 1 200px; min-width: 0; padding: 16px 18px; border-radius: 14px;
+    background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.10);
+}
+/* Rótulo pequeno em cima + valor grande embaixo (cara de dashboard). */
+.dash-card span {
+    display: block; margin-bottom: 8px;
+    font-size: 10.5px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+}
+.dash-card b { display: block; font-size: 21px; font-weight: 800; color: #fff; overflow-wrap: break-word; }
+
+/* Topo do dashboard: calendário à ESQUERDA + os 2 donuts empilhados à direita.
+   As duas colunas têm a MESMA altura (align-items:stretch) e a coluna dos
+   donuts se ajusta para caber ao lado do calendário. */
+.dash-top { display: flex; gap: 12px; margin-top: 12px; align-items: stretch; flex-wrap: wrap; }
+.dash-donuts-col { flex: 1 1 240px; display: flex; flex-direction: column; gap: 12px; }
+.dash-donuts-col .dash-card { flex: 1; display: flex; flex-direction: column; align-items: center; }
+.dash-donuts-col .dash-card span { align-self: stretch; text-align: left; }
+
+/* Calendário de visitas (compacto; visitado = roxo no escuro / rosa no claro) */
+.dash-cal-card {
+    flex: 0 0 auto; width: 300px; max-width: 100%; margin: 0; padding: 14px 16px; border-radius: 16px;
+    background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.10);
+}
+.dash-cal-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.dash-cal-bar b { font-size: 13px; color: #fff; }
+/* minmax(0,1fr) é obrigatório: com aspect-ratio nos itens, o "1fr" puro herda
+   o mínimo auto (min-content) e degenera para uma largura fixa gigante que
+   estoura a grade — era o bug dos quadrados enormes fora do calendário. */
+.dash-cal-grade { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.dash-cal-dow { text-align: center; font-size: 9.5px; font-weight: 700; color: rgba(255, 255, 255, 0.45); padding-bottom: 2px; }
+.dash-dia {
+    aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+    border-radius: 7px; font-size: 11px; font-weight: 600;
+    color: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.08);
+}
+/* Célula vazia (dias antes do dia 1): sem aspect-ratio — senão degenera para
+   uma altura enorme e afasta a 1ª semana. Estica para a altura da linha. */
+.dash-dia.vazio { background: none; border: none; aspect-ratio: auto; }
+.dash-dia.hoje { box-shadow: inset 0 0 0 1.5px rgba(34,211,238, 0.6); }
+.dash-dia.visitado {
+    background: #0e7490; border-color: #06b6d4; color: #fff; font-weight: 800;
+    box-shadow: 0 0 8px rgba(6,182,212, 0.45);
+}
+
+/* Donuts menores no dashboard, para os dois caberem ao lado do calendário. */
+.dash-donuts-col .dash-donut-wrap { width: 116px; }
+.dash-donuts-col .dash-donut { width: 116px; height: 116px; }
+.dash-card.dash-bom b { color: #34d399; }
+.dash-card.dash-ruim b { color: #f87171; }
+/* Donut dos dias da semana */
+.dash-card-donut { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.dash-donut-wrap { position: relative; width: 150px; }
+.dash-donut { display: block; width: 150px; height: 150px; }
+.dash-fatia { cursor: pointer; transition: opacity .15s ease; }
+.dash-donut:hover .dash-fatia { opacity: 0.45; }
+.dash-donut .dash-fatia:hover { opacity: 1; }
+.dash-donut-centro { fill: #fff; font-size: 17px; font-weight: 800; font-family: inherit; }
+.dash-donut-sub { fill: rgba(255, 255, 255, 0.55); font-size: 11px; font-weight: 600; font-family: inherit; }
+.dash-tt { white-space: nowrap; }
+.dash-tt b { display: block; margin-bottom: 2px; }
+
+/* --- Relatórios: controles + gráfico de barras (HTML/CSS puro) --- */
+/* O cartão de relatórios NÃO recorta o conteúdo (overflow visível): o menu
+   "Modelo do relatório" (posição absoluta) precisa abrir por cima do cartão.
+   Nada mais neste cartão encosta nos cantos, então o border-radius não sofre. */
+.pc-tela[data-tela="relatorios"] .glow-body { overflow: visible; }
+.rel-controles { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; position: relative; }
+.rel-controles .pc-dst-input.rel-data { flex: 0 1 auto; min-width: 130px; width: 150px; cursor: pointer; }
+/* Calendário próprio (pt-BR) dos campos de data */
+.cal-pop {
+    position: absolute; z-index: 60; width: 254px; padding: 10px;
+    background: #0d1420; border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 14px;
+    box-shadow: 0 18px 46px -16px rgba(0, 0, 0, 0.8);
+}
+.cal-cab { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.cal-cab b { font-size: 13px; color: #fff; }
+.cal-nav {
+    width: 26px; height: 26px; border-radius: 8px; border: none; cursor: pointer;
+    background: rgba(255, 255, 255, 0.07); color: #fff; font-size: 15px; line-height: 1;
+}
+.cal-nav:hover { background: rgba(34,211,238, 0.25); }
+.cal-grade { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.cal-dow { font-size: 10px; font-weight: 700; color: rgba(255, 255, 255, 0.45); text-align: center; padding: 4px 0; }
+.cal-vazio { height: 28px; }
+.cal-dia {
+    height: 28px; border: none; border-radius: 8px; cursor: pointer; background: none;
+    color: rgba(255, 255, 255, 0.85); font-family: inherit; font-size: 12.5px;
+}
+.cal-dia:hover { background: rgba(34,211,238, 0.18); color: #fff; }
+.cal-dia.hoje { box-shadow: inset 0 0 0 1px rgba(34,211,238, 0.6); }
+.cal-dia.sel { background: #0891b2; color: #fff; font-weight: 700; }
+.rt-menu button.rt-item { width: 100%; background: none; border: none; cursor: pointer; font-family: inherit; text-align: left; }
+.rel-resumo { font-size: 13px; font-weight: 600; color: rgba(255, 255, 255, 0.7); margin-bottom: 4px; }
+.rel-grafico { display: flex; flex-direction: column; gap: 7px; margin-top: 10px; }
+.rel-linha { display: flex; align-items: center; gap: 10px; }
+.rel-rotulo { flex: 0 0 42px; text-align: right; font-size: 12.5px; font-weight: 600; color: rgba(255, 255, 255, 0.6); }
+.rel-barra-wrap { flex: 1; height: 20px; border-radius: 6px; background: rgba(255, 255, 255, 0.06); overflow: hidden; }
+.rel-barra { display: block; height: 100%; border-radius: 6px; min-width: 0;
+    background: linear-gradient(90deg, #0891b2, #ec4899); transition: width .5s ease; }
+.rel-pct { flex: 0 0 56px; font-size: 12.5px; font-weight: 700; color: rgba(255, 255, 255, 0.85); font-variant-numeric: tabular-nums; }
+/* Relatórios por cliente: rótulo = nome/telefone (link do WhatsApp) */
+.rel-rotulo-tel { flex: 0 0 106px; font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rel-pct-lg { flex: 0 0 78px; }
+.rel-wa { color: #34d399; text-decoration: none; }
+.rel-wa:hover { color: #6ee7b7; text-decoration: underline; }
+.rel-top .rel-rotulo, .rel-top .rel-pct { color: #fff; }
+.rel-top .rel-barra { box-shadow: 0 0 14px rgba(34,211,238, 0.55); }
+/* Data no tema escuro: o ícone do calendário nativo some no fundo escuro */
+.painel-cliente input[type="date"].rel-data::-webkit-calendar-picker-indicator { filter: invert(1); opacity: .7; }
+html[data-tema="claro"] .painel-cliente input[type="date"].rel-data::-webkit-calendar-picker-indicator { filter: none; }
+
+/* --- Estatísticas: filtros + gráfico de linhas (SVG puro) --- */
+.est-filtros { display: flex; gap: 8px; flex-wrap: wrap; }
+.est-filtro {
+    padding: 8px 18px; border-radius: 999px; cursor: pointer;
+    background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.75); font-family: inherit; font-size: 13px; font-weight: 700;
+    transition: background .2s, color .2s, border-color .2s;
+}
+.est-filtro:hover { border-color: #22d3ee; color: #fff; }
+.est-filtro.atual { background: #0891b2; border-color: #0891b2; color: #fff; }
+.est-wrap { position: relative; margin-top: 14px; }
+.est-svg { display: block; width: 100%; height: auto; }
+.est-grid { stroke: rgba(255, 255, 255, 0.09); stroke-width: 1; }
+.est-txt { fill: rgba(255, 255, 255, 0.5); font-size: 9.5px; font-family: inherit; }
+.est-linha-con { fill: none; stroke: #06b6d4; stroke-width: 2.4; stroke-linecap: round; }
+.est-linha-nov { fill: none; stroke: #ec4899; stroke-width: 2.4; stroke-linecap: round; }
+.est-area-con { fill: rgba(6,182,212, 0.13); stroke: none; }
+.est-area-nov { fill: rgba(236, 72, 153, 0.10); stroke: none; }
+.est-cursor { stroke: rgba(255, 255, 255, 0.25); stroke-width: 1; stroke-dasharray: 3 3; }
+.est-dot-con { fill: #06b6d4; stroke: #fff; stroke-width: 1.5; }
+.est-dot-nov { fill: #ec4899; stroke: #fff; stroke-width: 1.5; }
+.est-tooltip {
+    position: absolute; display: none; pointer-events: none; z-index: 5;
+    background: #0d1420; border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 10px;
+    padding: 8px 12px; font-size: 12px; color: #fff; white-space: nowrap;
+    box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.7);
+}
+.est-tooltip b { display: block; margin-bottom: 3px; font-size: 12.5px; }
+.est-tooltip span { display: block; }
+.est-tt-con { color: #67e8f9; }
+.est-tt-nov { color: #f9a8d4; }
+.est-legenda { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 8px; font-size: 12.5px; color: rgba(255, 255, 255, 0.7); }
+.est-leg::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.est-leg-con::before { background: #06b6d4; }
+.est-leg-nov::before { background: #ec4899; }
+
+/* Celular: drawer sobreposto, fechado por padrão */
+@media (max-width: 900px) {
+    .pc-sidebar {
+        position: fixed; left: 0; top: 0; bottom: 0; z-index: 70; margin: 0;
+        transform: translateX(-105%); transition: transform .28s ease;
+        background: #0d1420;
+    }
+    body.pc-menu-fechado .pc-sidebar { margin-left: 0; }
+    body.pc-menu-aberto .pc-sidebar { transform: none; }
+    .pc-side-backdrop {
+        display: block; position: fixed; inset: 0; z-index: 65;
+        background: rgba(0, 0, 0, 0.55); opacity: 0; pointer-events: none; transition: opacity .28s ease;
+    }
+    body.pc-menu-aberto .pc-side-backdrop { opacity: 1; pointer-events: auto; }
+}
+
+/* ============================================================
+   TEMA CLARO  —  html[data-tema="claro"]
+   Mesmo visual da landing (roxo #0891b2 → pink #ec4899, fundo lilás).
+   O TEMA ESCURO é TUDO o que está ACIMA (inalterado) = "tema atual".
+   A escolha do usuário fica em localStorage('cd-tema') e é aplicada
+   cedo no <head> de cada página (sem flash). Botão de troca no canto
+   superior direito (login, painel, admin — NUNCA na landing).
+   ============================================================ */
+
+/* ---- Botão flutuante de tema (vale para os dois temas) ---- */
+.tema-toggle {
+    position: fixed; top: 14px; right: 14px; z-index: 60;
+    width: 42px; height: 42px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; cursor: pointer; color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    transition: background .2s, border-color .2s, transform .2s, color .2s, box-shadow .2s;
+}
+.tema-toggle:hover  { background: rgba(255, 255, 255, 0.16); transform: translateY(-1px); }
+.tema-toggle:active { transform: scale(.94); }
+.tema-toggle svg { width: 20px; height: 20px; }
+.tema-toggle .ic-sol { display: none; }
+html[data-tema="escuro"] .tema-toggle .ic-sol { display: block; }
+html[data-tema="escuro"] .tema-toggle .ic-lua { display: none; }
+
+/* Reserva um respiro no topo dos painéis p/ o botão não cobrir a barra
+   (só em telas maiores; no celular o canto já fica livre). */
+@media (min-width: 601px) {
+    .painel-cliente .pc-shell { padding-top: 60px; }
+}
+
+/* ---- Variáveis do tema claro ---- */
+html[data-tema="claro"] {
+    --l-primary: #0891b2; --l-primary-600: #0e7490; --l-accent: #ec4899;
+    --l-bg: #faf5ff; --l-surface: #ffffff; --l-muted: #f5f0fd;
+    --l-fg: #0f172a; --l-fg2: #475569; --l-fg3: #64748b; --l-border: #ece3fb;
+    --l-grad: linear-gradient(100deg, #0891b2, #ec4899);
+}
+
+/* Botão no tema claro */
+html[data-tema="claro"] .tema-toggle {
+    background: var(--l-surface); border-color: var(--l-border); color: var(--l-primary);
+    box-shadow: 0 6px 18px -6px rgba(8,145,178,.35);
+}
+html[data-tema="claro"] .tema-toggle:hover { background: var(--l-bg); border-color: var(--l-primary); }
+
+/* ============================================================
+   TEMA CLARO — vidro fosco (glassmorphism, estilo iOS)
+   Fundo claro com leve gradiente (dá "o que desfocar"); blocos são vidro
+   fosco translúcido bem visível, texto ESCURO legível, destaque ciano.
+   ============================================================ */
+html[data-tema="claro"] { --g-fg: #1e293b; --g-fg2: #475569; --g-fg3: #64748b; --g-cyan: #0891b2; }
+
+/* --- Login --- */
+html[data-tema="claro"] body.login-screen { background: #e6ecf5; color: var(--g-fg); }
+html[data-tema="claro"] .login-screen .lp-bg-gradient {
+    background:
+        radial-gradient(70% 55% at 15% 0%, rgba(6,182,212,0.20), transparent 60%),
+        radial-gradient(60% 45% at 90% 8%, rgba(99,102,241,0.16), transparent 60%),
+        linear-gradient(180deg, #eef3fb, #dfe7f2);
+}
+html[data-tema="claro"] .login-screen .lp-glow { opacity: .3; }
+html[data-tema="claro"] .login-screen .lp-card-inner {
+    background: rgba(255,255,255,0.55); -webkit-backdrop-filter: blur(18px) saturate(1.5); backdrop-filter: blur(18px) saturate(1.5);
+    border-color: rgba(255,255,255,0.75); box-shadow: 0 10px 34px -14px rgba(15,23,42,0.28);
+}
+html[data-tema="claro"] .login-screen .lp-title { color: var(--g-fg); }
+html[data-tema="claro"] .login-screen .lp-subtitle,
+html[data-tema="claro"] .login-screen .lp-field-icon { color: var(--g-fg3); }
+html[data-tema="claro"] .login-screen .lp-field input,
+html[data-tema="claro"] .login-screen .af-field input,
+html[data-tema="claro"] .login-screen .af-field textarea {
+    background: rgba(255,255,255,0.6); color: var(--g-fg); border-color: rgba(15,23,42,0.14);
+}
+html[data-tema="claro"] .login-screen .lp-field input::placeholder,
+html[data-tema="claro"] .login-screen .af-field input::placeholder,
+html[data-tema="claro"] .login-screen .af-field textarea::placeholder { color: var(--g-fg3); }
+html[data-tema="claro"] .login-screen .af-field label { color: var(--g-fg2); }
+html[data-tema="claro"] .login-screen .af-check { color: var(--g-fg2); }
+html[data-tema="claro"] .login-screen .af-btn-secondary { background: rgba(255,255,255,0.6); color: var(--g-fg); border-color: rgba(15,23,42,0.14); }
+
+/* --- Painel: fundo com leve gradiente --- */
+html[data-tema="claro"] body.painel-cliente { background: #e6ecf5; color: var(--g-fg); }
+html[data-tema="claro"] .painel-cliente .pc-bg-gradient {
+    background:
+        radial-gradient(65% 50% at 12% 0%, rgba(6,182,212,0.20), transparent 60%),
+        radial-gradient(55% 45% at 92% 6%, rgba(99,102,241,0.16), transparent 60%),
+        linear-gradient(180deg, #eef3fb, #dfe7f2);
+}
+html[data-tema="claro"] .painel-cliente .pc-glow { opacity: .4; }
+
+/* --- Blocos = vidro fosco --- */
+html[data-tema="claro"] .painel-cliente .glow-body,
+html[data-tema="claro"] .rt-menu,
+html[data-tema="claro"] .ctx-menu,
+html[data-tema="claro"] .cal-pop,
+html[data-tema="claro"] .pc-modal-card .glow-body {
+    background: rgba(255,255,255,0.62);
+    -webkit-backdrop-filter: blur(18px) saturate(1.5); backdrop-filter: blur(18px) saturate(1.5);
+    border-color: rgba(100,116,139,0.28);
+    box-shadow: 0 12px 34px -10px rgba(15,23,42,0.38);
+}
+html[data-tema="claro"] .pc-modal-backdrop { background: rgba(15,23,42,0.25); }
+
+/* --- Sidebar = vidro fosco --- */
+html[data-tema="claro"] .pc-sidebar {
+    background: rgba(255,255,255,0.5);
+    -webkit-backdrop-filter: blur(18px) saturate(1.5); backdrop-filter: blur(18px) saturate(1.5);
+    border-right-color: rgba(255,255,255,0.7);
+}
+@media (max-width: 900px) { html[data-tema="claro"] .pc-sidebar { background: rgba(240,244,250,0.92); } }
+html[data-tema="claro"] .pc-side-brand span { color: var(--g-fg); }
+html[data-tema="claro"] .pc-side-item { color: var(--g-fg2); }
+html[data-tema="claro"] .pc-side-item:hover { background: rgba(6,182,212,0.10); color: var(--g-cyan); }
+html[data-tema="claro"] .pc-side-item.atual { background: rgba(6,182,212,0.15); color: var(--g-cyan); }
+html[data-tema="claro"] .pc-side-item.atual::after { background: var(--g-cyan); box-shadow: 0 0 8px rgba(8,145,178,0.6); }
+
+/* --- Topbar / botões --- */
+html[data-tema="claro"] .painel-cliente .pc-brand { color: var(--g-fg); }
+html[data-tema="claro"] .painel-cliente .pc-sub { color: var(--g-fg2); }
+html[data-tema="claro"] .painel-cliente .pc-sub strong { color: var(--g-cyan); }
+html[data-tema="claro"] .pc-menu-btn { background: rgba(255,255,255,0.6); border-color: rgba(15,23,42,0.14); color: var(--g-fg); }
+html[data-tema="claro"] .pc-menu-btn:hover { background: rgba(255,255,255,0.85); }
+html[data-tema="claro"] .painel-cliente .pc-btn { background: rgba(255,255,255,0.6); color: var(--g-fg); border-color: rgba(15,23,42,0.14); }
+html[data-tema="claro"] .painel-cliente .pc-btn:hover { background: rgba(255,255,255,0.85); }
+html[data-tema="claro"] .painel-cliente .pc-btn-primary { background: var(--g-cyan); color: #fff; border-color: var(--g-cyan); }
+
+/* --- Cartões de resumo --- */
+html[data-tema="claro"] .painel-cliente .pc-metric-num { color: var(--g-fg); }
+html[data-tema="claro"] .painel-cliente .pc-metric-label { color: var(--g-fg3); }
+html[data-tema="claro"] .painel-cliente .pc-metric.atual .glow-body { border-color: var(--g-cyan); box-shadow: 0 0 0 1px var(--g-cyan), 0 8px 30px -12px rgba(8,145,178,0.4); }
+html[data-tema="claro"] .painel-cliente .pc-metric.atual .pc-metric-label { color: var(--g-cyan); }
+
+/* --- Tabela --- */
+html[data-tema="claro"] .painel-cliente thead th { color: var(--g-fg3); border-bottom-color: rgba(15,23,42,0.10); }
+html[data-tema="claro"] .painel-cliente tbody td { color: var(--g-fg); border-bottom-color: rgba(15,23,42,0.08); }
+html[data-tema="claro"] .painel-cliente tbody tr:hover { background: rgba(6,182,212,0.06); }
+html[data-tema="claro"] .painel-cliente .pc-vazio { color: var(--g-fg3); }
+html[data-tema="claro"] .painel-cliente .pc-aparelho,
+html[data-tema="claro"] .painel-cliente .pc-data,
+html[data-tema="claro"] .painel-cliente td.pc-uso { color: var(--g-fg); }
+html[data-tema="claro"] .painel-cliente .pc-hora { color: var(--g-fg3); }
+html[data-tema="claro"] .painel-cliente .pc-lead-tel { color: var(--g-fg3); }
+html[data-tema="claro"] .painel-cliente .pc-th-hint { color: var(--g-fg3); }
+html[data-tema="claro"] .painel-cliente .pc-dot { background: rgba(15,23,42,0.18); }
+html[data-tema="claro"] .painel-cliente tr:not([data-online="1"]) .pc-tempo { color: var(--g-fg3); }
+html[data-tema="claro"] .painel-cliente tr[data-online="1"] .pc-tempo { color: var(--g-fg); }
+html[data-tema="claro"] .painel-cliente td.pc-limite { color: var(--g-cyan); }
+html[data-tema="claro"] .painel-cliente td.pc-banda { color: #0284c7; }
+html[data-tema="claro"] .painel-cliente td.pc-limite input,
+html[data-tema="claro"] .painel-cliente td.pc-banda input { background: rgba(255,255,255,0.7); color: var(--g-fg); }
+
+/* --- Config (anúncio/dst/limites/html) --- */
+html[data-tema="claro"] .painel-cliente .pc-anuncio-title { color: var(--g-fg); }
+html[data-tema="claro"] .painel-cliente .pc-anuncio-desc,
+html[data-tema="claro"] .painel-cliente .pc-dst-atual { color: var(--g-fg2); }
+html[data-tema="claro"] .painel-cliente .pc-dst-atual strong { color: var(--g-cyan); }
+html[data-tema="claro"] .painel-cliente .pc-dst-input {
+    background: rgba(255,255,255,0.7); color: var(--g-fg); border-color: rgba(15,23,42,0.14);
+}
+html[data-tema="claro"] .painel-cliente .pc-dst-input::placeholder { color: var(--g-fg3); }
+html[data-tema="claro"] .painel-cliente .pc-file-label { background: rgba(255,255,255,0.7); color: var(--g-fg); border-color: rgba(15,23,42,0.14); }
+html[data-tema="claro"] .painel-cliente .pc-anuncio-preview { background: rgba(255,255,255,0.4); border-color: rgba(15,23,42,0.10); }
+html[data-tema="claro"] .painel-cliente .pc-anuncio-vazio { color: var(--g-fg3); }
+
+/* --- Modal / calendário / rt-menu texto --- */
+html[data-tema="claro"] .pc-modal-title { color: var(--g-fg); }
+html[data-tema="claro"] .pc-modal-x, html[data-tema="claro"] .pc-modal-info { color: var(--g-fg3); }
+html[data-tema="claro"] .pc-conex-head, html[data-tema="claro"] .pc-conex-ap { color: var(--g-fg3); }
+html[data-tema="claro"] .pc-conex-data { color: var(--g-fg); }
+html[data-tema="claro"] .rt-menu-title, html[data-tema="claro"] .cal-dow { color: var(--g-fg3); }
+html[data-tema="claro"] .rt-item, html[data-tema="claro"] .cal-cab b, html[data-tema="claro"] .cal-dia { color: var(--g-fg); }
+html[data-tema="claro"] .rt-item:hover { background: rgba(6,182,212,0.10); color: var(--g-cyan); }
+html[data-tema="claro"] .cal-nav { background: rgba(255,255,255,0.7); color: var(--g-fg); }
+html[data-tema="claro"] .ctx-menu .rt-item.perigo { color: #dc2626; }
+html[data-tema="claro"] .rt-sel summary { background: rgba(255,255,255,0.6); color: var(--g-fg); border-color: rgba(15,23,42,0.14); }
+
+/* --- Dashboard cards / donut / tooltips --- */
+html[data-tema="claro"] .dash-titular { color: var(--g-fg); }
+html[data-tema="claro"] .dash-card b, html[data-tema="claro"] .dash-donut-centro { color: var(--g-fg); fill: var(--g-fg); }
+html[data-tema="claro"] .dash-card span, html[data-tema="claro"] .dash-donut-sub { color: var(--g-fg3); fill: var(--g-fg3); }
+html[data-tema="claro"] .dash-card, html[data-tema="claro"] .dash-cal-card {
+    background: rgba(255,255,255,0.62);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4);
+    border-color: rgba(100,116,139,0.28);
+    box-shadow: 0 10px 28px -10px rgba(15,23,42,0.32);
+}
+html[data-tema="claro"] .dash-cal-bar b { color: var(--g-fg); }
+html[data-tema="claro"] .dash-cal-dow { color: var(--g-fg3); }
+html[data-tema="claro"] .dash-dia { background: rgba(255,255,255,0.65); border-color: rgba(15,23,42,0.10); color: var(--g-fg2); }
+html[data-tema="claro"] .dash-dia.visitado { background: #06b6d4; border-color: #0891b2; color: #fff; }
+html[data-tema="claro"] .est-tt, html[data-tema="claro"] .dash-tt { background: rgba(255,255,255,0.92); border-color: rgba(15,23,42,0.12); color: var(--g-fg); }
+html[data-tema="claro"] .est-txt { fill: var(--g-fg3); }
+html[data-tema="claro"] .est-filtro { background: rgba(255,255,255,0.6); border-color: rgba(15,23,42,0.14); color: var(--g-fg2); }
+html[data-tema="claro"] .est-filtro.atual { background: var(--g-cyan); border-color: var(--g-cyan); color: #fff; }
+html[data-tema="claro"] .rel-resumo, html[data-tema="claro"] .rel-rotulo { color: var(--g-fg2); }
+html[data-tema="claro"] .rel-pct { color: var(--g-fg); }
+html[data-tema="claro"] .rel-barra-wrap { background: rgba(15,23,42,0.08); }
+
+/* --- Paginação --- */
+html[data-tema="claro"] .pc-pag-btn { background: rgba(255,255,255,0.6); border-color: rgba(15,23,42,0.14); color: var(--g-fg2); }
+html[data-tema="claro"] .pc-pag-btn.atual { background: var(--g-cyan); border-color: var(--g-cyan); color: #fff; }
