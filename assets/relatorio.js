@@ -42,13 +42,28 @@
         });
     }
 
-    // Porcentagem relativa ao topo (maior valor = 100%) — assim a largura da
-    // barra bate com o número mostrado, igual ao modelo de funil.
-    function pct(n, base) {
-        if (!base) return '0%';
-        return (Math.round(n * 1000 / base) / 10).toString().replace('.', ',') + '%';
-    }
     function fmtNum(n) { return Number(n).toLocaleString('pt-BR'); }
+
+    // Reparte as % (fatia do total, 1 casa) de forma que a soma feche 100,0 —
+    // maior resto (Hare): arredonda pra baixo e distribui os décimos que faltam
+    // pros de maior resto. Retorna array de % alinhado com vals.
+    function pcts1(vals) {
+        var tot = 0, i;
+        for (i = 0; i < vals.length; i++) tot += vals[i];
+        if (!tot) return vals.map(function () { return 0; });
+        var dec = vals.map(function (v) { return v * 1000 / tot; }); // em décimos de %
+        var base = dec.map(function (x) { return Math.floor(x); });
+        var usado = base.reduce(function (a, b) { return a + b; }, 0);
+        var falta = 1000 - usado;
+        var ordem = dec.map(function (x, idx) { return { i: idx, r: x - Math.floor(x) }; })
+            .sort(function (a, b) { return b.r - a.r; });
+        for (i = 0; i < falta; i++) base[ordem[i].i]++;
+        return base.map(function (t) { return t / 10; });
+    }
+    // "100%" (sem casa quando inteiro), "54,5%" senão.
+    function fmtPct(p) {
+        return (p % 1 === 0 ? String(p) : p.toFixed(1)).replace('.', ',') + '%';
+    }
 
     function resumoHTML(d, meio) {
         return '<p class="rel-resumo">' + (NOMES[d.tipo] || '') + ' — ' + meio + ' de ' +
@@ -93,14 +108,16 @@
             grafico.innerHTML = '<p class="pc-anuncio-desc">Nenhum acesso no período selecionado.</p>';
             return;
         }
-        var max = 0, i;
-        for (i = 0; i < d.lista.length; i++) max = Math.max(max, d.lista[i].valor);
+        var vals = d.lista.map(function (x) { return x.valor; });
+        var max = Math.max.apply(null, vals);
+        var ps = pcts1(vals); // % do total (soma dos valores), fecha 100
         var html = resumoHTML(d, d.total + ' cliente(s)');
-        for (i = 0; i < d.lista.length; i++) {
-            var v = d.lista[i].valor;
+        for (var i = 0; i < d.lista.length; i++) {
+            var v = vals[i];
+            if (!v) continue; // oculta clientes com valor 0
             var w = max ? (v * 100 / max) : 0;
             var txt = d.tipo === 'clientes_tempo' ? fmtTempo(v) : v + (v === 1 ? ' dia' : ' dias');
-            html += linhaHTML(waLink(d.lista[i].telefone, d.lista[i].nome), txt, pct(v, max), w, true);
+            html += linhaHTML(waLink(d.lista[i].telefone, d.lista[i].nome), txt, fmtPct(ps[i]), w, true);
         }
         grafico.innerHTML = html;
     }
@@ -120,13 +137,15 @@
             grafico.innerHTML = '<p class="pc-anuncio-desc">Nenhum acesso no período selecionado.</p>';
             return;
         }
-        var max = 0, k;
-        for (k = 0; k < chaves.length; k++) max = Math.max(max, d.buckets[chaves[k]] || 0);
+        var vals = chaves.map(function (k) { return d.buckets[k] || 0; });
+        var max = Math.max.apply(null, vals);
+        var ps = pcts1(vals); // % do total, soma 100 (zeros dão 0%)
         var html = resumoHTML(d, d.total + ' acesso(s)');
-        for (k = 0; k < chaves.length; k++) {
-            var n = d.buckets[chaves[k]] || 0;
+        for (var k = 0; k < chaves.length; k++) {
+            var n = vals[k];
+            if (!n) continue; // oculta horários/dias zerados
             var w = max ? (n * 100 / max) : 0;
-            html += linhaHTML(rotulo(chaves[k]), fmtNum(n), pct(n, max), w);
+            html += linhaHTML(rotulo(chaves[k]), fmtNum(n), fmtPct(ps[k]), w);
         }
         grafico.innerHTML = html;
     }
