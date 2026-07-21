@@ -33,6 +33,7 @@
 
     // ===== Gráfico "pizza oca" (donut) dos dias da semana =====
     var DIAS_NOMES = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+    var DIAS_CURTO = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
     var DIAS_CORES = ['#f472b6', '#a855f7', '#ec4899', '#8b5cf6', '#d946ef', '#7c3aed', '#c084fc'];
     var MESES_NOMES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
                        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
@@ -113,16 +114,46 @@
         return '<div class="dash-donut-wrap">' + s + '<div class="est-tooltip dash-tt"></div></div>';
     }
 
+    // % inteira (fatia do total) fechando 100 — maior resto.
+    function pctsInt(vals) {
+        var tot = 0, i;
+        for (i = 0; i < vals.length; i++) tot += vals[i];
+        if (!tot) return vals.map(function () { return 0; });
+        var raw = vals.map(function (v) { return v * 100 / tot; });
+        var base = raw.map(function (x) { return Math.floor(x); });
+        var falta = 100 - base.reduce(function (a, b) { return a + b; }, 0);
+        var ordem = raw.map(function (x, idx) { return { i: idx, r: x - Math.floor(x) }; })
+            .sort(function (a, b) { return b.r - a.r; });
+        for (i = 0; i < falta; i++) base[ordem[i].i]++;
+        return base;
+    }
+    // Legenda ao lado do donut (igual à print): bolinha + nome + % à direita.
+    function legendaHTML(fatias) {
+        var ps = pctsInt(fatias.map(function (f) { return f.n; }));
+        var h = '<ul class="dash-legenda">';
+        for (var i = 0; i < fatias.length; i++) {
+            h += '<li><span class="leg-cor" style="background:' + fatias[i].cor + '"></span>' +
+                '<span class="leg-nome">' + esc(fatias[i].lg || fatias[i].l) + '</span>' +
+                '<span class="leg-pct">' + ps[i] + '%</span></li>';
+        }
+        return h + '</ul>';
+    }
+    // Donut + legenda lado a lado. Sem dados = só o "—" do donut.
+    function montarDonut(fatias, c1, c2) {
+        if (!fatias.length) return donutSVG(fatias, c1, c2);
+        return '<div class="dash-donut-row">' + donutSVG(fatias, c1, c2) + legendaHTML(fatias) + '</div>';
+    }
+
     // Donut dos dias da semana (visitas por dia).
     function donutSemana(porDow, topNome) {
         var fatias = [];
         for (var i = 0; i < 7; i++) {
             var n = parseInt(porDow && porDow[i], 10) || 0;
-            if (n > 0) fatias.push({ cor: DIAS_CORES[i], l: DIAS_NOMES[i], v: n + (n === 1 ? ' vez' : ' vezes'), n: n });
+            if (n > 0) fatias.push({ cor: DIAS_CORES[i], l: DIAS_NOMES[i], lg: DIAS_CURTO[i], v: n + (n === 1 ? ' vez' : ' vezes'), n: n });
         }
         var partes = String(topNome || '').split('-');
         var l1 = partes[0] ? partes[0].charAt(0).toUpperCase() + partes[0].slice(1) : '—';
-        return donutSVG(fatias, l1, partes[1] ? '-' + partes[1] : '');
+        return montarDonut(fatias, l1, partes[1] ? '-' + partes[1] : '');
     }
 
     // Donut das faixas de horário (dias por faixa de 1h dominante da conexão).
@@ -142,7 +173,7 @@
                 n: comDado[i].n
             });
         }
-        return donutSVG(fatias, horaTop || '—', '');
+        return montarDonut(fatias, horaTop || '—', '');
     }
 
     function ligarDonuts() {

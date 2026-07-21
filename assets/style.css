@@ -1031,6 +1031,13 @@ body.pc-menu-fechado .pc-sidebar { margin-left: -232px; }
 .dash-donut-centro { fill: #fff; font-size: 17px; font-weight: 800; font-family: inherit; }
 .dash-donut-sub { fill: rgba(255, 255, 255, 0.55); font-size: 11px; font-weight: 600; font-family: inherit; }
 .dash-tt { white-space: nowrap; }
+/* Donut + legenda lado a lado (modelo da print) */
+.dash-donut-row { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
+.dash-legenda { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; flex: 1 1 auto; min-width: 108px; }
+.dash-legenda li { display: flex; align-items: center; gap: 8px; font-size: 12.5px; line-height: 1; }
+.leg-cor { width: 9px; height: 9px; border-radius: 3px; flex: 0 0 auto; }
+.leg-nome { color: rgba(255, 255, 255, 0.72); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.leg-pct { margin-left: auto; padding-left: 10px; color: #fff; font-weight: 700; font-variant-numeric: tabular-nums; }
 .dash-tt b { display: block; margin-bottom: 2px; }
 
 /* --- Relatórios: controles + gráfico de barras (HTML/CSS puro) --- */
@@ -1320,6 +1327,8 @@ html[data-tema="claro"] .rt-sel summary { background: rgba(255,255,255,0.6); col
 html[data-tema="claro"] .dash-titular { color: var(--g-fg); }
 html[data-tema="claro"] .dash-card b, html[data-tema="claro"] .dash-donut-centro { color: var(--g-fg); fill: var(--g-fg); }
 html[data-tema="claro"] .dash-card span, html[data-tema="claro"] .dash-donut-sub { color: var(--g-fg3); fill: var(--g-fg3); }
+html[data-tema="claro"] .leg-nome { color: var(--g-fg2); }
+html[data-tema="claro"] .leg-pct { color: var(--g-fg); }
 html[data-tema="claro"] .dash-card, html[data-tema="claro"] .dash-cal-card {
     background: rgba(255,255,255,0.62);
     -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4);
