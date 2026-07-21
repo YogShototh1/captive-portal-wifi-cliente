@@ -1064,21 +1064,23 @@ body.pc-menu-fechado .pc-sidebar { margin-left: -232px; }
 .cal-dia.hoje { box-shadow: inset 0 0 0 1px rgba(34,211,238, 0.6); }
 .cal-dia.sel { background: #0891b2; color: #fff; font-weight: 700; }
 .rt-menu button.rt-item { width: 100%; background: none; border: none; cursor: pointer; font-family: inherit; text-align: left; }
-.rel-resumo { font-size: 13px; font-weight: 600; color: rgba(255, 255, 255, 0.7); margin-bottom: 4px; }
-.rel-grafico { display: flex; flex-direction: column; gap: 7px; margin-top: 10px; }
-.rel-linha { display: flex; align-items: center; gap: 10px; }
-.rel-rotulo { flex: 0 0 42px; text-align: right; font-size: 12.5px; font-weight: 600; color: rgba(255, 255, 255, 0.6); }
-.rel-barra-wrap { flex: 1; height: 20px; border-radius: 6px; background: rgba(255, 255, 255, 0.06); overflow: hidden; }
-.rel-barra { display: block; height: 100%; border-radius: 6px; min-width: 0;
-    background: linear-gradient(90deg, #0891b2, #ec4899); transition: width .5s ease; }
-.rel-pct { flex: 0 0 56px; font-size: 12.5px; font-weight: 700; color: rgba(255, 255, 255, 0.85); font-variant-numeric: tabular-nums; }
+/* Relatórios: funil — rótulo + (valor real, %) em cima, barra fina branca embaixo. */
+.rel-resumo { font-size: 13px; font-weight: 600; color: rgba(255, 255, 255, 0.7); margin-bottom: 14px; }
+.rel-grafico { display: flex; flex-direction: column; gap: 16px; margin-top: 10px; }
+.rel-linha { display: flex; flex-direction: column; gap: 7px; }
+.rel-topo { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.rel-rotulo { font-size: 13px; font-weight: 600; color: rgba(255, 255, 255, 0.88);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rel-nums { flex: 0 0 auto; display: flex; align-items: baseline; gap: 8px; font-variant-numeric: tabular-nums; }
+.rel-valor { font-size: 13px; font-weight: 700; color: #fff; }
+.rel-pct { font-size: 12px; font-weight: 600; color: rgba(255, 255, 255, 0.45); }
+.rel-barra-wrap { width: 100%; height: 4px; border-radius: 999px; background: rgba(255, 255, 255, 0.09); overflow: hidden; }
+.rel-barra { display: block; height: 100%; border-radius: 999px; min-width: 2px;
+    background: #fff; transition: width .5s ease; }
 /* Relatórios por cliente: rótulo = nome/telefone (link do WhatsApp) */
-.rel-rotulo-tel { flex: 0 0 106px; font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.rel-pct-lg { flex: 0 0 78px; }
-.rel-wa { color: #34d399; text-decoration: none; }
-.rel-wa:hover { color: #6ee7b7; text-decoration: underline; }
-.rel-top .rel-rotulo, .rel-top .rel-pct { color: #fff; }
-.rel-top .rel-barra { box-shadow: 0 0 14px rgba(34,211,238, 0.55); }
+.rel-rotulo-tel { max-width: 62%; }
+.rel-wa { color: #fff; text-decoration: none; }
+.rel-wa:hover { text-decoration: underline; }
 /* Data no tema escuro: o ícone do calendário nativo some no fundo escuro */
 .painel-cliente input[type="date"].rel-data::-webkit-calendar-picker-indicator { filter: invert(1); opacity: .7; }
 html[data-tema="claro"] .painel-cliente input[type="date"].rel-data::-webkit-calendar-picker-indicator { filter: none; }
@@ -1332,9 +1334,12 @@ html[data-tema="claro"] .est-tt, html[data-tema="claro"] .dash-tt { background: 
 html[data-tema="claro"] .est-txt { fill: var(--g-fg3); }
 html[data-tema="claro"] .est-filtro { background: rgba(255,255,255,0.6); border-color: rgba(15,23,42,0.14); color: var(--g-fg2); }
 html[data-tema="claro"] .est-filtro.atual { background: var(--g-cyan); border-color: var(--g-cyan); color: #fff; }
-html[data-tema="claro"] .rel-resumo, html[data-tema="claro"] .rel-rotulo { color: var(--g-fg2); }
-html[data-tema="claro"] .rel-pct { color: var(--g-fg); }
-html[data-tema="claro"] .rel-barra-wrap { background: rgba(15,23,42,0.08); }
+html[data-tema="claro"] .rel-resumo { color: var(--g-fg2); }
+html[data-tema="claro"] .rel-rotulo, html[data-tema="claro"] .rel-valor { color: var(--g-fg); }
+html[data-tema="claro"] .rel-pct { color: var(--g-fg2); }
+html[data-tema="claro"] .rel-barra-wrap { background: rgba(15,23,42,0.10); }
+html[data-tema="claro"] .rel-barra { background: var(--g-fg); }
+html[data-tema="claro"] .rel-wa { color: var(--g-fg); }
 
 /* --- Paginação --- */
 html[data-tema="claro"] .pc-pag-btn { background: rgba(255,255,255,0.6); border-color: rgba(15,23,42,0.14); color: var(--g-fg2); }

@@ -93,7 +93,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <meta name="format-detection" content="telephone=no">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Leads</title>
-    <link rel="stylesheet" href="assets/style.css?v=46">
+    <link rel="stylesheet" href="assets/style.css?v=47">
 </head>
 <body class="painel-cliente">
     <div class="pc-bg-gradient"></div>
@@ -548,7 +548,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     </div>
 
     <script src="assets/abas.js?v=2"></script>
-    <script src="assets/relatorio.js?v=5"></script>
+    <script src="assets/relatorio.js?v=6"></script>
     <script src="assets/dashboard.js?v=7"></script>
     <script src="assets/estatisticas.js?v=2"></script>
     <script src="assets/leads-live.js?v=21"></script>

@@ -42,9 +42,28 @@
         });
     }
 
-    function pct(n, total) {
-        if (!total) return '0%';
-        return (n * 100 / total).toFixed(1).replace('.', ',') + '%';
+    // Porcentagem relativa ao topo (maior valor = 100%) — assim a largura da
+    // barra bate com o número mostrado, igual ao modelo de funil.
+    function pct(n, base) {
+        if (!base) return '0%';
+        return (Math.round(n * 1000 / base) / 10).toString().replace('.', ',') + '%';
+    }
+    function fmtNum(n) { return Number(n).toLocaleString('pt-BR'); }
+
+    function resumoHTML(d, meio) {
+        return '<p class="rel-resumo">' + (NOMES[d.tipo] || '') + ' — ' + meio + ' de ' +
+            d.inicio.split('-').reverse().join('/') + ' a ' + d.fim.split('-').reverse().join('/') + '</p>';
+    }
+    // Uma linha do funil: rótulo + (valor real, %) em cima, barra fina embaixo.
+    function linhaHTML(rotulo, valor, pctStr, w, isTel) {
+        return '<div class="rel-linha">' +
+            '<div class="rel-topo">' +
+                '<span class="rel-rotulo' + (isTel ? ' rel-rotulo-tel' : '') + '">' + rotulo + '</span>' +
+                '<span class="rel-nums"><b class="rel-valor">' + valor + '</b>' +
+                '<span class="rel-pct">' + pctStr + '</span></span>' +
+            '</div>' +
+            '<span class="rel-barra-wrap"><span class="rel-barra" style="width:' + w.toFixed(1) + '%"></span></span>' +
+            '</div>';
     }
 
     function fmtTempo(seg) {
@@ -76,17 +95,12 @@
         }
         var max = 0, i;
         for (i = 0; i < d.lista.length; i++) max = Math.max(max, d.lista[i].valor);
-        var html = '<p class="rel-resumo">' + (NOMES[d.tipo] || '') + ' — ' + d.total + ' cliente(s) de ' +
-                   d.inicio.split('-').reverse().join('/') + ' a ' + d.fim.split('-').reverse().join('/') + '</p>';
+        var html = resumoHTML(d, d.total + ' cliente(s)');
         for (i = 0; i < d.lista.length; i++) {
             var v = d.lista[i].valor;
             var w = max ? (v * 100 / max) : 0;
             var txt = d.tipo === 'clientes_tempo' ? fmtTempo(v) : v + (v === 1 ? ' dia' : ' dias');
-            html += '<div class="rel-linha' + (v === max && v > 0 ? ' rel-top' : '') + '">' +
-                '<span class="rel-rotulo rel-rotulo-tel">' + waLink(d.lista[i].telefone, d.lista[i].nome) + '</span>' +
-                '<span class="rel-barra-wrap"><span class="rel-barra" style="width:' + w.toFixed(1) + '%"></span></span>' +
-                '<span class="rel-pct rel-pct-lg">' + txt + '</span>' +
-                '</div>';
+            html += linhaHTML(waLink(d.lista[i].telefone, d.lista[i].nome), txt, pct(v, max), w, true);
         }
         grafico.innerHTML = html;
     }
@@ -108,16 +122,11 @@
         }
         var max = 0, k;
         for (k = 0; k < chaves.length; k++) max = Math.max(max, d.buckets[chaves[k]] || 0);
-        var html = '<p class="rel-resumo">' + (NOMES[d.tipo] || '') + ' — ' + d.total + ' acesso(s) de ' +
-                   d.inicio.split('-').reverse().join('/') + ' a ' + d.fim.split('-').reverse().join('/') + '</p>';
+        var html = resumoHTML(d, d.total + ' acesso(s)');
         for (k = 0; k < chaves.length; k++) {
             var n = d.buckets[chaves[k]] || 0;
             var w = max ? (n * 100 / max) : 0;
-            html += '<div class="rel-linha' + (n === max && n > 0 ? ' rel-top' : '') + '">' +
-                '<span class="rel-rotulo">' + rotulo(chaves[k]) + '</span>' +
-                '<span class="rel-barra-wrap"><span class="rel-barra" style="width:' + w.toFixed(1) + '%"></span></span>' +
-                '<span class="rel-pct">' + pct(n, d.total) + '</span>' +
-                '</div>';
+            html += linhaHTML(rotulo(chaves[k]), fmtNum(n), pct(n, max), w);
         }
         grafico.innerHTML = html;
     }
