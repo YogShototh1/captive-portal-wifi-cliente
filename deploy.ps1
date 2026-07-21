@@ -48,14 +48,34 @@ $todos = Get-ChildItem $projeto -Recurse -File | Where-Object {
     return $true
 }
 
-# Lote do sftp: cria as pastas (o "-" na frente ignora "ja existe") e sobe tudo.
-$lote = New-TemporaryFile
-$linhas = @("cd $remoto")
+# Duas passadas: este sftp (OpenSSH do Windows) aborta o lote no 1o erro e NAO
+# honra o "-" de "-mkdir" em batch — entao um "mkdir pasta ja existe" mataria os
+# puts. Passada 1 so cria pastas (exit ignorado); passada 2 sobe os arquivos.
+$sftpArgs = @('-P', $port, '-i', $cfg['SSH_KEY'], '-o', 'BatchMode=yes',
+    '-o', 'StrictHostKeyChecking=accept-new')
+$destino = "$($cfg['SSH_USER'])@$($cfg['SSH_HOST'])"
+
 $dirs = $todos | ForEach-Object {
     $rel = $_.FullName.Substring($projeto.Length + 1) -replace '\\', '/'
     if ($rel.Contains('/')) { $rel.Substring(0, $rel.LastIndexOf('/')) }
 } | Sort-Object -Unique
-foreach ($d in $dirs) { $linhas += "-mkdir $d" }
+if ($dirs) {
+    # ponytail: o lote aborta no 1o dir ja-existente (este sftp nao honra "-mkdir"),
+    # entao dirs NOVOS aninhados depois de um existente nao sao criados. OK porque a
+    # estrutura de pastas do projeto e estavel; se um dia adicionar subpasta nova e o
+    # put dela falhar, criar a pasta uma vez na mao (ou trocar por ssh "mkdir -p").
+    $loteD = New-TemporaryFile
+    Set-Content -Path $loteD -Value (@("cd $remoto") + ($dirs | ForEach-Object { "-mkdir $_" })) -Encoding ascii
+    # O sftp joga "mkdir ja existe" no stderr; sob $ErrorActionPreference='Stop' isso
+    # terminaria o script. Baixa a preferencia e descarta o stderr so nesta passada.
+    $prev = $ErrorActionPreference; $ErrorActionPreference = 'SilentlyContinue'
+    & sftp.exe @sftpArgs -b $loteD $destino 2>$null | Out-Null
+    $ErrorActionPreference = $prev
+    Remove-Item $loteD -Force
+}
+
+$lote = New-TemporaryFile
+$linhas = @("cd $remoto")
 foreach ($f in $todos) {
     $rel = $f.FullName.Substring($projeto.Length + 1) -replace '\\', '/'
     $linhas += ('put "' + $f.FullName + '" "' + $rel + '"')
@@ -63,7 +83,7 @@ foreach ($f in $todos) {
 Set-Content -Path $lote -Value $linhas -Encoding ascii
 
 Write-Host ("Enviando {0} arquivo(s) para {1}:{2}/{3} ..." -f $todos.Count, $cfg['SSH_HOST'], $port, $remoto)
-& sftp.exe -P $port -i $cfg['SSH_KEY'] -o BatchMode=yes -o StrictHostKeyChecking=accept-new -b $lote "$($cfg['SSH_USER'])@$($cfg['SSH_HOST'])"
+& sftp.exe @sftpArgs -b $lote $destino
 $codigo = $LASTEXITCODE
 Remove-Item $lote -Force
 
