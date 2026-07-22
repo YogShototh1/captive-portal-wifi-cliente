@@ -1123,6 +1123,21 @@ body.pc-menu-fechado .pc-sidebar { margin-left: -232px; }
     background: #fff; transition: width .5s ease; }
 /* Relatórios por cliente: rótulo = nome/telefone (link do WhatsApp) */
 .rel-rotulo-tel { max-width: 62%; }
+/* Intervalo de retorno: "+" expande a lista de clientes da faixa */
+.rel-mais {
+    width: 20px; height: 20px; margin-right: 8px; border-radius: 6px; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; vertical-align: -4px;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16);
+    color: rgba(255,255,255,0.85); font-size: 14px; line-height: 1; font-family: inherit;
+    transition: background .2s, border-color .2s;
+}
+.rel-mais:hover { background: rgba(34,211,238,0.2); border-color: #22d3ee; }
+.rel-sub { margin-top: 8px; padding-left: 28px; display: flex; flex-direction: column; gap: 6px; }
+.rel-sub-item { display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px; }
+.rel-sub-item span { color: rgba(255,255,255,0.5); font-variant-numeric: tabular-nums; white-space: nowrap; }
+html[data-tema="claro"] .rel-mais { background: rgba(15,23,42,0.06); border-color: rgba(15,23,42,0.16); color: var(--g-fg); }
+html[data-tema="claro"] .rel-sub-item span { color: var(--g-fg3); }
+
 /* Campos extras dos relatórios sem datas (sumido há / mín. visitas / próximos dias) */
 .rel-extra {
     display: flex; flex-direction: column; gap: 4px;

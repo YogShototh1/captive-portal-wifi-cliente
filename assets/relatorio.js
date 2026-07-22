@@ -206,10 +206,37 @@
             String(d.mediana).replace('.', ',') + ' dia(s)</b> (mediana).</p>';
         for (var i = 0; i < vals.length; i++) {
             if (!vals[i]) continue;
-            html += linhaHTML(LBL[i], fmtNum(vals[i]) + ' cliente(s)', fmtPct(ps[i]), vals[i] * 100 / max);
+            // Linha com "+" antes do rótulo: expande a lista de clientes da faixa.
+            var cli = (d.clientes && d.clientes[i]) || [];
+            var sub = '';
+            for (var c = 0; c < cli.length; c++) {
+                sub += '<div class="rel-sub-item">' + waLink(cli[c].telefone, cli[c].nome) +
+                    '<span>volta a cada ' + String(cli[c].media).replace('.', ',') + ' dia(s)</span></div>';
+            }
+            html += '<div class="rel-linha">' +
+                '<div class="rel-topo">' +
+                    '<span class="rel-rotulo"><button type="button" class="rel-mais" data-fx="' + i + '" aria-label="Ver clientes da faixa">+</button>' + LBL[i] + '</span>' +
+                    '<span class="rel-nums"><b class="rel-valor">' + fmtNum(vals[i]) + ' cliente(s)</b>' +
+                    '<span class="rel-pct">' + fmtPct(ps[i]) + '</span></span>' +
+                '</div>' +
+                '<span class="rel-barra-wrap"><span class="rel-barra" style="width:' + (vals[i] * 100 / max).toFixed(1) + '%"></span></span>' +
+                '<div class="rel-sub" data-sub="' + i + '" style="display:none">' + sub + '</div>' +
+                '</div>';
         }
         grafico.innerHTML = html;
     }
+
+    // Expandir/recolher a lista de clientes de uma faixa (delegação: o gráfico
+    // é re-renderizado a cada geração, o container não).
+    grafico.addEventListener('click', function (e) {
+        var b = e.target.closest ? e.target.closest('.rel-mais') : null;
+        if (!b) return;
+        var sub = grafico.querySelector('.rel-sub[data-sub="' + b.getAttribute('data-fx') + '"]');
+        if (!sub) return;
+        var aberto = sub.style.display !== 'none';
+        sub.style.display = aberto ? 'none' : '';
+        b.textContent = aberto ? '+' : '−';
+    });
 
     // Mapa semana × hora: grade de calor (intensidade = acessos).
     function renderMapa(d) {

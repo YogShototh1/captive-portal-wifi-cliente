@@ -230,23 +230,33 @@ if ($tipo === 'aniversario') {
 //     Por cliente com >=2 dias de visita: média de dias entre visitas
 //     consecutivas; distribuição em faixas + mediana. ---
 if ($tipo === 'intervalo') {
-    $faixas = [0, 0, 0, 0, 0, 0]; // 1-2 / 3-4 / 5-7 / 8-14 / 15-30 / 31+
-    $medias = [];
+    $faixas   = [0, 0, 0, 0, 0, 0]; // 1-2 / 3-4 / 5-7 / 8-14 / 15-30 / 31+
+    $clientes = [[], [], [], [], [], []]; // quem caiu em cada faixa (p/ expandir no painel)
+    $medias   = [];
     if ($lista) {
         try {
             $q = db()->prepare(
-                "SELECT c.lead_id, DATE(c.conectado_em) AS d
+                "SELECT c.lead_id, l.telefone, l.nome, DATE(c.conectado_em) AS d
                    FROM conexoes c JOIN leads l ON l.id = c.lead_id
                   WHERE l.roteador IN ($ph)
-                  GROUP BY c.lead_id, d
+                  GROUP BY c.lead_id, l.telefone, l.nome, d
                   ORDER BY c.lead_id, d"
             );
             $q->execute($lista);
             $porLead = [];
             foreach ($q->fetchAll() as $r) {
-                $porLead[(int) $r['lead_id']][] = strtotime((string) $r['d']);
+                $id = (int) $r['lead_id'];
+                if (!isset($porLead[$id])) {
+                    $porLead[$id] = [
+                        'telefone' => (string) $r['telefone'],
+                        'nome'     => ($r['nome'] !== null && $r['nome'] !== '') ? (string) $r['nome'] : null,
+                        'dias'     => [],
+                    ];
+                }
+                $porLead[$id]['dias'][] = strtotime((string) $r['d']);
             }
-            foreach ($porLead as $dias) {
+            foreach ($porLead as $le) {
+                $dias = $le['dias'];
                 if (count($dias) < 2) { continue; }
                 $soma = 0;
                 for ($i = 1; $i < count($dias); $i++) {
@@ -254,13 +264,25 @@ if ($tipo === 'intervalo') {
                 }
                 $media = $soma / (count($dias) - 1);
                 $medias[] = $media;
-                if     ($media <= 2)  { $faixas[0]++; }
-                elseif ($media <= 4)  { $faixas[1]++; }
-                elseif ($media <= 7)  { $faixas[2]++; }
-                elseif ($media <= 14) { $faixas[3]++; }
-                elseif ($media <= 30) { $faixas[4]++; }
-                else                  { $faixas[5]++; }
+                if     ($media <= 2)  { $fx = 0; }
+                elseif ($media <= 4)  { $fx = 1; }
+                elseif ($media <= 7)  { $fx = 2; }
+                elseif ($media <= 14) { $fx = 3; }
+                elseif ($media <= 30) { $fx = 4; }
+                else                  { $fx = 5; }
+                $faixas[$fx]++;
+                if (count($clientes[$fx]) < 200) {
+                    $clientes[$fx][] = [
+                        'telefone' => $le['telefone'],
+                        'nome'     => $le['nome'],
+                        'media'    => round($media, 1),
+                    ];
+                }
             }
+            foreach ($clientes as &$cf) {
+                usort($cf, function ($a, $b) { return $a['media'] <=> $b['media']; });
+            }
+            unset($cf);
         } catch (Throwable $e) {
             http_response_code(500);
             exit(json_encode(['ok' => false, 'erro' => 'falha ao gerar o relatorio']));
@@ -272,7 +294,7 @@ if ($tipo === 'intervalo') {
         $n = count($medias);
         $mediana = round($n % 2 ? $medias[intdiv($n, 2)] : ($medias[$n / 2 - 1] + $medias[$n / 2]) / 2, 1);
     }
-    $sai(['total' => count($medias), 'faixas' => $faixas, 'mediana' => $mediana]);
+    $sai(['total' => count($medias), 'faixas' => $faixas, 'clientes' => $clientes, 'mediana' => $mediana]);
 }
 
 $buckets = [];
