@@ -1401,3 +1401,7 @@ html[data-tema="claro"] .est-filtro:hover { color: var(--g-fg); }
 /* Grade e cursor do gráfico de linhas (brancos sumiam no claro) */
 html[data-tema="claro"] .est-grid { stroke: rgba(15,23,42,0.10); }
 html[data-tema="claro"] .est-cursor { stroke: rgba(15,23,42,0.30); }
+/* Recorrência: verde (vindo) / vermelho (sumido) — meu override .dash-card b
+   estava apagando a cor pra preto no claro. Tons mais escuros p/ legibilidade. */
+html[data-tema="claro"] .dash-card.dash-bom b { color: #059669; }
+html[data-tema="claro"] .dash-card.dash-ruim b { color: #dc2626; }
