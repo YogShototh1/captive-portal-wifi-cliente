@@ -632,6 +632,12 @@ html:has(.pc-modal.aberto) { overflow: hidden; }
     padding: 8px 12px 5px; font-size: 11px; font-weight: 700;
     letter-spacing: 0.05em; text-transform: uppercase; color: rgba(255, 255, 255, 0.4);
 }
+/* Título do menu de contexto = nome/número do lead: sem caixa-alta, mais legível,
+   trunca se for longo (senão o menu estica). */
+.ctx-menu .rt-menu-title {
+    text-transform: none; color: rgba(255, 255, 255, 0.75); max-width: 220px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .rt-item {
     display: flex; align-items: center; justify-content: space-between; gap: 14px;
     padding: 9px 12px; border-radius: 9px; font-size: 14px; text-decoration: none;
@@ -1420,3 +1426,4 @@ html[data-tema="claro"] .dash-card.dash-ruim b { color: #dc2626; }
 html[data-tema="claro"] .pc-side-foot { border-top-color: rgba(15,23,42,0.12); }
 html[data-tema="claro"] .pc-side-sair { color: #dc2626; }
 html[data-tema="claro"] .pc-side-sair:hover { background: rgba(220,38,38,0.10); color: #b91c1c; }
+html[data-tema="claro"] .ctx-menu .rt-menu-title { color: var(--g-fg2); }

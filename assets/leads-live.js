@@ -277,6 +277,9 @@
             });
         }
         ctxTr = tr;
+        // Título do menu = nome do lead (se nomeado) ou o número. textContent = seguro.
+        var titEl = ctx.querySelector('.rt-menu-title');
+        if (titEl) titEl.textContent = tr.getAttribute('data-nome') || tr.getAttribute('data-tel') || 'Lead';
         ctx.classList.add('aberto');
         ctx.style.left = Math.max(8, Math.min(x, window.innerWidth - ctx.offsetWidth - 8)) + 'px';
         ctx.style.top  = Math.max(8, Math.min(y, window.innerHeight - ctx.offsetHeight - 8)) + 'px';
