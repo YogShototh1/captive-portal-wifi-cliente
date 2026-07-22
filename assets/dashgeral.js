@@ -30,8 +30,17 @@
         return base;
     }
 
+    // Linha de variação de visitas do período ("vs mês passado" etc.).
+    function linhaVar(d, rotulo) {
+        var pct = Number(d.pct) || 0;
+        var abs = Math.abs(pct).toLocaleString('pt-BR');
+        if (pct > 0) return '<p class="dg-var dg-var-bom">&uarr; ' + abs + '% mais visitas vs ' + rotulo + '</p>';
+        if (pct < 0) return '<p class="dg-var dg-var-ruim">&darr; ' + abs + '% menos visitas vs ' + rotulo + '</p>';
+        return '<p class="dg-var">mesmo número de visitas vs ' + rotulo + '</p>';
+    }
+
     // Donut + legenda de um período (revisitaram / não revisitaram / novos).
-    function donutPeriodo(titulo, d) {
+    function donutPeriodo(titulo, d, rotuloVar) {
         var itens = [
             { nome: 'Revisitaram',      n: d.revisitaram,     cor: '#06b6d4' },
             { nome: 'Não revisitaram', n: d.nao_revisitaram, cor: '#8b5cf6' },
@@ -72,26 +81,16 @@
             leg += '</ul>';
             corpo = '<div class="dash-donut-row">' + s + leg + '</div>';
         }
-        return '<div class="dash-card dg-card"><span>' + titulo + '</span>' + corpo + '</div>';
+        return '<div class="dash-card dg-card"><span>' + titulo + '</span>' + corpo + linhaVar(d, rotuloVar) + '</div>';
     }
 
     function render(d) {
         // Ordem pedida: mês, semana, dia (esquerda -> direita).
-        var cards = '<div class="dg-cards">' +
-            donutPeriodo('Recorrência do mês', d.mes) +
-            donutPeriodo('Recorrência da semana', d.semana) +
-            donutPeriodo('Recorrência diária', d.dia) +
+        out.innerHTML = '<div class="dg-cards">' +
+            donutPeriodo('Recorrência do mês', d.mes, 'mês passado') +
+            donutPeriodo('Recorrência da semana', d.semana, 'semana passada') +
+            donutPeriodo('Recorrência diária', d.dia, 'dia anterior') +
             '</div>';
-
-        // Variação de visitas vs mesmo trecho da semana passada.
-        var pct = Number(d.pct) || 0;
-        var abs = Math.abs(pct).toLocaleString('pt-BR');
-        var linha;
-        if (pct > 0)      linha = '<p class="dg-var dg-var-bom">&uarr; ' + abs + '% mais visitas vs semana passada</p>';
-        else if (pct < 0) linha = '<p class="dg-var dg-var-ruim">&darr; ' + abs + '% menos visitas vs semana passada</p>';
-        else              linha = '<p class="dg-var">mesmo número de visitas vs semana passada</p>';
-
-        out.innerHTML = cards + linha;
     }
 
     out.innerHTML = '<p class="pc-anuncio-desc">Carregando…</p>';

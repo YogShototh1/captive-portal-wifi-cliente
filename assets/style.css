@@ -1061,8 +1061,9 @@ body.pc-menu-fechado .pc-sidebar { margin-left: -232px; }
 /* Donut + legenda lado a lado (modelo da print) */
 .dash-donut-row { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
 /* Dashboard geral: 3 cartões (mês / semana / dia), donut + legenda em cada um */
-.dg-cards { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
-.dg-card { flex: 1 1 260px; min-width: 0; }
+.dg-cards { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 14px; align-items: stretch; }
+.dg-card { flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; }
+.dg-card .dg-var { margin-top: auto; padding-top: 12px; }
 .dg-card .dash-donut { width: 122px; height: 122px; flex: 0 0 auto; }
 .dg-card .dash-donut-row { justify-content: flex-start; gap: 16px; margin-top: 10px; }
 .dg-card .dash-legenda { max-width: 170px; }
