@@ -673,13 +673,13 @@ html:has(.pc-modal.aberto) { overflow: hidden; }
    não arredondados. O .painel-cliente é obrigatório: vence o min-width do
    .pc-dst-input base, que senão estoura o card com a linha de 2 colunas. */
 .painel-cliente .pc-editar-body .pc-dst-input {
-    min-width: 0; width: 100%; height: 52px; padding: 0 16px; border-radius: 10px;
+    min-width: 0; width: 100%; height: 52px; padding: 0 16px; border-radius: 8px;
     font-size: 15px;
 }
 /* Tempo limite + banda lado a lado (empilham em telas estreitas). */
 .pc-ed-row { display: flex; gap: 12px; flex-wrap: wrap; }
 .pc-ed-row .pc-ed-label { flex: 1 1 130px; min-width: 0; }
-.pc-editar-body .pc-btn-primary { border: none; cursor: pointer; font-family: inherit; height: 52px; border-radius: 10px; margin-top: 4px; }
+.pc-editar-body .pc-btn-primary { border: none; cursor: pointer; font-family: inherit; height: 52px; border-radius: 8px; margin-top: 4px; }
 
 /* --- Paginação da tabela de leads (1, 2, 3, ...) --- */
 .pc-pag { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; padding: 16px 0 4px; }
