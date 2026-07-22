@@ -93,9 +93,11 @@ $sai = function (array $extra) use ($tipo, $inicio, $fim) {
     exit(json_encode(['ok' => true, 'tipo' => $tipo, 'inicio' => $inicio, 'fim' => $fim] + $extra));
 };
 
-// --- Clientes sumidos: >=3 visitas na vida e a ÚLTIMA visita caiu no período
-//     (ou seja, sumiram desde então). valor = dias sem vir (até hoje). ---
+// --- Clientes sumidos: sem datas — "sumido há N+ dias" e "mínimo de M visitas".
+//     valor = dias sem vir (até hoje). ---
 if ($tipo === 'sumidos') {
+    $diasMin = max(1, (int) ($_GET['dias'] ?? 7));
+    $visMin  = max(1, (int) ($_GET['visitas'] ?? 3));
     $itens = [];
     if ($lista) {
         try {
@@ -104,12 +106,12 @@ if ($tipo === 'sumidos') {
                    FROM leads l JOIN conexoes c ON c.lead_id = l.id
                   WHERE l.roteador IN ($ph)
                   GROUP BY l.id, l.telefone, l.nome
-                 HAVING COUNT(c.id) >= 3
-                    AND MAX(c.conectado_em) >= ? AND MAX(c.conectado_em) < DATE_ADD(?, INTERVAL 1 DAY)
+                 HAVING COUNT(c.id) >= ?
+                    AND MAX(c.conectado_em) < DATE_SUB(NOW(), INTERVAL ? DAY)
                   ORDER BY ultima ASC
                   LIMIT 500"
             );
-            $q->execute(array_merge($lista, [$inicio, $fim]));
+            $q->execute(array_merge($lista, [$visMin, $diasMin]));
             foreach ($q->fetchAll() as $r) {
                 $itens[] = [
                     'telefone' => (string) $r['telefone'],
@@ -124,7 +126,7 @@ if ($tipo === 'sumidos') {
             exit(json_encode(['ok' => false, 'erro' => 'falha ao gerar o relatorio']));
         }
     }
-    $sai(['total' => count($itens), 'lista' => $itens]);
+    $sai(['total' => count($itens), 'lista' => $itens, 'dias' => $diasMin, 'visitas' => $visMin]);
 }
 
 // --- Ranking de fidelidade: top 20 por acessos (conexões) no período. ---
@@ -184,8 +186,12 @@ if ($tipo === 'mapa') {
     $sai(['total' => $total, 'grade' => $grade]);
 }
 
-// --- Aniversários: marcos de 3/6/12 meses da 1ª conexão caindo no período. ---
+// --- Aniversários: marcos de 3/6/12 meses da 1ª conexão nos PRÓXIMOS N dias
+//     (sem datas — o útil é saber quem está fazendo "aniversário" agora/em breve). ---
 if ($tipo === 'aniversario') {
+    $prox   = max(1, (int) ($_GET['proximos'] ?? 30));
+    $inicio = $hoje;
+    $fim    = date('Y-m-d', strtotime($hoje . " +$prox day"));
     $itens = [];
     if ($lista) {
         try {
@@ -217,11 +223,12 @@ if ($tipo === 'aniversario') {
             exit(json_encode(['ok' => false, 'erro' => 'falha ao gerar o relatorio']));
         }
     }
-    $sai(['total' => count($itens), 'lista' => $itens]);
+    $sai(['total' => count($itens), 'lista' => $itens, 'proximos' => $prox]);
 }
 
-// --- Intervalo de retorno: por cliente com >=2 dias de visita no período,
-//     média de dias entre visitas consecutivas; distribuição em faixas + mediana. ---
+// --- Intervalo de retorno: SEM inputs — histórico completo (do 1º lead até hoje).
+//     Por cliente com >=2 dias de visita: média de dias entre visitas
+//     consecutivas; distribuição em faixas + mediana. ---
 if ($tipo === 'intervalo') {
     $faixas = [0, 0, 0, 0, 0, 0]; // 1-2 / 3-4 / 5-7 / 8-14 / 15-30 / 31+
     $medias = [];
@@ -231,11 +238,10 @@ if ($tipo === 'intervalo') {
                 "SELECT c.lead_id, DATE(c.conectado_em) AS d
                    FROM conexoes c JOIN leads l ON l.id = c.lead_id
                   WHERE l.roteador IN ($ph)
-                    AND c.conectado_em >= ? AND c.conectado_em < DATE_ADD(?, INTERVAL 1 DAY)
                   GROUP BY c.lead_id, d
                   ORDER BY c.lead_id, d"
             );
-            $q->execute(array_merge($lista, [$inicio, $fim]));
+            $q->execute($lista);
             $porLead = [];
             foreach ($q->fetchAll() as $r) {
                 $porLead[(int) $r['lead_id']][] = strtotime((string) $r['d']);

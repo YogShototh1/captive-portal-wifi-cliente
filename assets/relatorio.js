@@ -29,6 +29,20 @@
     var DIAS  = { 1: 'Dom', 2: 'Seg', 3: 'Ter', 4: 'Qua', 5: 'Qui', 6: 'Sex', 7: 'Sáb' }; // DAYOFWEEK do MySQL
     var tipo  = null;
 
+    // Campos que cada relatório usa. Ausente do mapa = usa o par de datas.
+    var CAMPOS = { sumidos: ['dias', 'visitas'], aniversario: ['proximos'], intervalo: [] };
+    function usaDatas(t) { return !(t in CAMPOS); }
+    function mostrarCampos() {
+        var comDatas = tipo === null || usaDatas(tipo);
+        if (inpIni) inpIni.style.display = comDatas ? '' : 'none';
+        if (inpFim) inpFim.style.display = comDatas ? '' : 'none';
+        var extras = box.querySelectorAll('.rel-extra');
+        for (var i = 0; i < extras.length; i++) {
+            var quer = !comDatas && CAMPOS[tipo].indexOf(extras[i].getAttribute('data-campo')) !== -1;
+            extras[i].style.display = quer ? '' : 'none';
+        }
+    }
+
     function erro(msg) {
         if (!erroEl) return;
         if (msg) { erroEl.textContent = msg; erroEl.style.display = ''; }
@@ -43,6 +57,7 @@
             if (selLabel) selLabel.textContent = NOMES[tipo] || tipo;
             for (var j = 0; j < itens.length; j++) itens[j].classList.toggle('atual', itens[j] === this);
             sel.removeAttribute('open');
+            mostrarCampos();
             erro(null);
         });
     }
@@ -73,6 +88,10 @@
     function resumoHTML(d, meio) {
         return '<p class="rel-resumo">' + (NOMES[d.tipo] || '') + ' — ' + meio + ' de ' +
             d.inicio.split('-').reverse().join('/') + ' a ' + d.fim.split('-').reverse().join('/') + '</p>';
+    }
+    // Resumo sem período (relatórios que não usam datas).
+    function resumo2(d, meio) {
+        return '<p class="rel-resumo">' + (NOMES[d.tipo] || '') + ' — ' + meio + '</p>';
     }
     // Uma linha do funil: rótulo + (valor real, %) em cima, barra fina embaixo.
     function linhaHTML(rotulo, valor, pctStr, w, isTel) {
@@ -135,7 +154,7 @@
         if (!d.lista || !d.lista.length) return vazio();
         var max = 0, i;
         for (i = 0; i < d.lista.length; i++) max = Math.max(max, d.lista[i].dias);
-        var html = resumoHTML(d, d.total + ' cliente(s) sumido(s)');
+        var html = resumo2(d, d.total + ' cliente(s) sem vir há ' + d.dias + '+ dias (mín. ' + d.visitas + ' visitas)');
         for (i = 0; i < d.lista.length; i++) {
             var it = d.lista[i];
             html += linhaHTML(waLink(it.telefone, it.nome),
@@ -164,7 +183,7 @@
     // Aniversários: marcos de 3/6/12 meses da 1ª conexão dentro do período.
     function renderAniversario(d) {
         if (!d.lista || !d.lista.length) return vazio();
-        var html = resumoHTML(d, d.total + ' marco(s)');
+        var html = resumo2(d, d.total + ' marco(s) nos próximos ' + d.proximos + ' dias');
         for (var i = 0; i < d.lista.length; i++) {
             var it = d.lista[i];
             html += linhaHTML(waLink(it.telefone, it.nome),
@@ -182,7 +201,7 @@
         var vals = d.faixas || [];
         var max = Math.max.apply(null, vals.concat([1]));
         var ps = pcts1(vals);
-        var html = resumoHTML(d, d.total + ' cliente(s) com 2+ visitas');
+        var html = resumo2(d, d.total + ' cliente(s) com 2+ visitas — histórico completo');
         html += '<p class="rel-resumo">Cliente típico volta a cada <b>' +
             String(d.mediana).replace('.', ',') + ' dia(s)</b> (mediana).</p>';
         for (var i = 0; i < vals.length; i++) {
@@ -334,16 +353,29 @@
 
     btn.addEventListener('click', function () {
         if (!tipo) { erro('Escolha o modelo do relatório.'); return; }
-        var ini = inpIni ? inpIni.getAttribute('data-iso') : '';
-        var fim = inpFim ? inpFim.getAttribute('data-iso') : '';
-        if (!ini || !fim) { erro('Informe a data inicial e a final.'); return; }
+        var extra = '';
+        if (usaDatas(tipo)) {
+            var ini = inpIni ? inpIni.getAttribute('data-iso') : '';
+            var fim = inpFim ? inpFim.getAttribute('data-iso') : '';
+            if (!ini || !fim) { erro('Informe a data inicial e a final.'); return; }
+            extra = '&inicio=' + encodeURIComponent(ini) + '&fim=' + encodeURIComponent(fim);
+        } else {
+            // Só os campos deste relatório (sumido há / mín. visitas / próximos dias).
+            var mapa = { dias: 'rel-dias', visitas: 'rel-visitas', proximos: 'rel-proximos' };
+            for (var c = 0; c < CAMPOS[tipo].length; c++) {
+                var campo = CAMPOS[tipo][c];
+                var el = document.getElementById(mapa[campo]);
+                var v = el ? parseInt(el.value, 10) : 0;
+                if (!v || v < 1) { erro('Preencha os campos do relatório (números maiores que zero).'); return; }
+                extra += '&' + campo + '=' + v;
+            }
+        }
         erro(null);
         btn.disabled = true;
         var txt = btn.textContent;
         btn.textContent = 'Gerando…';
         grafico.innerHTML = '';
-        fetch(EP + (EP.indexOf('?') >= 0 ? '&' : '?') + 'tipo=' + encodeURIComponent(tipo) +
-              '&inicio=' + encodeURIComponent(ini) + '&fim=' + encodeURIComponent(fim),
+        fetch(EP + (EP.indexOf('?') >= 0 ? '&' : '?') + 'tipo=' + encodeURIComponent(tipo) + extra,
               { credentials: 'same-origin', cache: 'no-store' })
             .then(function (r) { return r.json(); })
             .then(function (d) {

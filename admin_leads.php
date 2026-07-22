@@ -92,7 +92,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <meta name="format-detection" content="telephone=no">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Leads — <?= h($cliente['nome'] ?: $cliente['email']) ?></title>
-    <link rel="stylesheet" href="assets/style.css?v=62">
+    <link rel="stylesheet" href="assets/style.css?v=63">
 </head>
 <body class="painel-cliente">
     <!-- Camadas de fundo (decorativas) -->
@@ -375,6 +375,15 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                                        value="<?= date('d/m/Y', strtotime('-6 days')) ?>" data-iso="<?= date('Y-m-d', strtotime('-6 days')) ?>" aria-label="Data inicial">
                                 <input type="text" id="rel-fim" class="pc-dst-input rel-data" readonly inputmode="none" placeholder="dd/mm/aaaa"
                                        value="<?= date('d/m/Y') ?>" data-iso="<?= date('Y-m-d') ?>" aria-label="Data final">
+                                <label class="rel-extra" data-campo="dias" style="display:none">sumido há (dias)
+                                    <input type="number" id="rel-dias" class="pc-dst-input rel-num" min="1" value="7">
+                                </label>
+                                <label class="rel-extra" data-campo="visitas" style="display:none">mínimo de visitas
+                                    <input type="number" id="rel-visitas" class="pc-dst-input rel-num" min="1" value="3">
+                                </label>
+                                <label class="rel-extra" data-campo="proximos" style="display:none">nos próximos (dias)
+                                    <input type="number" id="rel-proximos" class="pc-dst-input rel-num" min="1" value="30">
+                                </label>
                                 <button type="button" class="pc-btn-primary" id="rel-gerar">Gerar relatório</button>
                             </div>
                             <p class="pc-anuncio-msg err" id="rel-erro" style="display:none"></p>
@@ -589,7 +598,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     </div>
 
     <script src="assets/abas.js?v=2"></script>
-    <script src="assets/relatorio.js?v=8"></script>
+    <script src="assets/relatorio.js?v=9"></script>
     <script src="assets/dashboard.js?v=8"></script>
     <script src="assets/dashgeral.js?v=5"></script>
     <script src="assets/estatisticas.js?v=3"></script>

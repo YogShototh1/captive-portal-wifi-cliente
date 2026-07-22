@@ -1123,6 +1123,14 @@ body.pc-menu-fechado .pc-sidebar { margin-left: -232px; }
     background: #fff; transition: width .5s ease; }
 /* Relatórios por cliente: rótulo = nome/telefone (link do WhatsApp) */
 .rel-rotulo-tel { max-width: 62%; }
+/* Campos extras dos relatórios sem datas (sumido há / mín. visitas / próximos dias) */
+.rel-extra {
+    display: flex; flex-direction: column; gap: 4px;
+    font-size: 11.5px; font-weight: 600; color: rgba(255,255,255,0.6);
+}
+.rel-extra .rel-num { flex: 0 0 auto; min-width: 0; width: 130px; }
+html[data-tema="claro"] .rel-extra { color: var(--g-fg2); }
+
 /* Mapa semana × hora (grade de calor). Célula sem acesso = fundo apagado. */
 .rel-mapa-wrap { overflow-x: auto; }
 .rel-mapa { display: grid; grid-template-columns: 38px repeat(24, minmax(12px, 1fr)); gap: 2px; min-width: 460px; }
