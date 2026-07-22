@@ -186,12 +186,13 @@
     var modalLista = document.getElementById('conexoes-lista');
     var modalLead  = null; // lead aberto no modal (para as setas refazerem o fetch)
     var modalPorPag = 10;  // recalculado a cada abertura conforme a altura da tela
-    // Quantas linhas cabem SEM rolar: altura útil do modal (máx. 80vh) menos as
-    // partes fixas — cabeçalho (~62px), header da lista (~36px) e setas (~58px).
-    // Linha ≈ 42px. O objetivo é a seta de página SEMPRE visível sem arrastar.
+    // Quantas linhas cabem SEM rolar. O modal (.pc-modal-body) não tem scroll:
+    // a lista é paginada pra caber. Estimativa CONSERVADORA — parte fixa ~170px
+    // (cabeçalho + header da lista + setas + margem) e linha contada como 46px
+    // (real ~42) pra sobrar folga e nunca estourar (senão cortaria linha).
     function conexoesPorPagina() {
-        var util = Math.min(window.innerHeight * 0.8, window.innerHeight - 40) - 62 - 36 - 58;
-        return Math.max(3, Math.min(15, Math.floor(util / 42)));
+        var util = Math.min(window.innerHeight * 0.8, window.innerHeight - 40) - 170;
+        return Math.max(3, Math.min(15, Math.floor(util / 46)));
     }
     function fecharModal() {
         if (modal) { modal.classList.remove('aberto'); modal.setAttribute('aria-hidden', 'true'); }
