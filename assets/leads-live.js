@@ -310,6 +310,8 @@
     var edModal  = document.getElementById('editar-modal');
     var edNome   = document.getElementById('ed-nome');
     var edTel    = document.getElementById('ed-tel');
+    var edLimite = document.getElementById('ed-limite');
+    var edBanda  = document.getElementById('ed-banda');
     var edErro   = document.getElementById('ed-erro');
     var edSalvar = document.getElementById('ed-salvar');
     var edTr = null;
@@ -319,6 +321,8 @@
         edTr = tr;
         if (edNome) edNome.value = tr.getAttribute('data-nome') || '';
         if (edTel) edTel.value = tr.getAttribute('data-tel') || '';
+        if (edLimite) edLimite.value = tr.getAttribute('data-limite') || '';
+        if (edBanda) edBanda.value = tr.getAttribute('data-banda') || '';
         edMsg(null);
         edModal.classList.add('aberto');
         edModal.setAttribute('aria-hidden', 'false');
@@ -333,13 +337,28 @@
         });
         document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { fecharEditar(); ctxFechar(); } });
     }
+    // Reflete na linha o tempo/banda salvos (attrs + células, se não estão em edição inline).
+    function aplicarLimBanda(tr, d) {
+        if (d.limite !== undefined) {
+            var lv = d.limite == null ? '' : d.limite;
+            tr.setAttribute('data-limite', lv);
+            var lc = tr.querySelector('.pc-limite');
+            if (lc && !lc.querySelector('input')) lc.textContent = limiteTexto(lv);
+        }
+        if (d.banda !== undefined) {
+            var bv = d.banda == null ? '' : d.banda;
+            tr.setAttribute('data-banda', bv);
+            var bc = tr.querySelector('.pc-banda');
+            if (bc && !bc.querySelector('input')) bc.textContent = bandaTexto(bv);
+        }
+    }
     if (edSalvar) {
         var edEnviar = function (tr, mesclar) {
             edSalvar.disabled = true;
             fetch(EP_EDITAR, {
                 method: 'POST', credentials: 'same-origin',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ csrf: CSRF, id: parseInt(tr.getAttribute('data-id'), 10), nome: edNome ? edNome.value.trim() : '', telefone: edTel ? edTel.value.trim() : '', mesclar: mesclar ? 1 : 0 })
+                body: JSON.stringify({ csrf: CSRF, id: parseInt(tr.getAttribute('data-id'), 10), nome: edNome ? edNome.value.trim() : '', telefone: edTel ? edTel.value.trim() : '', limite: edLimite ? edLimite.value.trim() : '', banda: edBanda ? edBanda.value.trim() : '', mesclar: mesclar ? 1 : 0 })
             }).then(function (r) { return r.json(); }).then(function (d) {
                 edSalvar.disabled = false;
                 if (!d || !d.ok) {
@@ -359,6 +378,7 @@
                         alvoTr.setAttribute('data-nome', d.nome || '');
                         var ca = alvoTr.querySelector('td:first-child');
                         if (ca) ca.innerHTML = telHTML(d.telefone, d.nome);
+                        aplicarLimBanda(alvoTr, d);
                     }
                     tr.remove();
                     fecharEditar();
@@ -368,6 +388,7 @@
                 tr.setAttribute('data-nome', d.nome || '');
                 var c0 = tr.querySelector('td:first-child');
                 if (c0) c0.innerHTML = telHTML(d.telefone, d.nome);
+                aplicarLimBanda(tr, d);
                 fecharEditar();
             }).catch(function () { edSalvar.disabled = false; edMsg('Erro ao salvar. Tente de novo.'); });
         };

@@ -93,7 +93,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <meta name="format-detection" content="telephone=no">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Leads</title>
-    <link rel="stylesheet" href="assets/style.css?v=54">
+    <link rel="stylesheet" href="assets/style.css?v=55">
 </head>
 <body class="painel-cliente">
     <div class="pc-bg-gradient"></div>
@@ -530,6 +530,14 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                     <label class="pc-ed-label">Número
                         <input type="tel" id="ed-tel" class="pc-dst-input" inputmode="numeric" placeholder="48999999999">
                     </label>
+                    <div class="pc-ed-row">
+                        <label class="pc-ed-label">Tempo limite (min)
+                            <input type="number" id="ed-limite" class="pc-dst-input" min="0" inputmode="numeric" placeholder="sem limite">
+                        </label>
+                        <label class="pc-ed-label">Banda (Mbps)
+                            <input type="number" id="ed-banda" class="pc-dst-input" min="0" inputmode="numeric" placeholder="sem limite">
+                        </label>
+                    </div>
                     <p class="pc-anuncio-msg err" id="ed-erro" style="display:none"></p>
                     <button type="button" class="pc-btn-primary" id="ed-salvar">Salvar</button>
                 </div>
@@ -556,7 +564,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <script src="assets/relatorio.js?v=7"></script>
     <script src="assets/dashboard.js?v=8"></script>
     <script src="assets/estatisticas.js?v=3"></script>
-    <script src="assets/leads-live.js?v=22"></script>
+    <script src="assets/leads-live.js?v=23"></script>
     <?php require __DIR__ . '/inc/tema.php'; ?>
 </body>
 </html>

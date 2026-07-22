@@ -25,7 +25,7 @@ $csrf = csrf_token();
     <script>(function(){try{var t=localStorage.getItem('cd-tema');document.documentElement.setAttribute('data-tema',t==='escuro'?'escuro':'claro');}catch(e){document.documentElement.setAttribute('data-tema','claro');}})();</script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Administração</title>
-    <link rel="stylesheet" href="assets/style.css?v=54">
+    <link rel="stylesheet" href="assets/style.css?v=55">
 </head>
 <body class="painel-cliente">
     <!-- Camadas de fundo (decorativas) -->

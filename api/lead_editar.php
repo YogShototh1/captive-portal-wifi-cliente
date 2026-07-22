@@ -44,6 +44,19 @@ if ($telefone === null) {
     exit(json_encode(['ok' => false, 'erro' => 'Número inválido.']));
 }
 
+// Tempo limite (min) e banda (Mbps): mesmas regras de set_limite.php / set_banda.php.
+// Vazio/null = sem limite. Banda 0 = sem limite; teto 10000.
+$limRaw = $in['limite'] ?? '';
+$limite = ($limRaw === '' || $limRaw === null) ? null : max(0, (int) $limRaw);
+$bRaw   = $in['banda'] ?? '';
+$banda  = ($bRaw === '' || $bRaw === null) ? null : max(0, (int) $bRaw);
+if ($banda === 0) {
+    $banda = null;
+}
+if ($banda !== null) {
+    $banda = min($banda, 10000);
+}
+
 // Confirma que o lead pertence ao comprador (admin pode qualquer um).
 $q = db()->prepare('SELECT roteador FROM leads WHERE id = ?');
 $q->execute([$id]);
@@ -95,12 +108,13 @@ if ($outroId !== false) {
         db()->prepare('UPDATE conexoes SET lead_id = ? WHERE lead_id = ?')->execute([$alvo, $id]);
         db()->prepare(
             'UPDATE leads SET nome = ?, mac = ?, ip = ?, dispositivo = ?, conectado_em = ?, online = ?,
-                    visto_em = ?, desconectado_em = ?, segundos_conectado = ?, total_conexoes = ?, primeira_conexao = ?
+                    visto_em = ?, desconectado_em = ?, segundos_conectado = ?, total_conexoes = ?, primeira_conexao = ?,
+                    tempo_limite_min = ?, banda_limite = ?
               WHERE id = ?'
         )->execute([
             $nomeFinal, $rec['mac'], $rec['ip'], $rec['dispositivo'], $rec['conectado_em'], (int) $rec['online'],
             $rec['visto_em'], $rec['desconectado_em'], $rec['segundos_conectado'],
-            (int) $a['total_conexoes'] + (int) $b['total_conexoes'], $primeira, $alvo,
+            (int) $a['total_conexoes'] + (int) $b['total_conexoes'], $primeira, $limite, $banda, $alvo,
         ]);
         db()->prepare('DELETE FROM leads WHERE id = ?')->execute([$id]);
         db()->commit();
@@ -111,15 +125,15 @@ if ($outroId !== false) {
         http_response_code(500);
         exit(json_encode(['ok' => false, 'erro' => 'Falha ao mesclar. Tente de novo.']));
     }
-    exit(json_encode(['ok' => true, 'mesclado' => true, 'id' => $alvo, 'id_removido' => $id, 'nome' => $nomeFinal, 'telefone' => $telefone]));
+    exit(json_encode(['ok' => true, 'mesclado' => true, 'id' => $alvo, 'id_removido' => $id, 'nome' => $nomeFinal, 'telefone' => $telefone, 'limite' => $limite, 'banda' => $banda]));
 }
 
 try {
-    $u = db()->prepare('UPDATE leads SET nome = ?, telefone = ? WHERE id = ?');
-    $u->execute([$nome, $telefone, $id]);
+    $u = db()->prepare('UPDATE leads SET nome = ?, telefone = ?, tempo_limite_min = ?, banda_limite = ? WHERE id = ?');
+    $u->execute([$nome, $telefone, $limite, $banda, $id]);
 } catch (Throwable $e) {
     http_response_code(500);
     exit(json_encode(['ok' => false, 'erro' => 'Falha ao salvar. Banco atualizado? Rode sql/migracao_nome.sql.']));
 }
 
-echo json_encode(['ok' => true, 'id' => $id, 'nome' => $nome, 'telefone' => $telefone]);
+echo json_encode(['ok' => true, 'id' => $id, 'nome' => $nome, 'telefone' => $telefone, 'limite' => $limite, 'banda' => $banda]);
