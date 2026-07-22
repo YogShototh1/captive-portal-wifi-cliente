@@ -39,75 +39,75 @@ if (!$lista) {
 }
 
 try {
-    $agora = db_now();
-    // Períodos: mês (dia 1), semana (segunda-feira) e dia (hoje), sempre 00:00.
-    $iniMes = date('Y-m-01 00:00:00', strtotime($agora));
-    $iniSem = date('Y-m-d 00:00:00', strtotime('monday this week', strtotime($agora)));
-    $iniDia = date('Y-m-d 00:00:00', strtotime($agora));
+    $agora  = db_now();
+    $hoje00 = date('Y-m-d 00:00:00', strtotime($agora));
+    $diasAtras = function (int $n) use ($hoje00): string {
+        return date('Y-m-d 00:00:00', strtotime($hoje00 . " -$n day"));
+    };
 
     $ph = implode(',', array_fill(0, count($lista), '?'));
     // 1ª conexão do lead: coluna primeira_conexao; leads antigos (pré-migração)
     // caem no MIN(conexoes) e, sem histórico, no conectado_em.
     $primeira = 'COALESCE(l.primeira_conexao, (SELECT MIN(c2.conectado_em) FROM conexoes c2 WHERE c2.lead_id = l.id), l.conectado_em)';
 
-    // Contagens de um período que começa em $ini.
-    $recorrencia = function (string $ini) use ($lista, $ph, $primeira): array {
-        $qN = db()->prepare("SELECT COUNT(*) FROM leads l WHERE l.roteador IN ($ph) AND $primeira >= ?");
-        $qN->execute(array_merge($lista, [$ini]));
-        $novos = (int) $qN->fetchColumn();
-
-        $qA = db()->prepare("SELECT COUNT(*) FROM leads l WHERE l.roteador IN ($ph) AND $primeira < ?");
-        $qA->execute(array_merge($lista, [$ini]));
-        $antigos = (int) $qA->fetchColumn();
+    // Um período = janela ATUAL [iniAtual, agora] vs janela ANTERIOR [iniAnt, iniAtual).
+    //   revisitaram     = visitaram na anterior E voltaram na atual
+    //   nao_revisitaram = visitaram na anterior e (ainda) não voltaram na atual
+    //   novos           = 1ª conexão dentro da janela atual
+    //   pct             = conexões da atual vs conexões da anterior
+    $periodo = function (string $iniAnt, string $iniAtual) use ($lista, $ph, $primeira): array {
+        $qB = db()->prepare(
+            "SELECT COUNT(DISTINCT l.id) FROM leads l
+               JOIN conexoes c ON c.lead_id = l.id AND c.conectado_em >= ? AND c.conectado_em < ?
+              WHERE l.roteador IN ($ph)"
+        );
+        $qB->execute(array_merge([$iniAnt, $iniAtual], $lista));
+        $anteriores = (int) $qB->fetchColumn();
 
         $qR = db()->prepare(
             "SELECT COUNT(DISTINCT l.id) FROM leads l
-               JOIN conexoes c ON c.lead_id = l.id AND c.conectado_em >= ?
-              WHERE l.roteador IN ($ph) AND $primeira < ?"
+               JOIN conexoes ca ON ca.lead_id = l.id AND ca.conectado_em >= ?
+               JOIN conexoes cb ON cb.lead_id = l.id AND cb.conectado_em >= ? AND cb.conectado_em < ?
+              WHERE l.roteador IN ($ph)"
         );
-        $qR->execute(array_merge([$ini], $lista, [$ini]));
+        $qR->execute(array_merge([$iniAtual, $iniAnt, $iniAtual], $lista));
         $rev = (int) $qR->fetchColumn();
 
-        return [
-            'total'           => $antigos + $novos,
-            'revisitaram'     => $rev,
-            'nao_revisitaram' => max(0, $antigos - $rev),
-            'novos'           => $novos,
-        ];
-    };
+        $qN = db()->prepare("SELECT COUNT(*) FROM leads l WHERE l.roteador IN ($ph) AND $primeira >= ?");
+        $qN->execute(array_merge($lista, [$iniAtual]));
+        $novos = (int) $qN->fetchColumn();
 
-    // Variação de visitas (conexões): janelas de DIAS COMPLETOS, estáveis o dia
-    // inteiro (só mudam à meia-noite) — hoje (parcial) fica de fora dos dois lados.
-    //   mês:    últimos 30 dias vs os 30 anteriores
-    //   semana: últimos 7 dias  vs os 7 anteriores
-    //   dia:    ontem           vs anteontem
-    $hoje00   = date('Y-m-d 00:00:00', strtotime($agora));
-    $diasAtras = function (int $n) use ($hoje00): string {
-        return date('Y-m-d 00:00:00', strtotime($hoje00 . " -$n day"));
-    };
-    $variacao = function (string $iniAnt, string $meio, string $fim) use ($lista, $ph): float {
-        // anterior = [iniAnt, meio)   atual = [meio, fim)
-        $q = db()->prepare(
+        $qV = db()->prepare(
             "SELECT
-                SUM(c.conectado_em >= ? AND c.conectado_em < ?) AS atual,
+                SUM(c.conectado_em >= ?) AS atual,
                 SUM(c.conectado_em >= ? AND c.conectado_em < ?) AS passada
                FROM conexoes c JOIN leads l ON l.id = c.lead_id
               WHERE l.roteador IN ($ph)"
         );
-        $q->execute(array_merge([$meio, $fim, $iniAnt, $meio], $lista));
-        $v = $q->fetch();
+        $qV->execute(array_merge([$iniAtual, $iniAnt, $iniAtual], $lista));
+        $v = $qV->fetch();
         $atual   = (int) ($v['atual'] ?? 0);
         $passada = (int) ($v['passada'] ?? 0);
-        return $passada > 0
-            ? round(($atual - $passada) * 100 / $passada, 1)
-            : ($atual > 0 ? 100.0 : 0.0);
+
+        return [
+            'total'           => $anteriores + $novos,
+            'revisitaram'     => $rev,
+            'nao_revisitaram' => max(0, $anteriores - $rev),
+            'novos'           => $novos,
+            'pct'             => $passada > 0
+                ? round(($atual - $passada) * 100 / $passada, 1)
+                : ($atual > 0 ? 100.0 : 0.0),
+        ];
     };
 
     echo json_encode([
         'ok'     => true,
-        'mes'    => $recorrencia($iniMes) + ['pct' => $variacao($diasAtras(60), $diasAtras(30), $hoje00)],
-        'semana' => $recorrencia($iniSem) + ['pct' => $variacao($diasAtras(14), $diasAtras(7), $hoje00)],
-        'dia'    => $recorrencia($iniDia) + ['pct' => $variacao($diasAtras(2), $diasAtras(1), $hoje00)],
+        // mês: últimos 30 dias (contando hoje) vs os 30 anteriores
+        'mes'    => $periodo($diasAtras(59), $diasAtras(29)),
+        // semana: últimos 7 dias (contando hoje) vs os 7 anteriores
+        'semana' => $periodo($diasAtras(13), $diasAtras(6)),
+        // dia: hoje vs ontem
+        'dia'    => $periodo($diasAtras(1), $hoje00),
     ]);
 } catch (Throwable $e) {
     http_response_code(500);

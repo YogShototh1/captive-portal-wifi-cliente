@@ -86,11 +86,11 @@
 
     function render(d) {
         // Ordem pedida: mês, semana, dia (esquerda -> direita).
-        // Variação = janelas de dias completos: 30d vs 30d, 7d vs 7d, ontem vs anteontem.
+        // Janelas: últimos 30 dias vs 30 anteriores, últimos 7 vs 7 anteriores, hoje vs ontem.
         out.innerHTML = '<div class="dg-cards">' +
             donutPeriodo('Recorrência do mês', d.mes, 'os 30 dias anteriores') +
             donutPeriodo('Recorrência da semana', d.semana, 'os 7 dias anteriores') +
-            donutPeriodo('Recorrência diária', d.dia, 'anteontem') +
+            donutPeriodo('Recorrência diária', d.dia, 'ontem') +
             '</div>';
     }
 
