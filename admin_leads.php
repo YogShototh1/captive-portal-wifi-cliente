@@ -141,6 +141,12 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                     Estatísticas
                 </button>
             </nav>
+            <div class="pc-side-foot">
+                <a class="pc-side-sair" href="admin.php">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+                    Voltar
+                </a>
+            </div>
         </aside>
         <div class="pc-side-backdrop" aria-hidden="true"></div>
 
@@ -185,7 +191,6 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                         </div>
                     </details>
                     <?php endif; ?>
-                    <a class="pc-btn" href="admin.php">&larr; Voltar</a>
                 </div>
             </header>
 
