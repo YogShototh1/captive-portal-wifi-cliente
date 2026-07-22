@@ -44,10 +44,6 @@ try {
     $iniMes = date('Y-m-01 00:00:00', strtotime($agora));
     $iniSem = date('Y-m-d 00:00:00', strtotime('monday this week', strtotime($agora)));
     $iniDia = date('Y-m-d 00:00:00', strtotime($agora));
-    // Início do período ANTERIOR equivalente (mês passado dia 1 / segunda passada / ontem).
-    $iniMesAnt = date('Y-m-01 00:00:00', strtotime($iniMes . ' -1 day'));
-    $iniSemAnt = date('Y-m-d H:i:s', strtotime($iniSem . ' -7 day'));
-    $iniDiaAnt = date('Y-m-d H:i:s', strtotime($iniDia . ' -1 day'));
 
     $ph = implode(',', array_fill(0, count($lista), '?'));
     // 1ª conexão do lead: coluna primeira_conexao; leads antigos (pré-migração)
@@ -80,20 +76,25 @@ try {
         ];
     };
 
-    // Variação de visitas (conexões) do período vs o MESMO trecho do período
-    // anterior: [iniAnt, iniAnt + tempo decorrido do período atual). Comparar
-    // com o período anterior INTEIRO faria todo começo de período ficar "no vermelho".
-    $agoraTs  = strtotime($agora);
-    $variacao = function (string $ini, string $iniAnt) use ($lista, $ph, $agoraTs): float {
-        $fimAnt = date('Y-m-d H:i:s', strtotime($iniAnt) + ($agoraTs - strtotime($ini)));
+    // Variação de visitas (conexões): janelas de DIAS COMPLETOS, estáveis o dia
+    // inteiro (só mudam à meia-noite) — hoje (parcial) fica de fora dos dois lados.
+    //   mês:    últimos 30 dias vs os 30 anteriores
+    //   semana: últimos 7 dias  vs os 7 anteriores
+    //   dia:    ontem           vs anteontem
+    $hoje00   = date('Y-m-d 00:00:00', strtotime($agora));
+    $diasAtras = function (int $n) use ($hoje00): string {
+        return date('Y-m-d 00:00:00', strtotime($hoje00 . " -$n day"));
+    };
+    $variacao = function (string $iniAnt, string $meio, string $fim) use ($lista, $ph): float {
+        // anterior = [iniAnt, meio)   atual = [meio, fim)
         $q = db()->prepare(
             "SELECT
-                SUM(c.conectado_em >= ?) AS atual,
+                SUM(c.conectado_em >= ? AND c.conectado_em < ?) AS atual,
                 SUM(c.conectado_em >= ? AND c.conectado_em < ?) AS passada
                FROM conexoes c JOIN leads l ON l.id = c.lead_id
               WHERE l.roteador IN ($ph)"
         );
-        $q->execute(array_merge([$ini, $iniAnt, $fimAnt], $lista));
+        $q->execute(array_merge([$meio, $fim, $iniAnt, $meio], $lista));
         $v = $q->fetch();
         $atual   = (int) ($v['atual'] ?? 0);
         $passada = (int) ($v['passada'] ?? 0);
@@ -104,9 +105,9 @@ try {
 
     echo json_encode([
         'ok'     => true,
-        'mes'    => $recorrencia($iniMes) + ['pct' => $variacao($iniMes, $iniMesAnt)],
-        'semana' => $recorrencia($iniSem) + ['pct' => $variacao($iniSem, $iniSemAnt)],
-        'dia'    => $recorrencia($iniDia) + ['pct' => $variacao($iniDia, $iniDiaAnt)],
+        'mes'    => $recorrencia($iniMes) + ['pct' => $variacao($diasAtras(60), $diasAtras(30), $hoje00)],
+        'semana' => $recorrencia($iniSem) + ['pct' => $variacao($diasAtras(14), $diasAtras(7), $hoje00)],
+        'dia'    => $recorrencia($iniDia) + ['pct' => $variacao($diasAtras(2), $diasAtras(1), $hoje00)],
     ]);
 } catch (Throwable $e) {
     http_response_code(500);
