@@ -197,11 +197,11 @@
     // Intervalo de retorno: faixas do intervalo médio entre visitas + mediana.
     function renderIntervalo(d) {
         if (!d.total) return vazio();
-        var LBL = ['volta em 1-2 dias', '3-4 dias', '5-7 dias', '8-14 dias', '15-30 dias', '31+ dias'];
+        var LBL = ['volta em 1-2 dias', '3-4 dias', '5-7 dias', '8-14 dias', '15-30 dias', '31+ dias', 'sem retorno'];
         var vals = d.faixas || [];
         var max = Math.max.apply(null, vals.concat([1]));
         var ps = pcts1(vals);
-        var html = resumo2(d, d.total + ' cliente(s) com 2+ visitas — histórico completo');
+        var html = resumo2(d, d.total + ' cliente(s) — histórico completo');
         html += '<p class="rel-resumo">Cliente típico volta a cada <b>' +
             String(d.mediana).replace('.', ',') + ' dia(s)</b> (mediana).</p>';
         for (var i = 0; i < vals.length; i++) {
@@ -210,8 +210,11 @@
             var cli = (d.clientes && d.clientes[i]) || [];
             var sub = '';
             for (var c = 0; c < cli.length; c++) {
+                var det = cli[c].media != null
+                    ? 'volta a cada ' + String(cli[c].media).replace('.', ',') + ' dia(s)'
+                    : 'veio 1 vez em ' + fmtD(cli[c].data);
                 sub += '<div class="rel-sub-item">' + waLink(cli[c].telefone, cli[c].nome) +
-                    '<span>volta a cada ' + String(cli[c].media).replace('.', ',') + ' dia(s)</span></div>';
+                    '<span>' + det + '</span></div>';
             }
             html += '<div class="rel-linha">' +
                 '<div class="rel-topo">' +

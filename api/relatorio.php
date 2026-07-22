@@ -230,8 +230,8 @@ if ($tipo === 'aniversario') {
 //     Por cliente com >=2 dias de visita: média de dias entre visitas
 //     consecutivas; distribuição em faixas + mediana. ---
 if ($tipo === 'intervalo') {
-    $faixas   = [0, 0, 0, 0, 0, 0]; // 1-2 / 3-4 / 5-7 / 8-14 / 15-30 / 31+
-    $clientes = [[], [], [], [], [], []]; // quem caiu em cada faixa (p/ expandir no painel)
+    $faixas   = [0, 0, 0, 0, 0, 0, 0]; // 1-2 / 3-4 / 5-7 / 8-14 / 15-30 / 31+ / sem retorno (1 visita só)
+    $clientes = [[], [], [], [], [], [], []]; // quem caiu em cada faixa (p/ expandir no painel)
     $medias   = [];
     if ($lista) {
         try {
@@ -257,7 +257,19 @@ if ($tipo === 'intervalo') {
             }
             foreach ($porLead as $le) {
                 $dias = $le['dias'];
-                if (count($dias) < 2) { continue; }
+                if (count($dias) < 2) {
+                    // Sem retorno: veio 1 dia só e nunca voltou.
+                    $faixas[6]++;
+                    if (count($clientes[6]) < 200) {
+                        $clientes[6][] = [
+                            'telefone' => $le['telefone'],
+                            'nome'     => $le['nome'],
+                            'media'    => null,
+                            'data'     => date('Y-m-d', $dias[0]),
+                        ];
+                    }
+                    continue;
+                }
                 $soma = 0;
                 for ($i = 1; $i < count($dias); $i++) {
                     $soma += ($dias[$i] - $dias[$i - 1]) / 86400;
@@ -279,8 +291,13 @@ if ($tipo === 'intervalo') {
                     ];
                 }
             }
-            foreach ($clientes as &$cf) {
-                usort($cf, function ($a, $b) { return $a['media'] <=> $b['media']; });
+            foreach ($clientes as $fx => &$cf) {
+                if ($fx === 6) {
+                    // Sem retorno: visita única mais recente primeiro.
+                    usort($cf, function ($a, $b) { return strcmp($b['data'], $a['data']); });
+                } else {
+                    usort($cf, function ($a, $b) { return $a['media'] <=> $b['media']; });
+                }
             }
             unset($cf);
         } catch (Throwable $e) {
@@ -294,7 +311,7 @@ if ($tipo === 'intervalo') {
         $n = count($medias);
         $mediana = round($n % 2 ? $medias[intdiv($n, 2)] : ($medias[$n / 2 - 1] + $medias[$n / 2]) / 2, 1);
     }
-    $sai(['total' => count($medias), 'faixas' => $faixas, 'clientes' => $clientes, 'mediana' => $mediana]);
+    $sai(['total' => count($medias) + $faixas[6], 'faixas' => $faixas, 'clientes' => $clientes, 'mediana' => $mediana]);
 }
 
 $buckets = [];
