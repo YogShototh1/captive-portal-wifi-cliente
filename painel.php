@@ -93,7 +93,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <meta name="format-detection" content="telephone=no">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Leads</title>
-    <link rel="stylesheet" href="assets/style.css?v=52">
+    <link rel="stylesheet" href="assets/style.css?v=53">
 </head>
 <body class="painel-cliente">
     <div class="pc-bg-gradient"></div>
@@ -143,6 +143,12 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                     Estatísticas
                 </button>
             </nav>
+            <div class="pc-side-foot">
+                <a class="pc-side-sair" href="sair.php">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1h-4"/><circle cx="7" cy="5.5" r="2"/><path d="M7 8.5v5.5"/><path d="m4.5 20.5 2.5-6 2.5 6"/><path d="M10.5 12h5"/><path d="m13 9.5 3 2.5-3 2.5"/></svg>
+                    Sair
+                </a>
+            </div>
         </aside>
         <div class="pc-side-backdrop" aria-hidden="true"></div>
 
@@ -186,7 +192,6 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                         </div>
                     </details>
                     <?php endif; ?>
-                    <a class="pc-btn" href="sair.php">Sair</a>
                 </div>
             </header>
 

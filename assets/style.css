@@ -948,6 +948,17 @@ body.pc-menu-fechado .pc-sidebar { margin-left: -232px; }
 }
 .pc-side-backdrop { display: none; }
 
+/* Rodapé da sidebar: "Sair" separado das opções, colado no fim, vermelho */
+.pc-side-foot { margin-top: auto; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.10); }
+.pc-side-sair {
+    display: flex; align-items: center; gap: 11px;
+    padding: 11px 13px; border-radius: 10px;
+    color: #f87171; font-family: inherit; font-size: 14px; font-weight: 600;
+    text-decoration: none; transition: background .2s, color .2s;
+}
+.pc-side-sair svg { width: 18px; height: 18px; flex: 0 0 auto; }
+.pc-side-sair:hover { background: rgba(248, 113, 113, 0.12); color: #fca5a5; }
+
 /* Botão hambúrguer no topo */
 .pc-menu-btn {
     display: inline-flex; align-items: center; justify-content: center;
@@ -1405,3 +1416,7 @@ html[data-tema="claro"] .est-cursor { stroke: rgba(15,23,42,0.30); }
    estava apagando a cor pra preto no claro. Tons mais escuros p/ legibilidade. */
 html[data-tema="claro"] .dash-card.dash-bom b { color: #059669; }
 html[data-tema="claro"] .dash-card.dash-ruim b { color: #dc2626; }
+/* Rodapé "Sair" no tema claro */
+html[data-tema="claro"] .pc-side-foot { border-top-color: rgba(15,23,42,0.12); }
+html[data-tema="claro"] .pc-side-sair { color: #dc2626; }
+html[data-tema="claro"] .pc-side-sair:hover { background: rgba(220,38,38,0.10); color: #b91c1c; }
