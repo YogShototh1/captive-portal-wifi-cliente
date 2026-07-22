@@ -64,7 +64,7 @@
             var x = PL + (n > 1 ? i * innerW / (n - 1) : innerW / 2);
             s += '<text class="est-txt" x="' + x + '" y="' + (H - 8) + '" text-anchor="middle">' + d.labels[i] + '</text>';
         }
-        // séries: área + linha (conectados = roxo, novos = rosa)
+        // séries: área + linha (conectados = azul, novos = branco)
         var pc = pontos(d.conectados, teto), pn = pontos(d.novos, teto);
         var base = PT + innerH;
         s += '<path class="est-area-con" d="' + caminho(pc, PT, base) + ' L' + (W - PR) + ' ' + base + ' L' + PL + ' ' + base + ' Z"/>';

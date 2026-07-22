@@ -1107,12 +1107,12 @@ html[data-tema="claro"] .painel-cliente input[type="date"].rel-data::-webkit-cal
 .est-grid { stroke: rgba(255, 255, 255, 0.09); stroke-width: 1; }
 .est-txt { fill: rgba(255, 255, 255, 0.5); font-size: 9.5px; font-family: inherit; }
 .est-linha-con { fill: none; stroke: #06b6d4; stroke-width: 2.4; stroke-linecap: round; }
-.est-linha-nov { fill: none; stroke: #ec4899; stroke-width: 2.4; stroke-linecap: round; }
+.est-linha-nov { fill: none; stroke: #fff; stroke-width: 2.4; stroke-linecap: round; }
 .est-area-con { fill: rgba(6,182,212, 0.13); stroke: none; }
-.est-area-nov { fill: rgba(236, 72, 153, 0.10); stroke: none; }
+.est-area-nov { fill: rgba(255, 255, 255, 0.10); stroke: none; }
 .est-cursor { stroke: rgba(255, 255, 255, 0.25); stroke-width: 1; stroke-dasharray: 3 3; }
 .est-dot-con { fill: #06b6d4; stroke: #fff; stroke-width: 1.5; }
-.est-dot-nov { fill: #ec4899; stroke: #fff; stroke-width: 1.5; }
+.est-dot-nov { fill: #fff; stroke: #0d1420; stroke-width: 1.5; }
 .est-tooltip {
     position: absolute; display: none; pointer-events: none; z-index: 5;
     background: #0d1420; border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 10px;
@@ -1122,11 +1122,11 @@ html[data-tema="claro"] .painel-cliente input[type="date"].rel-data::-webkit-cal
 .est-tooltip b { display: block; margin-bottom: 3px; font-size: 12.5px; }
 .est-tooltip span { display: block; }
 .est-tt-con { color: #67e8f9; }
-.est-tt-nov { color: #f9a8d4; }
+.est-tt-nov { color: #fff; }
 .est-legenda { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 8px; font-size: 12.5px; color: rgba(255, 255, 255, 0.7); }
 .est-leg::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
 .est-leg-con::before { background: #06b6d4; }
-.est-leg-nov::before { background: #ec4899; }
+.est-leg-nov::before { background: #fff; }
 
 /* Celular: drawer sobreposto, fechado por padrão */
 @media (max-width: 900px) {
@@ -1341,6 +1341,12 @@ html[data-tema="claro"] .dash-dia { background: rgba(255,255,255,0.65); border-c
 html[data-tema="claro"] .dash-dia.visitado { background: #06b6d4; border-color: #0891b2; color: #fff; }
 html[data-tema="claro"] .est-tt, html[data-tema="claro"] .dash-tt { background: rgba(255,255,255,0.92); border-color: rgba(15,23,42,0.12); color: var(--g-fg); }
 html[data-tema="claro"] .est-txt { fill: var(--g-fg3); }
+/* Série "novos" = branca no escuro; no claro vira tinta escura (branco sumiria) */
+html[data-tema="claro"] .est-linha-nov { stroke: var(--g-fg); }
+html[data-tema="claro"] .est-area-nov { fill: rgba(15,23,42,0.10); }
+html[data-tema="claro"] .est-dot-nov { fill: var(--g-fg); stroke: #fff; }
+html[data-tema="claro"] .est-tt-nov { color: var(--g-fg); }
+html[data-tema="claro"] .est-leg-nov::before { background: var(--g-fg); }
 html[data-tema="claro"] .est-filtro { background: rgba(255,255,255,0.6); border-color: rgba(15,23,42,0.14); color: var(--g-fg2); }
 html[data-tema="claro"] .est-filtro.atual { background: var(--g-cyan); border-color: var(--g-cyan); color: #fff; }
 html[data-tema="claro"] .rel-resumo { color: var(--g-fg2); }
