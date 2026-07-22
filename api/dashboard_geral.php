@@ -1,8 +1,9 @@
 <?php
-// Dashboard geral (todos os leads): recorrência da semana atual.
-//   revisitaram    = clientes antigos (1ª conexão antes da semana) que voltaram nesta semana
-//   nao_revisitaram= clientes antigos que ainda não voltaram nesta semana
-//   novos          = clientes cuja 1ª conexão foi nesta semana
+// Dashboard geral (todos os leads): recorrência por período (mês, semana, dia).
+// Para cada período:
+//   revisitaram    = clientes antigos (1ª conexão antes do período) que voltaram nele
+//   nao_revisitaram= clientes antigos que ainda não voltaram nele
+//   novos          = clientes cuja 1ª conexão foi no período
 // Visitas (conexões) desta semana vs o MESMO trecho da semana passada -> % de variação
 // (comparar com a semana passada inteira faria toda segunda começar "no vermelho").
 // Auth/isolamento igual ao dashboard.php.
@@ -33,13 +34,16 @@ if ($isAdmin) {
     }
 }
 if (!$lista) {
-    exit(json_encode(['ok' => true, 'total' => 0, 'revisitaram' => 0, 'nao_revisitaram' => 0, 'novos' => 0, 'pct' => 0]));
+    $zero = ['total' => 0, 'revisitaram' => 0, 'nao_revisitaram' => 0, 'novos' => 0];
+    exit(json_encode(['ok' => true, 'mes' => $zero, 'semana' => $zero, 'dia' => $zero, 'pct' => 0]));
 }
 
 try {
     $agora = db_now();
-    // Semana começa na segunda-feira 00:00.
-    $iniSem  = date('Y-m-d 00:00:00', strtotime('monday this week', strtotime($agora)));
+    // Períodos: mês (dia 1), semana (segunda-feira) e dia (hoje), sempre 00:00.
+    $iniMes = date('Y-m-01 00:00:00', strtotime($agora));
+    $iniSem = date('Y-m-d 00:00:00', strtotime('monday this week', strtotime($agora)));
+    $iniDia = date('Y-m-d 00:00:00', strtotime($agora));
     $iniPass = date('Y-m-d 00:00:00', strtotime($iniSem . ' -7 day'));
     // Mesmo trecho da semana passada: até "agora - 7 dias".
     $fimPass = date('Y-m-d H:i:s', strtotime($agora . ' -7 day'));
@@ -49,23 +53,33 @@ try {
     // caem no MIN(conexoes) e, sem histórico, no conectado_em.
     $primeira = 'COALESCE(l.primeira_conexao, (SELECT MIN(c2.conectado_em) FROM conexoes c2 WHERE c2.lead_id = l.id), l.conectado_em)';
 
-    $qN = db()->prepare("SELECT COUNT(*) FROM leads l WHERE l.roteador IN ($ph) AND $primeira >= ?");
-    $qN->execute(array_merge($lista, [$iniSem]));
-    $novos = (int) $qN->fetchColumn();
+    // Contagens de um período que começa em $ini.
+    $recorrencia = function (string $ini) use ($lista, $ph, $primeira): array {
+        $qN = db()->prepare("SELECT COUNT(*) FROM leads l WHERE l.roteador IN ($ph) AND $primeira >= ?");
+        $qN->execute(array_merge($lista, [$ini]));
+        $novos = (int) $qN->fetchColumn();
 
-    $qA = db()->prepare("SELECT COUNT(*) FROM leads l WHERE l.roteador IN ($ph) AND $primeira < ?");
-    $qA->execute(array_merge($lista, [$iniSem]));
-    $antigos = (int) $qA->fetchColumn();
+        $qA = db()->prepare("SELECT COUNT(*) FROM leads l WHERE l.roteador IN ($ph) AND $primeira < ?");
+        $qA->execute(array_merge($lista, [$ini]));
+        $antigos = (int) $qA->fetchColumn();
 
-    $qR = db()->prepare(
-        "SELECT COUNT(DISTINCT l.id) FROM leads l
-           JOIN conexoes c ON c.lead_id = l.id AND c.conectado_em >= ?
-          WHERE l.roteador IN ($ph) AND $primeira < ?"
-    );
-    $qR->execute(array_merge([$iniSem], $lista, [$iniSem]));
-    $revisitaram = (int) $qR->fetchColumn();
+        $qR = db()->prepare(
+            "SELECT COUNT(DISTINCT l.id) FROM leads l
+               JOIN conexoes c ON c.lead_id = l.id AND c.conectado_em >= ?
+              WHERE l.roteador IN ($ph) AND $primeira < ?"
+        );
+        $qR->execute(array_merge([$ini], $lista, [$ini]));
+        $rev = (int) $qR->fetchColumn();
 
-    // Visitas = conexões no período.
+        return [
+            'total'           => $antigos + $novos,
+            'revisitaram'     => $rev,
+            'nao_revisitaram' => max(0, $antigos - $rev),
+            'novos'           => $novos,
+        ];
+    };
+
+    // Visitas = conexões no período (variação só da semana).
     $qV = db()->prepare(
         "SELECT
             SUM(c.conectado_em >= ?) AS atual,
@@ -83,10 +97,9 @@ try {
 
     echo json_encode([
         'ok'              => true,
-        'total'           => $antigos + $novos,
-        'revisitaram'     => $revisitaram,
-        'nao_revisitaram' => max(0, $antigos - $revisitaram),
-        'novos'           => $novos,
+        'mes'             => $recorrencia($iniMes),
+        'semana'          => $recorrencia($iniSem),
+        'dia'             => $recorrencia($iniDia),
         'visitas_semana'  => $atual,
         'visitas_passada' => $passada,
         'pct'             => $pct,
