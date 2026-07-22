@@ -92,7 +92,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <meta name="format-detection" content="telephone=no">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Leads — <?= h($cliente['nome'] ?: $cliente['email']) ?></title>
-    <link rel="stylesheet" href="assets/style.css?v=58">
+    <link rel="stylesheet" href="assets/style.css?v=59">
 </head>
 <body class="painel-cliente">
     <!-- Camadas de fundo (decorativas) -->
@@ -115,6 +115,10 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                 <button type="button" class="pc-side-item" data-aba="dashboard">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
                     Dashboard
+                </button>
+                <button type="button" class="pc-side-item" data-aba="informacoes">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+                    Informações
                 </button>
                 <button type="button" class="pc-side-item" data-aba="relatorios">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M7 16v-5"/><path d="M12 16V8"/><path d="M17 16v-8"/></svg>
@@ -306,13 +310,27 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                 </div>
             </section>
 
-            <!-- ============ ABA: DASHBOARD (hábitos de um lead) ============ -->
+            <!-- ============ ABA: DASHBOARD (visão geral da semana) ============ -->
             <section class="pc-tela" data-tela="dashboard">
                 <div class="glow-card pc-dst-card">
                     <span class="glow-fx" aria-hidden="true"></span>
                     <div class="glow-body">
+                        <div class="pc-dst" id="dashgeral-box" data-endpoint="api/dashboard_geral.php?<?= $rotAtivo !== null ? 'roteador=' . urlencode($rotAtivo) : 'cliente_id=' . (int) $id ?>">
+                            <h2 class="pc-anuncio-title">Recorrência da semana</h2>
+                            <p class="pc-anuncio-desc">Todos os leads: quem revisitou o estabelecimento nesta semana, quem ainda não voltou e quem apareceu pela primeira vez.</p>
+                            <div id="dg-conteudo"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============ ABA: INFORMAÇÕES (hábitos de um lead) ============ -->
+            <section class="pc-tela" data-tela="informacoes">
+                <div class="glow-card pc-dst-card">
+                    <span class="glow-fx" aria-hidden="true"></span>
+                    <div class="glow-body">
                         <div class="pc-dst" id="dashboard-box" data-endpoint="api/dashboard.php?<?= $rotAtivo !== null ? 'roteador=' . urlencode($rotAtivo) : 'cliente_id=' . (int) $id ?>">
-                            <h2 class="pc-anuncio-title">Dashboard do lead</h2>
+                            <h2 class="pc-anuncio-title">Informações do lead</h2>
                             <p class="pc-anuncio-desc">Digite o número de um lead para ver os hábitos de visita dele — ou clique com o botão direito num lead na aba Painel e escolha "Informações".</p>
                             <div class="pc-dst-form">
                                 <input type="tel" id="dash-tel" class="pc-dst-input" inputmode="numeric" placeholder="48999999999" aria-label="Número do lead">
@@ -568,8 +586,9 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <script src="assets/abas.js?v=2"></script>
     <script src="assets/relatorio.js?v=7"></script>
     <script src="assets/dashboard.js?v=8"></script>
+    <script src="assets/dashgeral.js?v=1"></script>
     <script src="assets/estatisticas.js?v=3"></script>
-    <script src="assets/leads-live.js?v=24"></script>
+    <script src="assets/leads-live.js?v=25"></script>
     <?php require __DIR__ . '/inc/tema.php'; ?>
 </body>
 </html>

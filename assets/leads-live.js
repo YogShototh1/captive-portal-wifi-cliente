@@ -272,7 +272,7 @@
                 else if (acao === 'excluir') { excluirLead(alvo); }
                 else if (acao === 'info') {
                     // Abre a aba Dashboard já consultando este lead.
-                    if (window.cdAbrirAba) window.cdAbrirAba('dashboard');
+                    if (window.cdAbrirAba) window.cdAbrirAba('informacoes');
                     if (window.cdDashboardConsultar) window.cdDashboardConsultar(alvo.getAttribute('data-tel') || '');
                 }
             });
