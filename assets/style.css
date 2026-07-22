@@ -1359,3 +1359,24 @@ html[data-tema="claro"] .rel-wa { color: var(--g-fg); }
 /* --- Paginação --- */
 html[data-tema="claro"] .pc-pag-btn { background: rgba(255,255,255,0.6); border-color: rgba(15,23,42,0.14); color: var(--g-fg2); }
 html[data-tema="claro"] .pc-pag-btn.atual { background: var(--g-cyan); border-color: var(--g-cyan); color: #fff; }
+
+/* --- Correções de contraste no claro: ícones/textos que ficavam brancos sobre branco --- */
+/* Ícone do topo do card de login/form (era branco -> invisível) + seu anel */
+html[data-tema="claro"] .login-screen .lp-logo {
+    color: var(--g-fg);
+    border-color: rgba(15,23,42,0.14);
+    background: linear-gradient(to bottom right, rgba(15,23,42,0.06), transparent);
+}
+html[data-tema="claro"] .login-screen .lp-field:focus-within .lp-field-icon { color: var(--g-cyan); }
+/* Links utilitários */
+html[data-tema="claro"] .link { color: var(--g-cyan); }
+html[data-tema="claro"] .link:hover { color: var(--g-fg); }
+html[data-tema="claro"] .painel-cliente .pc-link:hover { color: var(--g-fg); }
+/* Rótulo "cliente" e badge "admin" da lista de contas */
+html[data-tema="claro"] .painel-cliente .pc-tipo-cliente { color: var(--g-fg3); }
+html[data-tema="claro"] .painel-cliente .pc-badge {
+    color: var(--g-cyan); background: rgba(8,145,178,0.10); border-color: rgba(8,145,178,0.35);
+}
+/* Hover das células editáveis (tempo/banda) ia para branco */
+html[data-tema="claro"] .painel-cliente td.pc-limite:hover,
+html[data-tema="claro"] .painel-cliente td.pc-banda:hover { color: var(--g-fg); }
