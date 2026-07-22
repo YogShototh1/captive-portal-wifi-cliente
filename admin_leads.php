@@ -92,7 +92,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <meta name="format-detection" content="telephone=no">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Leads — <?= h($cliente['nome'] ?: $cliente['email']) ?></title>
-    <link rel="stylesheet" href="assets/style.css?v=61">
+    <link rel="stylesheet" href="assets/style.css?v=62">
 </head>
 <body class="painel-cliente">
     <!-- Camadas de fundo (decorativas) -->
@@ -364,6 +364,11 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                                         <button type="button" class="rt-item rel-item" data-tipo="hora"><span>Acessos por horário</span></button>
                                         <button type="button" class="rt-item rel-item" data-tipo="clientes_dias"><span>Clientes - Dias</span></button>
                                         <button type="button" class="rt-item rel-item" data-tipo="clientes_tempo"><span>Clientes - Tempo</span></button>
+                                        <button type="button" class="rt-item rel-item" data-tipo="sumidos"><span>Clientes sumidos</span></button>
+                                        <button type="button" class="rt-item rel-item" data-tipo="ranking"><span>Ranking de fidelidade</span></button>
+                                        <button type="button" class="rt-item rel-item" data-tipo="mapa"><span>Mapa semana &times; hora</span></button>
+                                        <button type="button" class="rt-item rel-item" data-tipo="aniversario"><span>Aniversários de cliente</span></button>
+                                        <button type="button" class="rt-item rel-item" data-tipo="intervalo"><span>Intervalo de retorno</span></button>
                                     </div>
                                 </details>
                                 <input type="text" id="rel-inicio" class="pc-dst-input rel-data" readonly inputmode="none" placeholder="dd/mm/aaaa"
@@ -584,7 +589,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     </div>
 
     <script src="assets/abas.js?v=2"></script>
-    <script src="assets/relatorio.js?v=7"></script>
+    <script src="assets/relatorio.js?v=8"></script>
     <script src="assets/dashboard.js?v=8"></script>
     <script src="assets/dashgeral.js?v=5"></script>
     <script src="assets/estatisticas.js?v=3"></script>

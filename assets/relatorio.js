@@ -19,7 +19,12 @@
         semana: 'Acessos por dia da semana',
         hora: 'Acessos por horário',
         clientes_dias: 'Clientes - Dias',
-        clientes_tempo: 'Clientes - Tempo'
+        clientes_tempo: 'Clientes - Tempo',
+        sumidos: 'Clientes sumidos',
+        ranking: 'Ranking de fidelidade',
+        mapa: 'Mapa semana × hora',
+        aniversario: 'Aniversários de cliente',
+        intervalo: 'Intervalo de retorno'
     };
     var DIAS  = { 1: 'Dom', 2: 'Seg', 3: 'Ter', 4: 'Qua', 5: 'Qui', 6: 'Sex', 7: 'Sáb' }; // DAYOFWEEK do MySQL
     var tipo  = null;
@@ -122,7 +127,99 @@
         grafico.innerHTML = html;
     }
 
+    function fmtD(iso) { return String(iso || '').split('-').reverse().join('/'); }
+    function vazio() { grafico.innerHTML = '<p class="pc-anuncio-desc">Nenhum resultado no período selecionado.</p>'; }
+
+    // Clientes sumidos: barra = dias sem vir; direita = visitas e última visita.
+    function renderSumidos(d) {
+        if (!d.lista || !d.lista.length) return vazio();
+        var max = 0, i;
+        for (i = 0; i < d.lista.length; i++) max = Math.max(max, d.lista[i].dias);
+        var html = resumoHTML(d, d.total + ' cliente(s) sumido(s)');
+        for (i = 0; i < d.lista.length; i++) {
+            var it = d.lista[i];
+            html += linhaHTML(waLink(it.telefone, it.nome),
+                it.dias + (it.dias === 1 ? ' dia sem vir' : ' dias sem vir'),
+                it.visitas + ' visitas · últ. ' + fmtD(it.ultima),
+                max ? (it.dias * 100 / max) : 0, true);
+        }
+        grafico.innerHTML = html;
+    }
+
+    // Ranking de fidelidade: top 20 por acessos no período.
+    function renderRanking(d) {
+        if (!d.lista || !d.lista.length) return vazio();
+        var max = d.lista[0].valor || 1;
+        var html = resumoHTML(d, 'top ' + d.total + ' cliente(s)');
+        for (var i = 0; i < d.lista.length; i++) {
+            var it = d.lista[i];
+            html += linhaHTML((i + 1) + 'º ' + waLink(it.telefone, it.nome),
+                it.valor + (it.valor === 1 ? ' acesso' : ' acessos'),
+                'últ. ' + fmtD(it.ultima),
+                it.valor * 100 / max, true);
+        }
+        grafico.innerHTML = html;
+    }
+
+    // Aniversários: marcos de 3/6/12 meses da 1ª conexão dentro do período.
+    function renderAniversario(d) {
+        if (!d.lista || !d.lista.length) return vazio();
+        var html = resumoHTML(d, d.total + ' marco(s)');
+        for (var i = 0; i < d.lista.length; i++) {
+            var it = d.lista[i];
+            html += linhaHTML(waLink(it.telefone, it.nome),
+                it.meses + ' meses de cliente',
+                'em ' + fmtD(it.data),
+                it.meses * 100 / 12, true);
+        }
+        grafico.innerHTML = html;
+    }
+
+    // Intervalo de retorno: faixas do intervalo médio entre visitas + mediana.
+    function renderIntervalo(d) {
+        if (!d.total) return vazio();
+        var LBL = ['volta em 1-2 dias', '3-4 dias', '5-7 dias', '8-14 dias', '15-30 dias', '31+ dias'];
+        var vals = d.faixas || [];
+        var max = Math.max.apply(null, vals.concat([1]));
+        var ps = pcts1(vals);
+        var html = resumoHTML(d, d.total + ' cliente(s) com 2+ visitas');
+        html += '<p class="rel-resumo">Cliente típico volta a cada <b>' +
+            String(d.mediana).replace('.', ',') + ' dia(s)</b> (mediana).</p>';
+        for (var i = 0; i < vals.length; i++) {
+            if (!vals[i]) continue;
+            html += linhaHTML(LBL[i], fmtNum(vals[i]) + ' cliente(s)', fmtPct(ps[i]), vals[i] * 100 / max);
+        }
+        grafico.innerHTML = html;
+    }
+
+    // Mapa semana × hora: grade de calor (intensidade = acessos).
+    function renderMapa(d) {
+        if (!d.total) return vazio();
+        var DIAS_MAPA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']; // DAYOFWEEK 1..7
+        var max = 0, k;
+        for (k in d.grade) { if (d.grade[k] > max) max = d.grade[k]; }
+        var html = resumoHTML(d, d.total + ' acesso(s)') + '<div class="rel-mapa-wrap"><div class="rel-mapa">';
+        html += '<span class="rm-rot"></span>';
+        for (var h = 0; h < 24; h++) html += '<span class="rm-hora">' + (h % 3 === 0 ? h : '') + '</span>';
+        for (var dw = 1; dw <= 7; dw++) {
+            html += '<span class="rm-rot">' + DIAS_MAPA[dw - 1] + '</span>';
+            for (h = 0; h < 24; h++) {
+                var n = d.grade[dw + '-' + h] || 0;
+                var a = n ? (0.15 + 0.85 * n / max) : 0;
+                html += '<span class="rm-cel"' +
+                    (n ? ' style="background:rgba(34,211,238,' + a.toFixed(2) + ')"' : '') +
+                    ' title="' + DIAS_MAPA[dw - 1] + ' ' + (h < 10 ? '0' : '') + h + 'h — ' + n + ' acesso(s)"></span>';
+            }
+        }
+        grafico.innerHTML = html + '</div></div>';
+    }
+
     function render(d) {
+        if (d.tipo === 'sumidos')     return renderSumidos(d);
+        if (d.tipo === 'ranking')     return renderRanking(d);
+        if (d.tipo === 'aniversario') return renderAniversario(d);
+        if (d.tipo === 'intervalo')   return renderIntervalo(d);
+        if (d.tipo === 'mapa')        return renderMapa(d);
         if (d.lista) return renderLista(d); // relatórios por cliente
         // Linhas fixas: 7 dias ou 24 horas — bucket ausente = 0 acessos.
         var chaves = [], rotulo;

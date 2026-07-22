@@ -32,7 +32,8 @@ if ($isAdmin) {
 }
 
 $tipo = (string) ($_GET['tipo'] ?? 'semana');
-if (!in_array($tipo, ['semana', 'hora', 'clientes_dias', 'clientes_tempo'], true)) {
+if (!in_array($tipo, ['semana', 'hora', 'clientes_dias', 'clientes_tempo',
+                      'sumidos', 'ranking', 'mapa', 'aniversario', 'intervalo'], true)) {
     $tipo = 'semana';
 }
 
@@ -85,6 +86,187 @@ if ($tipo === 'clientes_dias' || $tipo === 'clientes_tempo') {
         'total'  => count($itens),
         'lista'  => $itens,
     ]));
+}
+
+$ph  = $lista ? implode(',', array_fill(0, count($lista), '?')) : '';
+$sai = function (array $extra) use ($tipo, $inicio, $fim) {
+    exit(json_encode(['ok' => true, 'tipo' => $tipo, 'inicio' => $inicio, 'fim' => $fim] + $extra));
+};
+
+// --- Clientes sumidos: >=3 visitas na vida e a ÚLTIMA visita caiu no período
+//     (ou seja, sumiram desde então). valor = dias sem vir (até hoje). ---
+if ($tipo === 'sumidos') {
+    $itens = [];
+    if ($lista) {
+        try {
+            $q = db()->prepare(
+                "SELECT l.telefone, l.nome, COUNT(c.id) AS visitas, MAX(c.conectado_em) AS ultima
+                   FROM leads l JOIN conexoes c ON c.lead_id = l.id
+                  WHERE l.roteador IN ($ph)
+                  GROUP BY l.id, l.telefone, l.nome
+                 HAVING COUNT(c.id) >= 3
+                    AND MAX(c.conectado_em) >= ? AND MAX(c.conectado_em) < DATE_ADD(?, INTERVAL 1 DAY)
+                  ORDER BY ultima ASC
+                  LIMIT 500"
+            );
+            $q->execute(array_merge($lista, [$inicio, $fim]));
+            foreach ($q->fetchAll() as $r) {
+                $itens[] = [
+                    'telefone' => (string) $r['telefone'],
+                    'nome'     => ($r['nome'] !== null && $r['nome'] !== '') ? (string) $r['nome'] : null,
+                    'visitas'  => (int) $r['visitas'],
+                    'ultima'   => substr((string) $r['ultima'], 0, 10),
+                    'dias'     => max(0, (int) floor((strtotime($hoje) - strtotime(substr((string) $r['ultima'], 0, 10))) / 86400)),
+                ];
+            }
+        } catch (Throwable $e) {
+            http_response_code(500);
+            exit(json_encode(['ok' => false, 'erro' => 'falha ao gerar o relatorio']));
+        }
+    }
+    $sai(['total' => count($itens), 'lista' => $itens]);
+}
+
+// --- Ranking de fidelidade: top 20 por acessos (conexões) no período. ---
+if ($tipo === 'ranking') {
+    $itens = [];
+    if ($lista) {
+        try {
+            $q = db()->prepare(
+                "SELECT l.telefone, l.nome, COUNT(*) AS v, MAX(c.conectado_em) AS ultima
+                   FROM conexoes c JOIN leads l ON l.id = c.lead_id
+                  WHERE l.roteador IN ($ph)
+                    AND c.conectado_em >= ? AND c.conectado_em < DATE_ADD(?, INTERVAL 1 DAY)
+                  GROUP BY c.lead_id, l.telefone, l.nome
+                  ORDER BY v DESC, l.telefone
+                  LIMIT 20"
+            );
+            $q->execute(array_merge($lista, [$inicio, $fim]));
+            foreach ($q->fetchAll() as $r) {
+                $itens[] = [
+                    'telefone' => (string) $r['telefone'],
+                    'nome'     => ($r['nome'] !== null && $r['nome'] !== '') ? (string) $r['nome'] : null,
+                    'valor'    => (int) $r['v'],
+                    'ultima'   => substr((string) $r['ultima'], 0, 10),
+                ];
+            }
+        } catch (Throwable $e) {
+            http_response_code(500);
+            exit(json_encode(['ok' => false, 'erro' => 'falha ao gerar o relatorio']));
+        }
+    }
+    $sai(['total' => count($itens), 'lista' => $itens]);
+}
+
+// --- Mapa semana × hora: conexões do período por (dia da semana, hora). ---
+if ($tipo === 'mapa') {
+    $grade = []; // "d-h" => n (d = DAYOFWEEK 1..7, 1=domingo; h = 0..23)
+    $total = 0;
+    if ($lista) {
+        try {
+            $q = db()->prepare(
+                "SELECT DAYOFWEEK(c.conectado_em) AS d, HOUR(c.conectado_em) AS h, COUNT(*) AS n
+                   FROM conexoes c JOIN leads l ON l.id = c.lead_id
+                  WHERE l.roteador IN ($ph)
+                    AND c.conectado_em >= ? AND c.conectado_em < DATE_ADD(?, INTERVAL 1 DAY)
+                  GROUP BY d, h"
+            );
+            $q->execute(array_merge($lista, [$inicio, $fim]));
+            foreach ($q->fetchAll() as $r) {
+                $grade[$r['d'] . '-' . $r['h']] = (int) $r['n'];
+                $total += (int) $r['n'];
+            }
+        } catch (Throwable $e) {
+            http_response_code(500);
+            exit(json_encode(['ok' => false, 'erro' => 'falha ao gerar o relatorio']));
+        }
+    }
+    $sai(['total' => $total, 'grade' => $grade]);
+}
+
+// --- Aniversários: marcos de 3/6/12 meses da 1ª conexão caindo no período. ---
+if ($tipo === 'aniversario') {
+    $itens = [];
+    if ($lista) {
+        try {
+            $q = db()->prepare(
+                "SELECT l.telefone, l.nome,
+                        COALESCE(l.primeira_conexao, (SELECT MIN(c2.conectado_em) FROM conexoes c2 WHERE c2.lead_id = l.id), l.conectado_em) AS p
+                   FROM leads l WHERE l.roteador IN ($ph)"
+            );
+            $q->execute($lista);
+            foreach ($q->fetchAll() as $r) {
+                if ($r['p'] === null) { continue; }
+                $p = substr((string) $r['p'], 0, 10);
+                foreach ([3, 6, 12] as $m) {
+                    $marco = date('Y-m-d', strtotime($p . " +$m month"));
+                    if ($marco >= $inicio && $marco <= $fim) {
+                        $itens[] = [
+                            'telefone' => (string) $r['telefone'],
+                            'nome'     => ($r['nome'] !== null && $r['nome'] !== '') ? (string) $r['nome'] : null,
+                            'meses'    => $m,
+                            'data'     => $marco,
+                        ];
+                    }
+                }
+            }
+            usort($itens, function ($a, $b) { return strcmp($a['data'], $b['data']); });
+            $itens = array_slice($itens, 0, 500);
+        } catch (Throwable $e) {
+            http_response_code(500);
+            exit(json_encode(['ok' => false, 'erro' => 'falha ao gerar o relatorio']));
+        }
+    }
+    $sai(['total' => count($itens), 'lista' => $itens]);
+}
+
+// --- Intervalo de retorno: por cliente com >=2 dias de visita no período,
+//     média de dias entre visitas consecutivas; distribuição em faixas + mediana. ---
+if ($tipo === 'intervalo') {
+    $faixas = [0, 0, 0, 0, 0, 0]; // 1-2 / 3-4 / 5-7 / 8-14 / 15-30 / 31+
+    $medias = [];
+    if ($lista) {
+        try {
+            $q = db()->prepare(
+                "SELECT c.lead_id, DATE(c.conectado_em) AS d
+                   FROM conexoes c JOIN leads l ON l.id = c.lead_id
+                  WHERE l.roteador IN ($ph)
+                    AND c.conectado_em >= ? AND c.conectado_em < DATE_ADD(?, INTERVAL 1 DAY)
+                  GROUP BY c.lead_id, d
+                  ORDER BY c.lead_id, d"
+            );
+            $q->execute(array_merge($lista, [$inicio, $fim]));
+            $porLead = [];
+            foreach ($q->fetchAll() as $r) {
+                $porLead[(int) $r['lead_id']][] = strtotime((string) $r['d']);
+            }
+            foreach ($porLead as $dias) {
+                if (count($dias) < 2) { continue; }
+                $soma = 0;
+                for ($i = 1; $i < count($dias); $i++) {
+                    $soma += ($dias[$i] - $dias[$i - 1]) / 86400;
+                }
+                $media = $soma / (count($dias) - 1);
+                $medias[] = $media;
+                if     ($media <= 2)  { $faixas[0]++; }
+                elseif ($media <= 4)  { $faixas[1]++; }
+                elseif ($media <= 7)  { $faixas[2]++; }
+                elseif ($media <= 14) { $faixas[3]++; }
+                elseif ($media <= 30) { $faixas[4]++; }
+                else                  { $faixas[5]++; }
+            }
+        } catch (Throwable $e) {
+            http_response_code(500);
+            exit(json_encode(['ok' => false, 'erro' => 'falha ao gerar o relatorio']));
+        }
+    }
+    $mediana = 0;
+    if ($medias) {
+        sort($medias);
+        $n = count($medias);
+        $mediana = round($n % 2 ? $medias[intdiv($n, 2)] : ($medias[$n / 2 - 1] + $medias[$n / 2]) / 2, 1);
+    }
+    $sai(['total' => count($medias), 'faixas' => $faixas, 'mediana' => $mediana]);
 }
 
 $buckets = [];
