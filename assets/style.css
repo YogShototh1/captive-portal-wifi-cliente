@@ -845,6 +845,14 @@ a.pc-pag-btn:hover { background: rgba(34,211,238, 0.2); border-color: #22d3ee; c
        globo — o overflow:hidden geral a cortava. Aqui o overflow fica visível
        (data/hora são curtas, não precisam de ellipsis). */
     .painel-cliente tbody td:nth-child(4) { overflow: visible; }
+    /* Lista de contas do admin (6 células: nome/e-mail/mikrotik na 1ª linha,
+       leads/tipo na 2ª): as AÇÕES (ver leads / editar / excluir) ganham a 3ª
+       linha inteira — antes ficavam espremidas numa célula e viravam "…". */
+    .painel-cliente td.pc-actions {
+        grid-column: 1 / -1; overflow: visible; white-space: normal;
+        display: flex; align-items: center; gap: 18px;
+    }
+    .painel-cliente td.pc-actions .pc-link { margin-right: 0; }
     /* Linha "nenhum lead" volta a ser bloco normal */
     .painel-cliente tbody tr.pc-empty-row { display: block; }
     .painel-cliente tbody tr.pc-empty-row td { white-space: normal; }
