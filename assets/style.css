@@ -841,6 +841,10 @@ a.pc-pag-btn:hover { background: rgba(34,211,238, 0.2); border-color: #22d3ee; c
         display: block; padding: 0; border: none; min-width: 0;
         font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
+    /* Célula da conexão (4ª): o badge de contagem sobe 6px ACIMA do ícone do
+       globo — o overflow:hidden geral a cortava. Aqui o overflow fica visível
+       (data/hora são curtas, não precisam de ellipsis). */
+    .painel-cliente tbody td:nth-child(4) { overflow: visible; }
     /* Linha "nenhum lead" volta a ser bloco normal */
     .painel-cliente tbody tr.pc-empty-row { display: block; }
     .painel-cliente tbody tr.pc-empty-row td { white-space: normal; }
