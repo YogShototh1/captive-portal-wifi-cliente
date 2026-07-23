@@ -1,11 +1,8 @@
 <?php
 // Dashboard geral (todos os leads): recorrência por período (mês, semana, dia).
-// Para cada período:
-//   revisitaram    = clientes antigos (1ª conexão antes do período) que voltaram nele
-//   nao_revisitaram= clientes antigos que ainda não voltaram nele
-//   novos          = clientes cuja 1ª conexão foi no período
-// Visitas (conexões) desta semana vs o MESMO trecho da semana passada -> % de variação
-// (comparar com a semana passada inteira faria toda segunda começar "no vermelho").
+// Comparação justa: período atual até AGORA vs o período anterior truncado no
+// mesmo ponto decorrido (mês passado até o mesmo dia/hora; semana passada de
+// domingo até o mesmo ponto; ontem até a mesma hora).
 // Auth/isolamento igual ao dashboard.php.
 ini_set('display_errors', '0');
 
@@ -39,10 +36,25 @@ if (!$lista) {
 }
 
 try {
-    $agora  = db_now();
-    $hoje00 = date('Y-m-d 00:00:00', strtotime($agora));
-    $diasAtras = function (int $n) use ($hoje00): string {
-        return date('Y-m-d 00:00:00', strtotime($hoje00 . " -$n day"));
+    $agora   = db_now();
+    $agoraTs = strtotime($agora);
+    $hoje00  = date('Y-m-d 00:00:00', $agoraTs);
+
+    // Comparação JUSTA: período atual até agora vs o período anterior truncado
+    // no MESMO ponto decorrido.
+    //   mês:    dia 1 -> agora           vs mês passado dia 1 -> mesmo dia/hora
+    //   semana: DOMINGO -> agora         vs semana passada domingo -> mesmo ponto
+    //   dia:    hoje 00:00 -> agora      vs ontem 00:00 -> mesma hora
+    $iniMes = date('Y-m-01 00:00:00', $agoraTs);
+    $iniSem = date('Y-m-d 00:00:00', strtotime($hoje00 . ' -' . (int) date('w', $agoraTs) . ' day')); // domingo
+    $iniDia = $hoje00;
+    $iniMesAnt = date('Y-m-01 00:00:00', strtotime($iniMes . ' -1 day')); // dia 1 do mês passado
+    $iniSemAnt = date('Y-m-d H:i:s', strtotime($iniSem . ' -7 day'));
+    $iniDiaAnt = date('Y-m-d H:i:s', strtotime($iniDia . ' -1 day'));
+    // Fim da janela anterior = início dela + tempo decorrido do período atual.
+    // (No dia 31, o "mesmo dia" de um mês de 30 transborda 1 dia — caso raro, aceito.)
+    $fimAnt = function (string $ini, string $iniAnt) use ($agoraTs): string {
+        return date('Y-m-d H:i:s', strtotime($iniAnt) + ($agoraTs - strtotime($ini)));
     };
 
     $ph = implode(',', array_fill(0, count($lista), '?'));
@@ -50,18 +62,18 @@ try {
     // caem no MIN(conexoes) e, sem histórico, no conectado_em.
     $primeira = 'COALESCE(l.primeira_conexao, (SELECT MIN(c2.conectado_em) FROM conexoes c2 WHERE c2.lead_id = l.id), l.conectado_em)';
 
-    // Um período = janela ATUAL [iniAtual, agora] vs janela ANTERIOR [iniAnt, iniAtual).
+    // Janela ATUAL [iniAtual, agora] vs janela ANTERIOR truncada [iniAnt, fimAnt).
     //   revisitaram     = visitaram na anterior E voltaram na atual
     //   nao_revisitaram = visitaram na anterior e (ainda) não voltaram na atual
     //   novos           = 1ª conexão dentro da janela atual
     //   pct             = conexões da atual vs conexões da anterior
-    $periodo = function (string $iniAnt, string $iniAtual) use ($lista, $ph, $primeira): array {
+    $periodo = function (string $iniAnt, string $fimAntStr, string $iniAtual) use ($lista, $ph, $primeira): array {
         $qB = db()->prepare(
             "SELECT COUNT(DISTINCT l.id) FROM leads l
                JOIN conexoes c ON c.lead_id = l.id AND c.conectado_em >= ? AND c.conectado_em < ?
               WHERE l.roteador IN ($ph)"
         );
-        $qB->execute(array_merge([$iniAnt, $iniAtual], $lista));
+        $qB->execute(array_merge([$iniAnt, $fimAntStr], $lista));
         $anteriores = (int) $qB->fetchColumn();
 
         $qR = db()->prepare(
@@ -70,7 +82,7 @@ try {
                JOIN conexoes cb ON cb.lead_id = l.id AND cb.conectado_em >= ? AND cb.conectado_em < ?
               WHERE l.roteador IN ($ph)"
         );
-        $qR->execute(array_merge([$iniAtual, $iniAnt, $iniAtual], $lista));
+        $qR->execute(array_merge([$iniAtual, $iniAnt, $fimAntStr], $lista));
         $rev = (int) $qR->fetchColumn();
 
         $qN = db()->prepare("SELECT COUNT(*) FROM leads l WHERE l.roteador IN ($ph) AND $primeira >= ?");
@@ -84,7 +96,7 @@ try {
                FROM conexoes c JOIN leads l ON l.id = c.lead_id
               WHERE l.roteador IN ($ph)"
         );
-        $qV->execute(array_merge([$iniAtual, $iniAnt, $iniAtual], $lista));
+        $qV->execute(array_merge([$iniAtual, $iniAnt, $fimAntStr], $lista));
         $v = $qV->fetch();
         $atual   = (int) ($v['atual'] ?? 0);
         $passada = (int) ($v['passada'] ?? 0);
@@ -102,12 +114,9 @@ try {
 
     echo json_encode([
         'ok'     => true,
-        // mês: últimos 30 dias (contando hoje) vs os 30 anteriores
-        'mes'    => $periodo($diasAtras(59), $diasAtras(29)),
-        // semana: últimos 7 dias (contando hoje) vs os 7 anteriores
-        'semana' => $periodo($diasAtras(13), $diasAtras(6)),
-        // dia: hoje vs ontem
-        'dia'    => $periodo($diasAtras(1), $hoje00),
+        'mes'    => $periodo($iniMesAnt, $fimAnt($iniMes, $iniMesAnt), $iniMes),
+        'semana' => $periodo($iniSemAnt, $fimAnt($iniSem, $iniSemAnt), $iniSem),
+        'dia'    => $periodo($iniDiaAnt, $fimAnt($iniDia, $iniDiaAnt), $iniDia),
     ]);
 } catch (Throwable $e) {
     http_response_code(500);
