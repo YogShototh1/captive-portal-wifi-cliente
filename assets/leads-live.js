@@ -184,15 +184,17 @@
     var modal      = document.getElementById('conexoes-modal');
     var modalTel   = document.getElementById('conexoes-tel');
     var modalLista = document.getElementById('conexoes-lista');
+    var modalNav   = document.getElementById('conexoes-nav'); // setas FORA da área que corta
     var modalLead  = null; // lead aberto no modal (para as setas refazerem o fetch)
     var modalPorPag = 10;  // recalculado a cada abertura conforme a altura da tela
     // Quantas linhas cabem SEM rolar. O modal (.pc-modal-body) não tem scroll:
     // a lista é paginada pra caber. Estimativa CONSERVADORA — parte fixa ~170px
-    // (cabeçalho + header da lista + setas + margem) e linha contada como 46px
-    // (real ~42) pra sobrar folga e nunca estourar (senão cortaria linha).
+    // (cabeçalho + header da lista + setas + margem). Linha: 46px no desktop;
+    // no celular 62px, porque "120 MB" etc. quebram em 2 linhas na coluna estreita.
     function conexoesPorPagina() {
+        var linha = window.innerWidth <= 600 ? 62 : 46;
         var util = Math.min(window.innerHeight * 0.8, window.innerHeight - 40) - 170;
-        return Math.max(3, Math.min(15, Math.floor(util / 46)));
+        return Math.max(3, Math.min(15, Math.floor(util / linha)));
     }
     function fecharModal() {
         if (modal) { modal.classList.remove('aberto'); modal.setAttribute('aria-hidden', 'true'); }
@@ -201,6 +203,7 @@
         if (!modal || !EP_CONEXOES) return;
         modalLead = leadId;
         modalLista.innerHTML = '<p class="pc-modal-info">Carregando…</p>';
+        if (modalNav) modalNav.innerHTML = '';
         modal.classList.add('aberto');
         modal.setAttribute('aria-hidden', 'false');
         fetch(EP_CONEXOES + '?lead_id=' + encodeURIComponent(leadId) + '&pagina=' + (pagina || 1) + '&por_pagina=' + modalPorPag, { credentials: 'same-origin' })
@@ -217,13 +220,17 @@
                             '<span class="pc-conex-ap">' + esc(c.dispositivo || '—') + '</span></li>';
                 });
                 html += '</ul>';
-                if (d.paginas > 1) {
-                    html += '<div class="pc-conex-nav">' +
-                        (d.pagina > 1 ? '<button type="button" class="pc-conex-seta" data-pag="' + (d.pagina - 1) + '" aria-label="Página anterior">&lsaquo;</button>' : '') +
-                        (d.pagina < d.paginas ? '<button type="button" class="pc-conex-seta" data-pag="' + (d.pagina + 1) + '" aria-label="Próxima página">&rsaquo;</button>' : '') +
-                        '</div>';
-                }
                 modalLista.innerHTML = html;
+                // Setas no container FIXO (fora do corpo com overflow): sempre visíveis,
+                // mesmo se a lista estourar a estimativa e for cortada.
+                if (modalNav) {
+                    modalNav.innerHTML = d.paginas > 1
+                        ? '<div class="pc-conex-nav">' +
+                          (d.pagina > 1 ? '<button type="button" class="pc-conex-seta" data-pag="' + (d.pagina - 1) + '" aria-label="Página anterior">&lsaquo;</button>' : '') +
+                          (d.pagina < d.paginas ? '<button type="button" class="pc-conex-seta" data-pag="' + (d.pagina + 1) + '" aria-label="Próxima página">&rsaquo;</button>' : '') +
+                          '</div>'
+                        : '';
+                }
             }).catch(function () { modalLista.innerHTML = '<p class="pc-modal-info">Erro ao carregar.</p>'; });
     }
     tbody.addEventListener('click', function (e) {
@@ -234,8 +241,8 @@
             abrirConexoes(btn.getAttribute('data-lead'), 1);
         }
     });
-    if (modalLista) {
-        modalLista.addEventListener('click', function (e) {
+    if (modalNav) {
+        modalNav.addEventListener('click', function (e) {
             var seta = e.target.closest ? e.target.closest('.pc-conex-seta') : null;
             if (seta && modalLead != null) abrirConexoes(modalLead, parseInt(seta.getAttribute('data-pag'), 10) || 1);
         });

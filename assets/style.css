@@ -845,6 +845,11 @@ a.pc-pag-btn:hover { background: rgba(34,211,238, 0.2); border-color: #22d3ee; c
        globo — o overflow:hidden geral a cortava. Aqui o overflow fica visível
        (data/hora são curtas, não precisam de ellipsis). */
     .painel-cliente tbody td:nth-child(4) { overflow: visible; }
+
+    /* Modal de conexões compacto: fontes/paddings menores para "120 MB" etc.
+       quebrarem menos linha (a seta de página fica fora da área que corta). */
+    .pc-conex-head { padding: 10px 14px 8px; gap: 6px; font-size: 10px; }
+    .pc-conex-list li { padding: 11px 14px; gap: 6px; font-size: 12.5px; }
     /* Lista de contas do admin (6 células: nome/e-mail/mikrotik na 1ª linha,
        leads/tipo na 2ª): as AÇÕES (ver leads / editar / excluir) ganham a 3ª
        linha inteira — antes ficavam espremidas numa célula e viravam "…". */
