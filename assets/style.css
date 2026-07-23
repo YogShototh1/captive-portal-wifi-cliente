@@ -821,22 +821,41 @@ a.pc-pag-btn:hover { background: rgba(34,211,238, 0.2); border-color: #22d3ee; c
     /* Mais largura útil: reduz a margem lateral do miolo. */
     .painel-cliente .pc-shell { padding: 18px 10px 40px; }
 
-    /* --- Tabela de leads compacta: cabe mais coluna por tela --- */
+    /* --- Tabela de leads vira "cartão" por cliente: 3 colunas, SEM arrastar
+       de lado (só rolagem vertical). As 8 células fluem no grid de 3 colunas:
+         linha 1: número (WhatsApp) / IP / aparelho
+         linha 2: data (globo) / tempo conectado / consumo
+         linha 3: banda / tempo limite --- */
     .painel-cliente .pc-table-card > .glow-body { padding: 4px; }
-    .painel-cliente table { min-width: 0; }               /* remove o piso de 640px */
-    .painel-cliente thead th {
-        padding: 10px 9px; font-size: 11px; letter-spacing: 0.3px; white-space: nowrap;
+    .painel-cliente .pc-table-wrap { overflow-x: hidden; }
+    .painel-cliente table { min-width: 0; width: 100%; }
+    .painel-cliente table, .painel-cliente tbody { display: block; }
+    .painel-cliente thead { display: none; }
+    .painel-cliente tbody tr {
+        display: grid; grid-template-columns: 1.4fr 1fr 0.95fr;
+        gap: 7px 10px; align-items: center;
+        padding: 12px 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
+    .painel-cliente tbody tr:last-child { border-bottom: none; }
     .painel-cliente tbody td {
-        padding: 11px 9px; font-size: 12.5px; white-space: nowrap;
+        display: block; padding: 0; border: none; min-width: 0;
+        font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    /* Some com o que rouba largura sem necessidade no celular. */
-    .painel-cliente .pc-th-hint { display: none; }
+    /* Linha "nenhum lead" volta a ser bloco normal */
+    .painel-cliente tbody tr.pc-empty-row { display: block; }
+    .painel-cliente tbody tr.pc-empty-row td { white-space: normal; }
+    /* Sem cabeçalho, banda/limite ficam ambíguos ("sem limite" 2x): rótulo antes */
+    .painel-cliente td.pc-banda::before { content: "banda: "; color: rgba(255,255,255,0.45); font-size: 10.5px; }
+    .painel-cliente td.pc-limite::before { content: "tempo: "; color: rgba(255,255,255,0.45); font-size: 10.5px; }
+    html[data-tema="claro"] .painel-cliente tbody tr { border-bottom-color: rgba(15,23,42,0.10); }
+    html[data-tema="claro"] .painel-cliente td.pc-banda::before,
+    html[data-tema="claro"] .painel-cliente td.pc-limite::before { color: var(--g-fg3); }
+    /* Ajustes miúdos dos componentes internos */
     .painel-cliente .pc-dot { width: 6px; height: 6px; margin-right: 5px; }
-    .painel-cliente .pc-ver-conexoes { font-size: 11px; margin-top: 2px; }
-    .painel-cliente .pc-data { font-size: 12.5px; }
+    .painel-cliente .pc-ver-conexoes { font-size: 11px; margin-top: 0; }
+    .painel-cliente .pc-data { font-size: 12px; }
     .painel-cliente td.pc-limite,
-    .painel-cliente td.pc-banda { font-size: 12.5px; }
+    .painel-cliente td.pc-banda { font-size: 12px; }
 
     /* (1) Inputs a 16px no celular: impede o zoom automático do iOS ao focar. */
     .login-screen .lp-field input,
