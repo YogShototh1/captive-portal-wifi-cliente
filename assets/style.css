@@ -833,7 +833,7 @@ a.pc-pag-btn:hover { background: rgba(34,211,238, 0.2); border-color: #22d3ee; c
     .painel-cliente thead { display: none; }
     .painel-cliente tbody tr {
         display: grid; grid-template-columns: 1.4fr 1fr 0.95fr;
-        gap: 7px 10px; align-items: center;
+        gap: 15px 10px; align-items: center; /* respiro vertical: o badge do globo sobe 6px acima do ícone */
         padding: 12px 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
     .painel-cliente tbody tr:last-child { border-bottom: none; }
