@@ -37,10 +37,12 @@
     // À direita da pizza: SOMA de revisitas + novos (clientes que estiveram no
     // período), com linhas-guia saindo do meio dessas duas fatias até o número.
     function donutPeriodo(titulo, d, rotuloVar) {
+        // Cores do tema (navy/cyan): quem esteve no período em tons vivos;
+        // "não revisitaram" apagado (cinza-ardósia) e sempre do lado ESQUERDO.
         var itens = [
-            { k: 'rev', nome: 'Revisitaram',      n: d.revisitaram,     cor: '#06b6d4' },
-            { k: 'nao', nome: 'Não revisitaram', n: d.nao_revisitaram, cor: '#8b5cf6' },
-            { k: 'nov', nome: 'Novos',            n: d.novos,           cor: '#ec4899' }
+            { k: 'rev', nome: 'Revisitaram',      n: d.revisitaram,     cor: '#22d3ee' },
+            { k: 'nao', nome: 'Não revisitaram', n: d.nao_revisitaram, cor: '#64748b' },
+            { k: 'nov', nome: 'Novos',            n: d.novos,           cor: '#3b82f6' }
         ];
         var comDado = itens.filter(function (f) { return f.n > 0; });
         var corpo;
@@ -56,14 +58,18 @@
                 s += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="' + comDado[0].cor + '"/>';
                 if (comDado[0].k !== 'nao') meios[comDado[0].k] = 0; // círculo inteiro: guia sai da direita
             } else {
+                // Desenha rev -> novos -> não, começando de modo que rev+novos
+                // fiquem CENTRADOS no lado direito (perto do número): as guias
+                // saem sempre apontando pro número, sem cruzar outra cor.
+                var ordem = [itens[0], itens[2], itens[1]].filter(function (f) { return f.n > 0; });
                 var total = 0, i;
-                for (i = 0; i < comDado.length; i++) total += comDado[i].n;
-                var ang = -Math.PI / 2;
-                for (i = 0; i < comDado.length; i++) {
-                    var a0 = ang, a1 = ang + comDado[i].n / total * 2 * Math.PI;
+                for (i = 0; i < ordem.length; i++) total += ordem[i].n;
+                var ang = -Math.PI * (soma / total); // arco de rev+novos centrado no ângulo 0 (leste)
+                for (i = 0; i < ordem.length; i++) {
+                    var a0 = ang, a1 = ang + ordem[i].n / total * 2 * Math.PI;
                     var laf = (a1 - a0) > Math.PI ? 1 : 0;
-                    s += '<path d="M' + cx + ' ' + cy + ' L' + pt(r, a0) + ' A' + r + ' ' + r + ' 0 ' + laf + ' 1 ' + pt(r, a1) + ' Z" fill="' + comDado[i].cor + '"/>';
-                    if (comDado[i].k !== 'nao') meios[comDado[i].k] = (a0 + a1) / 2;
+                    s += '<path d="M' + cx + ' ' + cy + ' L' + pt(r, a0) + ' A' + r + ' ' + r + ' 0 ' + laf + ' 1 ' + pt(r, a1) + ' Z" fill="' + ordem[i].cor + '"/>';
+                    if (ordem[i].k !== 'nao') meios[ordem[i].k] = (a0 + a1) / 2;
                     ang = a1;
                 }
             }
