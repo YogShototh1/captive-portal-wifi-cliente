@@ -1101,6 +1101,10 @@ body.pc-menu-fechado .pc-sidebar { margin-left: -232px; }
 .dg-card { flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; }
 .dg-card .dg-var { margin-top: auto; padding-top: 12px; }
 .dg-card .dash-donut { width: 122px; height: 122px; flex: 0 0 auto; }
+/* Pizza cheia com o total (revisitas+novos) à direita e linhas-guia */
+.dg-card .dash-pie { width: 100%; max-width: 250px; height: auto; display: block; flex: 0 0 auto; }
+.dg-guia { stroke: rgba(255, 255, 255, 0.45); stroke-width: 1.4; fill: none; }
+html[data-tema="claro"] .dg-guia { stroke: rgba(15, 23, 42, 0.4); }
 .dg-card .dash-donut-row { justify-content: flex-start; gap: 16px; margin-top: 10px; }
 /* Legenda NUNCA corta nem quebra linha interna: se não couber ao lado do
    donut, o flex-wrap a derruba para BAIXO dele com a largura toda do cartão. */

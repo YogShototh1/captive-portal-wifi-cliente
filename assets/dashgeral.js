@@ -8,14 +8,6 @@
     var out = document.getElementById('dg-conteudo');
     if (!out) return;
 
-    // Setor anelar (mesma geometria do dashboard do lead).
-    function fatiaPath(cx, cy, rO, rI, a0, a1) {
-        function pt(r, a) { return (cx + r * Math.cos(a)).toFixed(2) + ' ' + (cy + r * Math.sin(a)).toFixed(2); }
-        var laf = (a1 - a0) > Math.PI ? 1 : 0;
-        return 'M' + pt(rO, a0) + ' A' + rO + ' ' + rO + ' 0 ' + laf + ' 1 ' + pt(rO, a1) +
-               ' L' + pt(rI, a1) + ' A' + rI + ' ' + rI + ' 0 ' + laf + ' 0 ' + pt(rI, a0) + ' Z';
-    }
-
     // % inteira fechando 100 (maior resto) — igual à legenda do dashboard do lead.
     function pctsInt(vals) {
         var tot = 0, i;
@@ -41,36 +33,49 @@
         return '<p class="dg-var">clientes iguais vs ' + rotulo + par + '</p>';
     }
 
-    // Donut + legenda de um período (revisitaram / não revisitaram / novos).
+    // Pizza (cheia) + legenda de um período (revisitaram / não revisitaram / novos).
+    // À direita da pizza: SOMA de revisitas + novos (clientes que estiveram no
+    // período), com linhas-guia saindo do meio dessas duas fatias até o número.
     function donutPeriodo(titulo, d, rotuloVar) {
         var itens = [
-            { nome: 'Revisitaram',      n: d.revisitaram,     cor: '#06b6d4' },
-            { nome: 'Não revisitaram', n: d.nao_revisitaram, cor: '#8b5cf6' },
-            { nome: 'Novos',            n: d.novos,           cor: '#ec4899' }
+            { k: 'rev', nome: 'Revisitaram',      n: d.revisitaram,     cor: '#06b6d4' },
+            { k: 'nao', nome: 'Não revisitaram', n: d.nao_revisitaram, cor: '#8b5cf6' },
+            { k: 'nov', nome: 'Novos',            n: d.novos,           cor: '#ec4899' }
         ];
         var comDado = itens.filter(function (f) { return f.n > 0; });
         var corpo;
         if (!d.total || !comDado.length) {
             corpo = '<p class="pc-anuncio-desc">Sem dados no período.</p>';
         } else {
-            var cx = 75, cy = 75, rO = 70, rI = 52;
-            var s = '<svg class="dash-donut" viewBox="0 0 150 150">';
+            var cx = 75, cy = 75, r = 70;
+            function pt(rr, a) { return (cx + rr * Math.cos(a)).toFixed(2) + ' ' + (cy + rr * Math.sin(a)).toFixed(2); }
+            var soma = (d.revisitaram || 0) + (d.novos || 0);
+            var meios = {}; // ângulo do meio das fatias rev/nov (p/ as linhas-guia)
+            var s = '<svg class="dash-pie" viewBox="0 0 265 150">';
             if (comDado.length === 1) {
-                s += '<circle cx="' + cx + '" cy="' + cy + '" r="' + ((rO + rI) / 2) + '" fill="none" stroke="' + comDado[0].cor + '" stroke-width="' + (rO - rI) + '"/>';
+                s += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="' + comDado[0].cor + '"/>';
+                if (comDado[0].k !== 'nao') meios[comDado[0].k] = 0; // círculo inteiro: guia sai da direita
             } else {
                 var total = 0, i;
                 for (i = 0; i < comDado.length; i++) total += comDado[i].n;
-                var GAP = 0.035, ang = -Math.PI / 2;
+                var ang = -Math.PI / 2;
                 for (i = 0; i < comDado.length; i++) {
-                    var frac = comDado[i].n / total;
-                    var a0 = ang + GAP / 2, a1 = ang + frac * 2 * Math.PI - GAP / 2;
-                    if (a1 <= a0) a1 = a0 + 0.02;
-                    s += '<path d="' + fatiaPath(cx, cy, rO, rI, a0, a1) + '" fill="' + comDado[i].cor + '"/>';
-                    ang += frac * 2 * Math.PI;
+                    var a0 = ang, a1 = ang + comDado[i].n / total * 2 * Math.PI;
+                    var laf = (a1 - a0) > Math.PI ? 1 : 0;
+                    s += '<path d="M' + cx + ' ' + cy + ' L' + pt(r, a0) + ' A' + r + ' ' + r + ' 0 ' + laf + ' 1 ' + pt(r, a1) + ' Z" fill="' + comDado[i].cor + '"/>';
+                    if (comDado[i].k !== 'nao') meios[comDado[i].k] = (a0 + a1) / 2;
+                    ang = a1;
                 }
             }
-            s += '<text class="dash-donut-centro" x="' + cx + '" y="' + (cy - 2) + '" text-anchor="middle">' + d.total + '</text>';
-            s += '<text class="dash-donut-sub" x="' + cx + '" y="' + (cy + 15) + '" text-anchor="middle">cliente' + (d.total === 1 ? '' : 's') + '</text>';
+            // Linhas-guia: do meio das fatias de revisitas/novos até o número.
+            var alvoX = 190, alvoY = 75;
+            ['rev', 'nov'].forEach(function (k) {
+                if (meios[k] === undefined) return;
+                s += '<line class="dg-guia" x1="' + pt(r * 0.62, meios[k]).replace(' ', '" y1="') + '" x2="' + alvoX + '" y2="' + alvoY + '"/>';
+            });
+            // Número = revisitas + novos ("clientes do período"), à direita.
+            s += '<text class="dash-donut-centro" x="222" y="79" text-anchor="middle">' + soma + '</text>';
+            s += '<text class="dash-donut-sub" x="222" y="96" text-anchor="middle">cliente' + (soma === 1 ? '' : 's') + '</text>';
             s += '</svg>';
 
             var ps = pctsInt(itens.map(function (f) { return f.n; }));

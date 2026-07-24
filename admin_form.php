@@ -93,7 +93,7 @@ $csrf = csrf_token();
     <script>(function(){try{var t=localStorage.getItem('cd-tema');document.documentElement.setAttribute('data-tema',t==='escuro'?'escuro':'claro');}catch(e){document.documentElement.setAttribute('data-tema','claro');}})();</script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $editando ? 'Editar usuário' : 'Novo usuário' ?></title>
-    <link rel="stylesheet" href="assets/style.css?v=72">
+    <link rel="stylesheet" href="assets/style.css?v=73">
 </head>
 <body class="login-screen">
     <div class="lp-bg-gradient"></div>
