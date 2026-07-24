@@ -36,10 +36,19 @@ header('Content-Type: text/plain; charset=utf-8');
 // ponytail: LIMIT 5000 — acima disso o arquivo passa de ~70KB na flash; se um
 // roteador chegar lá, paginar ou reter só os MACs recentes.
 try {
+    // Tabela de "cookies apagados" (auto-criada; pode nao existir ainda).
+    db()->exec(
+        'CREATE TABLE IF NOT EXISTS macs_esquecidos (
+            roteador VARCHAR(120) NOT NULL, mac VARCHAR(20) NOT NULL,
+            PRIMARY KEY (roteador, mac)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+    );
+    // MACs cadastrados do roteador, MENOS os que tiveram os cookies apagados.
     $q = db()->prepare(
         'SELECT DISTINCT c.mac FROM conexoes c
            JOIN leads l ON l.id = c.lead_id
           WHERE l.roteador = ? AND c.mac IS NOT NULL AND c.mac <> ""
+            AND NOT EXISTS (SELECT 1 FROM macs_esquecidos e WHERE e.roteador = l.roteador AND e.mac = c.mac)
           LIMIT 5000'
     );
     $q->execute([$roteador]);

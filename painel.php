@@ -243,6 +243,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                              data-conexoes-endpoint="api/conexoes.php"
                              data-editar-endpoint="api/lead_editar.php"
                              data-excluir-endpoint="api/lead_excluir.php"
+                             data-esquecer-endpoint="api/lead_esquecer.php"
                              data-pagina="<?= $pagina ?>"
                              data-por-pagina="<?= $POR_PAG ?>"
                              data-csrf="<?= h($csrf) ?>">
@@ -598,7 +599,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <script src="assets/dashboard.js?v=10"></script>
     <script src="assets/dashgeral.js?v=12"></script>
     <script src="assets/estatisticas.js?v=3"></script>
-    <script src="assets/leads-live.js?v=26"></script>
+    <script src="assets/leads-live.js?v=27"></script>
     <?php require __DIR__ . '/inc/tema.php'; ?>
 </body>
 </html>

@@ -105,6 +105,13 @@ try {
     $dispositivo = detecta_dispositivo($_SERVER['HTTP_USER_AGENT'] ?? '');
     $agora = db_now();
 
+    // Reabilita o reconhecimento: se este MAC teve os "cookies apagados", registrar
+    // de novo o tira da lista de esquecidos (volta a pular o número na próxima).
+    if ($mac !== null && $mac !== '') {
+        try { db()->prepare('DELETE FROM macs_esquecidos WHERE roteador = ? AND mac = ?')->execute([$roteador, $mac]); }
+        catch (Throwable $e) { /* tabela ainda nao existe: nada a reabilitar */ }
+    }
+
     // Revisita sem telefone: acha o lead pelo MAC (mais recente) e registra.
     if ($telefone === null) {
         if ($mac === null || $mac === '') {

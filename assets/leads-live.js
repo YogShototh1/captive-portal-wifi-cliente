@@ -255,8 +255,9 @@
     }
 
     // --- Menu de contexto na linha (botão direito / segurar no celular) ---
-    var EP_EDITAR  = root.getAttribute('data-editar-endpoint');
-    var EP_EXCLUIR = root.getAttribute('data-excluir-endpoint');
+    var EP_EDITAR   = root.getAttribute('data-editar-endpoint');
+    var EP_EXCLUIR  = root.getAttribute('data-excluir-endpoint');
+    var EP_ESQUECER = root.getAttribute('data-esquecer-endpoint');
     var ctx = null, ctxTr = null;
     function ctxFechar() { if (ctx) ctx.classList.remove('aberto'); ctxTr = null; }
     function ctxAbrir(tr, x, y) {
@@ -267,6 +268,7 @@
             ctx.innerHTML = '<div class="rt-menu-title">Lead</div>' +
                 '<button type="button" class="rt-item" data-acao="info"><span>Informações</span></button>' +
                 '<button type="button" class="rt-item" data-acao="editar"><span>Editar</span></button>' +
+                (EP_ESQUECER ? '<button type="button" class="rt-item" data-acao="esquecer"><span>Apagar cookies</span></button>' : '') +
                 '<button type="button" class="rt-item perigo" data-acao="excluir"><span>Excluir</span></button>';
             document.body.appendChild(ctx);
             ctx.addEventListener('click', function (e) {
@@ -277,6 +279,7 @@
                 ctxFechar();
                 if (acao === 'editar') { abrirEditar(alvo); }
                 else if (acao === 'excluir') { excluirLead(alvo); }
+                else if (acao === 'esquecer') { esquecerCookies(alvo); }
                 else if (acao === 'info') {
                     // Abre a aba Dashboard já consultando este lead.
                     if (window.cdAbrirAba) window.cdAbrirAba('informacoes');
@@ -419,6 +422,22 @@
             if (d && d.ok) { tr.remove(); }
             else { window.alert((d && d.erro) || 'Erro ao excluir.'); }
         }).catch(function () { window.alert('Erro ao excluir. Tente de novo.'); });
+    }
+
+    // --- Apagar cookies: os aparelhos deste número voltam a pedir o número no
+    //     próximo login (some da lista de MACs do MikroTik). O lead continua. ---
+    function esquecerCookies(tr) {
+        if (!EP_ESQUECER) return;
+        var rotulo = tr.getAttribute('data-nome') || tr.getAttribute('data-tel') || '';
+        if (!window.confirm('Apagar os cookies de ' + rotulo + '? Os aparelhos dele voltam a pedir o número no próximo acesso. (o lead e o histórico continuam)')) return;
+        fetch(EP_ESQUECER, {
+            method: 'POST', credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ csrf: CSRF, id: parseInt(tr.getAttribute('data-id'), 10) })
+        }).then(function (r) { return r.json(); }).then(function (d) {
+            if (d && d.ok) { window.alert('Cookies apagados (' + (d.macs || 0) + ' aparelho(s)). Vale em até ~1 min, quando o MikroTik atualizar a lista.'); }
+            else { window.alert((d && d.erro) || 'Erro ao apagar cookies.'); }
+        }).catch(function () { window.alert('Erro ao apagar cookies. Tente de novo.'); });
     }
 
     // --- Auto-refresh (a cada 20s): pede a mesma página que está na tela ---
