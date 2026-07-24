@@ -1555,7 +1555,17 @@ html[data-tema="claro"] .dg-var-ruim { color: #dc2626; }
 .pc-acesso-btn:hover { background: rgba(249,115,22,0.28); border-color: #f97316; color: #fdba74; }
 /* Modal de acessos + log geral: destino trunca, nome do cliente destaca */
 .pc-acesso-dst { color: #67e8f9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pc-acesso-head, .pc-acesso-row { grid-template-columns: 1.15fr 0.9fr 1.2fr 0.75fr; }
+/* Modal mais largo p/ os IPs de destino aparecerem inteiros; colunas balanceadas
+   e todas alinhadas a esquerda (batendo com o titulo). Em tela estreita a fonte
+   encolhe (media abaixo) em vez de cortar. */
+#acessos-modal .pc-modal-card { max-width: 600px; }
+.pc-acesso-head, .pc-acesso-row { grid-template-columns: 1.55fr 1.05fr 1.6fr 0.85fr; }
+.pc-acesso-head span, .pc-acesso-row .pc-conex-ap, .pc-acesso-head span:last-child { text-align: left; }
+@media (max-width: 600px) {
+    #acessos-modal .pc-acesso-head { font-size: 8px; padding: 10px 12px 8px; gap: 6px; }
+    #acessos-modal .pc-acesso-row  { font-size: 9.5px; padding: 11px 12px; gap: 6px; }
+    #acessos-modal .pc-acesso-head, #acessos-modal .pc-acesso-row { grid-template-columns: 1.7fr 1fr 1.4fr 0.7fr; }
+}
 .pc-log-head, .pc-log-row { display: grid; grid-template-columns: 1.1fr 1fr 0.9fr 1.2fr 0.7fr; gap: 10px; padding: 10px 22px; font-size: 13px; }
 .pc-log-head { padding: 10px 22px 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: rgba(255,255,255,0.45); border-bottom: 1px solid rgba(255,255,255,0.1); }
 .pc-log-row { border-bottom: 1px solid rgba(255,255,255,0.06); }
