@@ -34,8 +34,8 @@
     // ===== Gráfico "pizza oca" (donut) dos dias da semana =====
     var DIAS_NOMES = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
     var DIAS_CURTO = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-    // Paleta do tema (navy/cyan): tons frios distintos, alternando claro/escuro.
-    var DIAS_CORES = ['#22d3ee', '#3b82f6', '#67e8f9', '#6366f1', '#0ea5e9', '#818cf8', '#0891b2'];
+    // Paleta fria do tema, com mais variedade: teal/esmeralda/cyan/azul/índigo/violeta.
+    var DIAS_CORES = ['#2dd4bf', '#3b82f6', '#34d399', '#818cf8', '#22d3ee', '#a78bfa', '#0ea5e9'];
     var MESES_NOMES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
                        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
     var DOW_LETRAS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
@@ -166,9 +166,9 @@
         }
         var fatias = [];
         for (var i = 0; i < comDado.length; i++) {
-            var hue = 187 + 50 * (comDado.length > 1 ? i / (comDado.length - 1) : 0); // cyan -> azul/índigo
+            var hue = 150 + 110 * (comDado.length > 1 ? i / (comDado.length - 1) : 0); // esmeralda -> cyan -> azul -> violeta
             fatias.push({
-                cor: 'hsl(' + Math.round(hue) + ', 80%, 58%)',
+                cor: 'hsl(' + Math.round(hue) + ', 72%, 58%)',
                 l: (comDado[i].h < 10 ? '0' : '') + comDado[i].h + ':00',
                 v: comDado[i].n + (comDado[i].n === 1 ? ' dia' : ' dias'),
                 n: comDado[i].n
