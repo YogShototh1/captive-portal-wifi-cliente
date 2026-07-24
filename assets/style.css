@@ -1559,6 +1559,10 @@ html[data-tema="claro"] .pc-cor-input { border-color: rgba(15,23,42,0.14); }
 /* Upload de logo: "Escolher imagem" + dropdown de formato lado a lado */
 .pc-logo-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 .pc-forma-sel summary svg:first-child { width: 15px; height: 15px; flex: 0 0 auto; }
+/* Dropdown de formato aberto por cima de tudo: eleva o CARD inteiro da logo
+   (o card de cores, depois no DOM, cria stacking proprio e cobria o menu). */
+.pc-tela[data-tela="anuncio"] .glow-card:has(.pc-forma-sel[open]) { position: relative; z-index: 50; }
+.pc-forma-sel .rt-menu { z-index: 60; }
 
 /* Mapa de calor no claro */
 html[data-tema="claro"] .rm-hora { color: var(--g-fg3); }
