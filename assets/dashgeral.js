@@ -58,13 +58,20 @@
                 s += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="' + comDado[0].cor + '"/>';
                 if (comDado[0].k !== 'nao') meios[comDado[0].k] = 0; // círculo inteiro: guia sai da direita
             } else {
-                // Desenha rev -> novos -> não, começando de modo que rev+novos
-                // fiquem CENTRADOS no lado direito (perto do número): as guias
-                // saem sempre apontando pro número, sem cruzar outra cor.
+                // Desenha rev -> novos -> não. O giro inicial é calculado para os
+                // MEIOS das fatias rev e novos caírem simétricos ao eixo do número
+                // (±θ do leste): as duas guias ficam do MESMO tamanho, e o "não"
+                // sobra sempre do lado esquerdo.
                 var ordem = [itens[0], itens[2], itens[1]].filter(function (f) { return f.n > 0; });
                 var total = 0, i;
                 for (i = 0; i < ordem.length; i++) total += ordem[i].n;
-                var ang = -Math.PI * (soma / total); // arco de rev+novos centrado no ângulo 0 (leste)
+                var R = d.revisitaram / total * 2 * Math.PI; // arco de rev (rad)
+                var N = d.novos / total * 2 * Math.PI;       // arco de novos
+                var ang;
+                if (R > 0 && N > 0)  ang = -(3 * R + N) / 4; // meio_rev = -θ, meio_nov = +θ
+                else if (R > 0)      ang = -R / 2;           // só rev: meio no eixo
+                else if (N > 0)      ang = -N / 2;           // só novos: meio no eixo
+                else                 ang = -Math.PI / 2;     // só "não": tanto faz
                 for (i = 0; i < ordem.length; i++) {
                     var a0 = ang, a1 = ang + ordem[i].n / total * 2 * Math.PI;
                     var laf = (a1 - a0) > Math.PI ? 1 : 0;
