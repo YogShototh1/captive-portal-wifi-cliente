@@ -80,6 +80,18 @@
     }
     ativar(inicial);
 
+    // Dropdown de formato da logo (aba Anúncio): grava a escolha no input oculto.
+    document.addEventListener('click', function (e) {
+        var it = e.target.closest ? e.target.closest('.forma-item') : null;
+        if (!it) return;
+        var inp = document.getElementById('logo-forma-input');
+        var lbl = document.getElementById('logo-forma-label');
+        var sel = document.getElementById('logo-forma-sel');
+        if (inp) inp.value = it.getAttribute('data-forma');
+        if (lbl) lbl.textContent = it.textContent.trim();
+        if (sel) sel.removeAttribute('open');
+    });
+
     // Troca de aba programática (usada pela opção "Informações" da tabela).
     window.cdAbrirAba = function (aba) {
         ativar(aba);

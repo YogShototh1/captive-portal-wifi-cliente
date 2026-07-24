@@ -82,4 +82,7 @@ if (!move_uploaded_file($f['tmp_name'], $dest)) {
 }
 @chmod($dest, 0644);
 
+// Forma escolhida no dropdown (quadrado/arredondado/redondo).
+logo_forma_set($roteador, (string) ($_POST['forma'] ?? 'quadrado'));
+
 voltar_msg($voltar, 'logo_ok', 'Logo atualizada! Já aparece na tela de login.');

@@ -1540,6 +1540,10 @@ html[data-tema="claro"] .ctx-menu .rt-menu-title { color: var(--g-fg2); }
 html[data-tema="claro"] .dg-var { color: var(--g-fg2); border-top-color: rgba(15,23,42,0.12); }
 html[data-tema="claro"] .dg-var-bom { color: #059669; }
 html[data-tema="claro"] .dg-var-ruim { color: #dc2626; }
+/* Upload de logo: "Escolher imagem" + dropdown de formato lado a lado */
+.pc-logo-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.pc-forma-sel summary svg:first-child { width: 15px; height: 15px; flex: 0 0 auto; }
+
 /* Mapa de calor no claro */
 html[data-tema="claro"] .rm-hora { color: var(--g-fg3); }
 html[data-tema="claro"] .rm-rot { color: var(--g-fg2); }

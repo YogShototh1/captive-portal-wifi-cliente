@@ -56,6 +56,7 @@ $temAnuncio  = $rotAtivo !== null && anuncio_atual($rotAtivo) !== null;
 $logoOk   = isset($_GET['logo_ok'])   ? (string) $_GET['logo_ok']   : '';
 $logoErro = isset($_GET['logo_erro']) ? (string) $_GET['logo_erro'] : '';
 $temLogo  = $rotAtivo !== null && logo_atual($rotAtivo) !== null;
+$logoForma = $rotAtivo !== null ? logo_forma($rotAtivo) : 'quadrado';
 
 // Site de destino pós-anúncio.
 $dstOk    = isset($_GET['dst_ok'])   ? (string) $_GET['dst_ok']   : '';
@@ -96,7 +97,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <meta name="format-detection" content="telephone=no">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Leads</title>
-    <link rel="stylesheet" href="assets/style.css?v=76">
+    <link rel="stylesheet" href="assets/style.css?v=77">
 </head>
 <body class="painel-cliente">
     <div class="pc-bg-gradient"></div>
@@ -449,10 +450,26 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                                 <form class="pc-anuncio-envio" method="post" action="api/upload_logo.php" enctype="multipart/form-data">
                                     <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
                                     <input type="hidden" name="roteador" value="<?= h((string) $rotAtivo) ?>">
-                                    <label class="pc-file">
-                                        <input type="file" name="logo" accept=".png,.jpg,.jpeg,image/png,image/jpeg" required>
-                                        <span class="pc-file-label">Escolher imagem…</span>
-                                    </label>
+                                    <input type="hidden" name="forma" id="logo-forma-input" value="<?= h($logoForma) ?>">
+                                    <div class="pc-logo-row">
+                                        <label class="pc-file">
+                                            <input type="file" name="logo" accept=".png,.jpg,.jpeg,image/png,image/jpeg" required>
+                                            <span class="pc-file-label">Escolher imagem…</span>
+                                        </label>
+                                        <details class="rt-sel pc-forma-sel" id="logo-forma-sel">
+                                            <summary>
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/></svg>
+                                                <span id="logo-forma-label"><?= ['quadrado'=>'Quadrado','arredondado'=>'Borda arredondada','redondo'=>'Redondo'][$logoForma] ?? 'Quadrado' ?></span>
+                                                <svg class="rt-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                                            </summary>
+                                            <div class="rt-menu">
+                                                <div class="rt-menu-title">Formato da logo</div>
+                                                <button type="button" class="rt-item forma-item" data-forma="quadrado"><span>Quadrado</span></button>
+                                                <button type="button" class="rt-item forma-item" data-forma="arredondado"><span>Borda arredondada</span></button>
+                                                <button type="button" class="rt-item forma-item" data-forma="redondo"><span>Redondo</span></button>
+                                            </div>
+                                        </details>
+                                    </div>
                                     <button type="submit" class="pc-btn-primary">Enviar logo</button>
                                 </form>
                             </div>
@@ -626,7 +643,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
         </div>
     </div>
 
-    <script src="assets/abas.js?v=2"></script>
+    <script src="assets/abas.js?v=3"></script>
     <script src="assets/relatorio.js?v=12"></script>
     <script src="assets/dashboard.js?v=10"></script>
     <script src="assets/dashgeral.js?v=12"></script>

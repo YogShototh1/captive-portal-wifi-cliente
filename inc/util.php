@@ -158,6 +158,26 @@ function logo_atual(string $roteador): ?string
     return null;
 }
 
+// Forma da logo na tela de login: 'quadrado' (padrão) | 'arredondado' | 'redondo'.
+function logo_formas(): array { return ['quadrado', 'arredondado', 'redondo']; }
+function logo_forma(string $roteador): string
+{
+    $p = ads_dir() . '/logoforma_' . sha1(trim($roteador)) . '.txt';
+    $v = is_file($p) ? trim((string) @file_get_contents($p)) : '';
+    return in_array($v, logo_formas(), true) ? $v : 'quadrado';
+}
+function logo_forma_set(string $roteador, string $forma): void
+{
+    if (!in_array($forma, logo_formas(), true)) {
+        $forma = 'quadrado';
+    }
+    $dir = ads_dir();
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0755, true);
+    }
+    @file_put_contents($dir . '/logoforma_' . sha1(trim($roteador)) . '.txt', $forma);
+}
+
 // --- Site de destino pós-anúncio (dst do hotspot), por roteador ---
 
 // Destino padrão quando o comprador ainda não configurou um.
