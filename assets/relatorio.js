@@ -133,15 +133,13 @@
             return;
         }
         var vals = d.lista.map(function (x) { return x.valor; });
-        var max = Math.max.apply(null, vals);
         var ps = pcts1(vals); // % do total (soma dos valores), fecha 100
         var html = resumoHTML(d, d.total + ' cliente(s)');
         for (var i = 0; i < d.lista.length; i++) {
             var v = vals[i];
             if (!v) continue; // oculta clientes com valor 0
-            var w = max ? (v * 100 / max) : 0;
             var txt = d.tipo === 'clientes_tempo' ? fmtTempo(v) : v + (v === 1 ? ' dia' : ' dias');
-            html += linhaHTML(waLink(d.lista[i].telefone, d.lista[i].nome), txt, fmtPct(ps[i]), w, true);
+            html += linhaHTML(waLink(d.lista[i].telefone, d.lista[i].nome), txt, fmtPct(ps[i]), ps[i], true); // barra = a própria %
         }
         grafico.innerHTML = html;
     }
@@ -199,7 +197,6 @@
         if (!d.total) return vazio();
         var LBL = ['volta em 1-2 dias', '3-4 dias', '5-7 dias', '8-14 dias', '15-30 dias', '31+ dias', 'sem retorno'];
         var vals = d.faixas || [];
-        var max = Math.max.apply(null, vals.concat([1]));
         var ps = pcts1(vals);
         var html = resumo2(d, d.total + ' cliente(s) — histórico completo');
         html += '<p class="rel-resumo">Cliente típico volta a cada <b>' +
@@ -222,7 +219,7 @@
                     '<span class="rel-nums"><b class="rel-valor">' + fmtNum(vals[i]) + ' cliente(s)</b>' +
                     '<span class="rel-pct">' + fmtPct(ps[i]) + '</span></span>' +
                 '</div>' +
-                '<span class="rel-barra-wrap"><span class="rel-barra" style="width:' + (vals[i] * 100 / max).toFixed(1) + '%"></span></span>' +
+                '<span class="rel-barra-wrap"><span class="rel-barra" style="width:' + ps[i].toFixed(1) + '%"></span></span>' + // barra = a própria %
                 '<div class="rel-sub" data-sub="' + i + '" style="display:none">' + sub + '</div>' +
                 '</div>';
         }
@@ -290,8 +287,7 @@
         for (var k = 0; k < chaves.length; k++) {
             var n = vals[k];
             if (!n) continue; // oculta horários/dias zerados
-            var w = max ? (n * 100 / max) : 0;
-            html += linhaHTML(rotulo(chaves[k]), fmtNum(n), fmtPct(ps[k]), w);
+            html += linhaHTML(rotulo(chaves[k]), fmtNum(n), fmtPct(ps[k]), ps[k]); // barra = a própria %
         }
         grafico.innerHTML = html;
     }
