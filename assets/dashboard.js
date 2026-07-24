@@ -34,7 +34,8 @@
     // ===== Gráfico "pizza oca" (donut) dos dias da semana =====
     var DIAS_NOMES = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
     var DIAS_CURTO = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-    var DIAS_CORES = ['#f472b6', '#a855f7', '#ec4899', '#8b5cf6', '#d946ef', '#7c3aed', '#c084fc'];
+    // Paleta do tema (navy/cyan): tons frios distintos, alternando claro/escuro.
+    var DIAS_CORES = ['#22d3ee', '#3b82f6', '#67e8f9', '#6366f1', '#0ea5e9', '#818cf8', '#0891b2'];
     var MESES_NOMES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
                        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
     var DOW_LETRAS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
@@ -165,9 +166,9 @@
         }
         var fatias = [];
         for (var i = 0; i < comDado.length; i++) {
-            var hue = 250 + 80 * (comDado.length > 1 ? i / (comDado.length - 1) : 0); // violeta -> rosa
+            var hue = 187 + 50 * (comDado.length > 1 ? i / (comDado.length - 1) : 0); // cyan -> azul/índigo
             fatias.push({
-                cor: 'hsl(' + Math.round(hue) + ', 75%, 62%)',
+                cor: 'hsl(' + Math.round(hue) + ', 80%, 58%)',
                 l: (comDado[i].h < 10 ? '0' : '') + comDado[i].h + ':00',
                 v: comDado[i].n + (comDado[i].n === 1 ? ' dia' : ' dias'),
                 n: comDado[i].n
