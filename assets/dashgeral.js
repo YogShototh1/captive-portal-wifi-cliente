@@ -30,13 +30,15 @@
         return base;
     }
 
-    // Linha de variação de visitas do período ("vs mês passado" etc.).
+    // Linha de variação de visitas: % + números reais (atual vs anterior), em
+    // frase curta pra caber numa linha só. Ex.: "↑ 100% visitas vs ontem (12 vs 6)".
     function linhaVar(d, rotulo) {
         var pct = Number(d.pct) || 0;
         var abs = Math.abs(pct).toLocaleString('pt-BR');
-        if (pct > 0) return '<p class="dg-var dg-var-bom">&uarr; ' + abs + '% mais visitas vs ' + rotulo + '</p>';
-        if (pct < 0) return '<p class="dg-var dg-var-ruim">&darr; ' + abs + '% menos visitas vs ' + rotulo + '</p>';
-        return '<p class="dg-var">mesmo número de visitas vs ' + rotulo + '</p>';
+        var par = ' (' + (d.visitas || 0) + ' vs ' + (d.visitas_ant || 0) + ')';
+        if (pct > 0) return '<p class="dg-var dg-var-bom">&uarr; ' + abs + '% visitas vs ' + rotulo + par + '</p>';
+        if (pct < 0) return '<p class="dg-var dg-var-ruim">&darr; ' + abs + '% visitas vs ' + rotulo + par + '</p>';
+        return '<p class="dg-var">visitas iguais vs ' + rotulo + par + '</p>';
     }
 
     // Donut + legenda de um período (revisitaram / não revisitaram / novos).
@@ -88,11 +90,12 @@
 
     function render(d) {
         // Ordem pedida: mês, semana, dia (esquerda -> direita).
-        // Janelas justas: período atual até agora vs o anterior até o mesmo ponto.
+        // Janelas justas: período atual até agora vs o anterior até o mesmo ponto
+        // (rótulo curto pra caber numa linha; o corte "mesmo dia/hora" segue no cálculo).
         out.innerHTML = '<div class="dg-cards">' +
-            donutPeriodo('Recorrência do mês', d.mes, 'mês passado até o mesmo dia') +
-            donutPeriodo('Recorrência da semana', d.semana, 'semana passada até o mesmo dia') +
-            donutPeriodo('Recorrência diária', d.dia, 'ontem até esta hora') +
+            donutPeriodo('Recorrência do mês', d.mes, 'mês passado') +
+            donutPeriodo('Recorrência da semana', d.semana, 'semana passada') +
+            donutPeriodo('Recorrência diária', d.dia, 'ontem') +
             '</div>';
     }
 

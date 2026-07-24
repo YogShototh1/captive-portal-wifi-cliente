@@ -106,6 +106,8 @@ try {
             'revisitaram'     => $rev,
             'nao_revisitaram' => max(0, $anteriores - $rev),
             'novos'           => $novos,
+            'visitas'         => $atual,
+            'visitas_ant'     => $passada,
             'pct'             => $passada > 0
                 ? round(($atual - $passada) * 100 / $passada, 1)
                 : ($atual > 0 ? 100.0 : 0.0),

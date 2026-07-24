@@ -1106,7 +1106,7 @@ body.pc-menu-fechado .pc-sidebar { margin-left: -232px; }
    donut, o flex-wrap a derruba para BAIXO dele com a largura toda do cartão. */
 .dg-card .dash-legenda { max-width: none; flex: 1 1 165px; }
 .dg-card .leg-nome { overflow: visible; text-overflow: clip; white-space: nowrap; }
-.dg-var { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.10); font-size: 13.5px; font-weight: 700; color: rgba(255,255,255,0.6); }
+.dg-var { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.10); font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.6); white-space: nowrap; }
 .dg-var-bom { color: #34d399; }
 .dg-var-ruim { color: #f87171; }
 .dash-legenda { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; flex: 1 1 auto; min-width: 108px; }
