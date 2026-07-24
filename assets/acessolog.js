@@ -22,6 +22,27 @@
     function waLabel(tel, nome) {
         return esc((nome != null && nome !== '') ? nome : (tel || '—'));
     }
+    var COPIA_BTN = '<button type="button" class="pc-copia" title="Copiar destino" aria-label="Copiar destino">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>';
+    function copiarTexto(txt, btn) {
+        function ok() { if (btn) { btn.classList.add('copiado'); setTimeout(function () { btn.classList.remove('copiado'); }, 1200); } }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(txt).then(ok, function () { fb(txt); ok(); });
+        } else { fb(txt); ok(); }
+        function fb(t) {
+            var ta = document.createElement('textarea');
+            ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
+            document.body.appendChild(ta); ta.select();
+            try { document.execCommand('copy'); } catch (e) {}
+            document.body.removeChild(ta);
+        }
+    }
+    out.addEventListener('click', function (e) {
+        var c = e.target.closest ? e.target.closest('.pc-copia') : null;
+        if (!c) return;
+        var d = c.parentElement.querySelector('.pc-acesso-dst');
+        if (d) copiarTexto(d.textContent, c);
+    });
 
     var carregou = false;
     function carregar(pagina) {
@@ -39,7 +60,7 @@
                     html += '<li class="pc-log-row"><span class="pc-conex-data">' + fmtData(a.visto_em) + '</span>' +
                             '<span class="pc-log-cli">' + waLabel(a.telefone, a.nome) + '</span>' +
                             '<span class="pc-conex-ap">' + esc(a.ip_cliente || '—') + '</span>' +
-                            '<span class="pc-acesso-dst" title="' + esc(a.ip_destino) + '">' + destino + '</span>' +
+                            '<span class="pc-acesso-dst-cel"><span class="pc-acesso-dst" title="' + esc(a.ip_destino) + '">' + destino + '</span>' + COPIA_BTN + '</span>' +
                             '<span class="pc-conex-ap">' + esc(a.dispositivo || '—') + '</span></li>';
                 });
                 out.innerHTML = html + '</ul>';

@@ -251,6 +251,21 @@
     }
 
     // --- Pop-up "acessos" (botão "!", só admin) — hora / ip / destino / aparelho ---
+    var COPIA_BTN = '<button type="button" class="pc-copia" title="Copiar destino" aria-label="Copiar destino">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>';
+    function copiarTexto(txt, btn) {
+        function ok() { if (btn) { btn.classList.add('copiado'); setTimeout(function () { btn.classList.remove('copiado'); }, 1200); } }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(txt).then(ok, function () { copiaFallback(txt); ok(); });
+        } else { copiaFallback(txt); ok(); }
+    }
+    function copiaFallback(txt) {
+        var ta = document.createElement('textarea');
+        ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        document.body.removeChild(ta);
+    }
     var aModal = document.getElementById('acessos-modal');
     var aTel   = document.getElementById('acessos-tel');
     var aLista = document.getElementById('acessos-lista');
@@ -275,7 +290,7 @@
                     var destino = (a.host && a.host !== '') ? esc(a.host) : esc(a.ip_destino);
                     html += '<li class="pc-acesso-row"><span class="pc-conex-data">' + esc(fmtData(a.visto_em)) + '</span>' +
                             '<span class="pc-conex-ap">' + esc(a.ip_cliente || '—') + '</span>' +
-                            '<span class="pc-acesso-dst" title="' + esc(a.ip_destino) + '">' + destino + '</span>' +
+                            '<span class="pc-acesso-dst-cel"><span class="pc-acesso-dst" title="' + esc(a.ip_destino) + '">' + destino + '</span>' + COPIA_BTN + '</span>' +
                             '<span class="pc-conex-ap">' + esc(a.dispositivo || '—') + '</span></li>';
                 });
                 aLista.innerHTML = html + '</ul>';
@@ -297,6 +312,12 @@
         if (aNav) aNav.addEventListener('click', function (e) {
             var s = e.target.closest ? e.target.closest('.pc-conex-seta') : null;
             if (s && aLead != null) abrirAcessos(aLead, parseInt(s.getAttribute('data-apag'), 10) || 1);
+        });
+        if (aLista) aLista.addEventListener('click', function (e) {
+            var c = e.target.closest ? e.target.closest('.pc-copia') : null;
+            if (!c) return;
+            var d = c.parentElement.querySelector('.pc-acesso-dst');
+            if (d) copiarTexto(d.textContent, c);
         });
         if (aModal) {
             aModal.addEventListener('click', function (e) { if (e.target && e.target.hasAttribute && e.target.hasAttribute('data-close')) fecharAcessos(); });
