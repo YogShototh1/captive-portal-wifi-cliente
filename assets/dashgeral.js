@@ -74,9 +74,11 @@
             var ps = pctsInt(itens.map(function (f) { return f.n; }));
             var leg = '<ul class="dash-legenda">';
             for (var j = 0; j < itens.length; j++) {
+                // Quantidade real ao lado da % — zerado mostra só "0%".
+                var qtd = itens[j].n > 0 ? ' <small>(' + itens[j].n + ')</small>' : '';
                 leg += '<li><span class="leg-cor" style="background:' + itens[j].cor + '"></span>' +
                     '<span class="leg-nome">' + itens[j].nome + '</span>' +
-                    '<span class="leg-pct">' + ps[j] + '%</span></li>';
+                    '<span class="leg-pct">' + ps[j] + '%' + qtd + '</span></li>';
             }
             leg += '</ul>';
             corpo = '<div class="dash-donut-row">' + s + leg + '</div>';

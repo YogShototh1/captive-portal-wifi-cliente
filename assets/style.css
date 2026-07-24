@@ -1111,6 +1111,8 @@ body.pc-menu-fechado .pc-sidebar { margin-left: -232px; }
 .leg-cor { width: 9px; height: 9px; border-radius: 3px; flex: 0 0 auto; }
 .leg-nome { color: rgba(255, 255, 255, 0.72); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .leg-pct { margin-left: auto; padding-left: 10px; color: #fff; font-weight: 700; font-variant-numeric: tabular-nums; }
+.leg-pct small { color: rgba(255, 255, 255, 0.5); font-weight: 600; font-size: 11px; }
+html[data-tema="claro"] .leg-pct small { color: var(--g-fg3); }
 .dash-tt b { display: block; margin-bottom: 2px; }
 
 /* --- Relatórios: controles + gráfico de barras (HTML/CSS puro) --- */
