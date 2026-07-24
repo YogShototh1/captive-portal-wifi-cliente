@@ -59,6 +59,9 @@ $logoOk   = isset($_GET['logo_ok'])   ? (string) $_GET['logo_ok']   : '';
 $logoErro = isset($_GET['logo_erro']) ? (string) $_GET['logo_erro'] : '';
 $temLogo  = $rotAtivo !== null && logo_atual($rotAtivo) !== null;
 $logoForma = $rotAtivo !== null ? logo_forma($rotAtivo) : 'quadrado';
+$coresOk   = isset($_GET['cores_ok'])   ? (string) $_GET['cores_ok']   : '';
+$coresErro = isset($_GET['cores_erro']) ? (string) $_GET['cores_erro'] : '';
+$cores     = $rotAtivo !== null ? cores_get($rotAtivo) : cores_padrao();
 
 // Site de destino pós-anúncio do cliente aberto.
 $dstOk    = isset($_GET['dst_ok'])   ? (string) $_GET['dst_ok']   : '';
@@ -96,7 +99,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <meta name="format-detection" content="telephone=no">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Leads — <?= h($cliente['nome'] ?: $cliente['email']) ?></title>
-    <link rel="stylesheet" href="assets/style.css?v=78">
+    <link rel="stylesheet" href="assets/style.css?v=79">
 </head>
 <body class="painel-cliente">
     <!-- Camadas de fundo (decorativas) -->
@@ -129,8 +132,8 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                     Relatórios
                 </button>
                 <button type="button" class="pc-side-item" data-aba="anuncio">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
-                    Anúncio
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18.37 2.63 14 7l-1.59-1.59a2 2 0 0 0-2.82 0L8 7l9 9 1.59-1.59a2 2 0 0 0 0-2.82L17 10l4.37-4.37a2.12 2.12 0 1 0-3-3Z"/><path d="M9 8c-2 3-4 3.5-7 4l8 10c2-1 6-5 6-7"/><path d="M14.5 17.5 4.5 15"/></svg>
+                    Personalizar
                 </button>
                 <button type="button" class="pc-side-item" data-aba="url">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
@@ -477,6 +480,33 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                         </div>
                     </div>
                 </div>
+                <div class="glow-card pc-anuncio-card">
+                    <span class="glow-fx" aria-hidden="true"></span>
+                    <div class="glow-body">
+                        <div class="pc-anuncio-form" style="flex:1">
+                            <h2 class="pc-anuncio-title">Cores da tela de login</h2>
+                            <div class="pc-anuncio-target">Enviando para: <strong><?= h($cliente['nome'] ?: $cliente['email']) ?></strong> — roteador <strong><?= h((string) $rotAtivo) ?></strong></div>
+                            <p class="pc-anuncio-desc">Clique na cor pra abrir o seletor (roda de cor + código #), ou digite o código. Vale na tela onde o cliente digita o número.</p>
+                            <?php if ($coresOk): ?><p class="pc-anuncio-msg ok"><?= h($coresOk) ?></p><?php endif; ?>
+                            <?php if ($coresErro): ?><p class="pc-anuncio-msg err"><?= h($coresErro) ?></p><?php endif; ?>
+                            <form method="post" action="api/set_cores.php" class="pc-cores-form">
+                                <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+                                    <input type="hidden" name="cliente_id" value="<?= (int) $id ?>">
+                                    <input type="hidden" name="roteador" value="<?= h((string) $rotAtivo) ?>">
+                                    <?php foreach ([['primary','Cor principal (botões e links)'],['accent','Cor de destaque (degradê)'],['bg','Fundo da tela'],['fg','Cor do texto']] as [$ck,$cl]): ?>
+                                    <label class="pc-cor-row">
+                                        <span class="pc-cor-nome"><?= $cl ?></span>
+                                        <span class="pc-cor-ctrls">
+                                            <input type="color" class="pc-cor-input" name="<?= $ck ?>" value="<?= h($cores[$ck]) ?>" data-hex="cor-<?= $ck ?>-hex" aria-label="<?= h($cl) ?>">
+                                            <input type="text" class="pc-cor-hex" id="cor-<?= $ck ?>-hex" value="<?= h($cores[$ck]) ?>" maxlength="7" spellcheck="false" data-color="<?= $ck ?>">
+                                        </span>
+                                    </label>
+                                    <?php endforeach; ?>
+                                <button type="submit" class="pc-btn-primary">Salvar cores</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
                 <?php else: echo $avisoRoteador; endif; ?>
             </section>
 
@@ -649,7 +679,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
         </div>
     </div>
 
-    <script src="assets/abas.js?v=3"></script>
+    <script src="assets/abas.js?v=4"></script>
     <script src="assets/relatorio.js?v=12"></script>
     <script src="assets/dashboard.js?v=10"></script>
     <script src="assets/dashgeral.js?v=12"></script>

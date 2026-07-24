@@ -22,3 +22,5 @@ header('Cache-Control: no-cache, must-revalidate');
 echo 'window.PORTAL_DST=' . json_encode($url, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . ';';
 // Forma da logo (quadrado/arredondado/redondo) — o login.html aplica a classe.
 echo 'window.LOGO_FORMA=' . json_encode($roteador !== '' ? logo_forma($roteador) : 'quadrado') . ';';
+// Cores da tela de login (por roteador) — o login.html aplica nas CSS vars.
+echo 'window.CORES=' . json_encode($roteador !== '' ? cores_get($roteador) : cores_padrao()) . ';';

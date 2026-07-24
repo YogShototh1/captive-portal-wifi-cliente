@@ -92,6 +92,24 @@
         if (sel) sel.removeAttribute('open');
     });
 
+    // Cores da tela de login: sincroniza o seletor nativo (<input type=color>)
+    // com o campo de código #hex, nos dois sentidos.
+    document.addEventListener('input', function (e) {
+        var t = e.target;
+        if (!t.classList) return;
+        if (t.classList.contains('pc-cor-input')) {
+            var hx = document.getElementById(t.getAttribute('data-hex'));
+            if (hx) hx.value = t.value;
+        } else if (t.classList.contains('pc-cor-hex')) {
+            var v = t.value.trim();
+            if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+                var row = t.closest ? t.closest('.pc-cor-row') : null;
+                var ci = row ? row.querySelector('.pc-cor-input') : null;
+                if (ci) ci.value = v;
+            }
+        }
+    });
+
     // Troca de aba programática (usada pela opção "Informações" da tabela).
     window.cdAbrirAba = function (aba) {
         ativar(aba);

@@ -178,6 +178,45 @@ function logo_forma_set(string $roteador, string $forma): void
     @file_put_contents($dir . '/logoforma_' . sha1(trim($roteador)) . '.txt', $forma);
 }
 
+// Cores da tela de login, por roteador. Chaves = variaveis CSS do login.html.
+function cores_padrao(): array
+{
+    return ['primary' => '#0891b2', 'accent' => '#22d3ee', 'bg' => '#e6ecf5', 'fg' => '#1e293b'];
+}
+function cores_get(string $roteador): array
+{
+    $def = cores_padrao();
+    $p = ads_dir() . '/cores_' . sha1(trim($roteador)) . '.json';
+    if (!is_file($p)) {
+        return $def;
+    }
+    $j = json_decode((string) @file_get_contents($p), true);
+    if (!is_array($j)) {
+        return $def;
+    }
+    $out = $def;
+    foreach ($def as $k => $v) {
+        if (isset($j[$k]) && preg_match('/^#[0-9a-fA-F]{6}$/', (string) $j[$k])) {
+            $out[$k] = strtolower((string) $j[$k]);
+        }
+    }
+    return $out;
+}
+function cores_set(string $roteador, array $cores): void
+{
+    $def = cores_padrao();
+    $out = [];
+    foreach ($def as $k => $v) {
+        $c = isset($cores[$k]) ? (string) $cores[$k] : $v;
+        $out[$k] = preg_match('/^#[0-9a-fA-F]{6}$/', $c) ? strtolower($c) : $v;
+    }
+    $dir = ads_dir();
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0755, true);
+    }
+    @file_put_contents($dir . '/cores_' . sha1(trim($roteador)) . '.json', json_encode($out));
+}
+
 // --- Site de destino pós-anúncio (dst do hotspot), por roteador ---
 
 // Destino padrão quando o comprador ainda não configurou um.
