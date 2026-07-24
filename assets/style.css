@@ -1542,6 +1542,29 @@ html[data-tema="claro"] .ctx-menu .rt-menu-title { color: var(--g-fg2); }
 html[data-tema="claro"] .dg-var { color: var(--g-fg2); border-top-color: rgba(15,23,42,0.12); }
 html[data-tema="claro"] .dg-var-bom { color: #059669; }
 html[data-tema="claro"] .dg-var-ruim { color: #dc2626; }
+/* Botão "!" (laranja) antes do IP — abre os acessos do lead (só admin) */
+.pc-ip-cel { white-space: nowrap; }
+.pc-acesso-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 20px; height: 20px; margin-right: 8px; vertical-align: -4px;
+    border-radius: 6px; border: 1px solid rgba(249,115,22,0.55); cursor: pointer;
+    background: rgba(249,115,22,0.16); color: #fb923c; font-family: inherit;
+    font-weight: 800; font-size: 13px; line-height: 1; flex: 0 0 auto;
+    transition: background .2s, border-color .2s;
+}
+.pc-acesso-btn:hover { background: rgba(249,115,22,0.28); border-color: #f97316; color: #fdba74; }
+/* Modal de acessos + log geral: destino trunca, nome do cliente destaca */
+.pc-acesso-dst { color: #67e8f9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pc-acesso-head, .pc-acesso-row { grid-template-columns: 1.15fr 0.9fr 1.2fr 0.75fr; }
+.pc-log-head, .pc-log-row { display: grid; grid-template-columns: 1.1fr 1fr 0.9fr 1.2fr 0.7fr; gap: 10px; padding: 10px 22px; font-size: 13px; }
+.pc-log-head { padding: 10px 22px 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: rgba(255,255,255,0.45); border-bottom: 1px solid rgba(255,255,255,0.1); }
+.pc-log-row { border-bottom: 1px solid rgba(255,255,255,0.06); }
+.pc-log-cli { color: #34d399; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pc-acesso-list { margin-top: 8px; }
+html[data-tema="claro"] .pc-acesso-dst { color: var(--g-cyan); }
+html[data-tema="claro"] .pc-log-head { color: var(--g-fg3); border-bottom-color: rgba(15,23,42,0.10); }
+html[data-tema="claro"] .pc-log-row { border-bottom-color: rgba(15,23,42,0.08); }
+
 /* Cores da tela de login: linha nome + seletor nativo + campo #hex */
 .pc-cores-form { display: flex; flex-direction: column; gap: 12px; }
 .pc-cor-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }

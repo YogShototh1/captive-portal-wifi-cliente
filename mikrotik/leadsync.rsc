@@ -142,3 +142,40 @@
   } on-error={ :set ok 0 }
   :if ($ok = 1) do={ :set cdMacsVer $mver }
 }
+
+# ============================================================
+#  Log de acessos (metadados: IP de destino por cliente)
+#  Envia ao painel: mapa ip-cliente=MAC (hotspot ativo) + as conexoes ativas
+#  (ipCliente>ipDestino). So destinos publicos. O painel deduplica e so o ADMIN
+#  ve depois. Empurra por HTTP (nada guardado na flash).
+# ============================================================
+:local amap ""
+:foreach h in=[/ip hotspot active find] do={
+  :set amap ($amap . [/ip hotspot active get $h address] . "=" . [/ip hotspot active get $h mac-address] . ",")
+}
+:local aconns ""
+:local acount 0
+:foreach cn in=[/ip firewall connection find] do={
+  :if ($acount < 400) do={
+    :local sa [/ip firewall connection get $cn src-address]
+    :local da [/ip firewall connection get $cn dst-address]
+    :local sp [:find $sa ":"]
+    :local dp [:find $da ":"]
+    :local sip $sa
+    :local dip $da
+    :if ([:typeof $sp] = "num") do={ :set sip [:pick $sa 0 $sp] }
+    :if ([:typeof $dp] = "num") do={ :set dip [:pick $da 0 $dp] }
+    # ignora destinos privados/locais (10.x, 192.168.x, 127.x) e o proprio roteador
+    :if ([:pick $dip 0 3] != "10." && [:pick $dip 0 8] != "192.168." && [:pick $dip 0 4] != "127.") do={
+      :set aconns ($aconns . $sip . ">" . $dip . ",")
+      :set acount ($acount + 1)
+    }
+  }
+}
+:if ([:len $aconns] > 0) do={
+  :do {
+    /tool fetch url="https://captivedata.com.br/api/acesso.php" http-method=post check-certificate=no \
+        http-header-field="Content-Type: application/x-www-form-urlencoded" \
+        http-data=("token=$token&roteador=$ident&map=$amap&conns=$aconns") output=none
+  } on-error={}
+}

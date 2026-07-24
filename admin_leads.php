@@ -99,7 +99,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <meta name="format-detection" content="telephone=no">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Leads — <?= h($cliente['nome'] ?: $cliente['email']) ?></title>
-    <link rel="stylesheet" href="assets/style.css?v=80">
+    <link rel="stylesheet" href="assets/style.css?v=81">
 </head>
 <body class="painel-cliente">
     <!-- Camadas de fundo (decorativas) -->
@@ -150,6 +150,10 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                 <button type="button" class="pc-side-item" data-aba="estatisticas">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="m19 9-5 5-4-4-3 3"/></svg>
                     Estatísticas
+                </button>
+                <button type="button" class="pc-side-item" data-aba="log">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+                    Log de acessos
                 </button>
             </nav>
             <div class="pc-side-foot">
@@ -250,6 +254,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                              data-editar-endpoint="api/lead_editar.php"
                              data-excluir-endpoint="api/lead_excluir.php"
                              data-esquecer-endpoint="api/lead_esquecer.php"
+                             data-acessos-endpoint="api/acessos_lead.php"
                              data-pagina="<?= $pagina ?>"
                              data-por-pagina="<?= $POR_PAG ?>"
                              data-csrf="<?= h($csrf) ?>">
@@ -283,7 +288,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                                     ?>
                                     <tr data-id="<?= (int) $l['id'] ?>" data-online="<?= $online ?>" data-elapsed="<?= $elapsed ?>" data-limite="<?= $lim === null ? '' : (int) $lim ?>" data-banda="<?= $banda === null ? '' : (int) $banda ?>" data-total="<?= $total ?>" data-tel="<?= h($l['telefone']) ?>" data-nome="<?= h((string) ($l['nome'] ?? '')) ?>">
                                         <td><?= h(($l['nome'] !== null && $l['nome'] !== '') ? $l['nome'] : $l['telefone']) ?></td>
-                                        <td><?= h($l['ip'] ?? '—') ?></td>
+                                        <td class="pc-ip-cel"><button type="button" class="pc-acesso-btn" data-lead="<?= (int) $l['id'] ?>" aria-label="Ver acessos" title="Ver acessos (admin)">!</button><?= h($l['ip'] ?? '—') ?></td>
                                         <td class="pc-aparelho"><?= h($l['dispositivo'] ?? '—') ?></td>
                                         <td>
                                             <?php $dh = explode(' - ', fmt_data($l['conectado_em'])); ?>
@@ -628,6 +633,37 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                     </div>
                 </div>
             </section>
+
+            <!-- ============ ABA: LOG DE ACESSOS (só admin) ============ -->
+            <section class="pc-tela" data-tela="log">
+                <div class="glow-card pc-dst-card">
+                    <span class="glow-fx" aria-hidden="true"></span>
+                    <div class="glow-body">
+                        <div class="pc-dst" id="acessolog-box" data-endpoint="api/acessos_log.php?<?= $rotAtivo !== null ? 'roteador=' . urlencode($rotAtivo) : '' ?>" data-resolver="api/resolver.php">
+                            <h2 class="pc-anuncio-title">Log de acessos</h2>
+                            <p class="pc-anuncio-desc">Destinos (IP) acessados por cada aparelho, do mais recente para o mais antigo. Uso interno / forense — o comprador não vê isto. Domínio por reverse-DNS quando disponível.</p>
+                            <div class="pc-acesso-list" id="acessolog-lista"></div>
+                            <div id="acessolog-nav"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Pop-up: acessos de um número (botão "!") — só admin -->
+    <div class="pc-modal" id="acessos-modal" aria-hidden="true">
+        <div class="pc-modal-backdrop" data-close></div>
+        <div class="pc-modal-card glow-card">
+            <span class="glow-fx" aria-hidden="true"></span>
+            <div class="glow-body">
+                <div class="pc-modal-head">
+                    <h3 class="pc-modal-title">Acessos de <span id="acessos-tel"></span></h3>
+                    <button type="button" class="pc-modal-x" data-close aria-label="Fechar">&times;</button>
+                </div>
+                <div class="pc-modal-body" id="acessos-lista"></div>
+                <div id="acessos-nav"></div>
+            </div>
         </div>
     </div>
 
@@ -683,8 +719,9 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <script src="assets/relatorio.js?v=12"></script>
     <script src="assets/dashboard.js?v=10"></script>
     <script src="assets/dashgeral.js?v=12"></script>
+    <script src="assets/acessolog.js?v=1"></script>
     <script src="assets/estatisticas.js?v=3"></script>
-    <script src="assets/leads-live.js?v=27"></script>
+    <script src="assets/leads-live.js?v=28"></script>
     <?php require __DIR__ . '/inc/tema.php'; ?>
 </body>
 </html>

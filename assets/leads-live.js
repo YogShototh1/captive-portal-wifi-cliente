@@ -7,6 +7,7 @@
     var EP_LIMITE   = root.getAttribute('data-limite-endpoint');
     var EP_BANDA    = root.getAttribute('data-banda-endpoint');
     var EP_CONEXOES = root.getAttribute('data-conexoes-endpoint');
+    var EP_ACESSOS  = root.getAttribute('data-acessos-endpoint'); // só admin
     var CSRF        = root.getAttribute('data-csrf');
     var PAGINA      = parseInt(root.getAttribute('data-pagina') || '1', 10);
     var POR_PAGINA  = parseInt(root.getAttribute('data-por-pagina') || '50', 10);
@@ -164,7 +165,8 @@
         tr.setAttribute('data-nome', l.nome || '');
         function td(html, cls) { var t = document.createElement('td'); if (cls) t.className = cls; t.innerHTML = html; return t; }
         tr.appendChild(td(telHTML(l.telefone, l.nome)));
-        tr.appendChild(td(esc(l.ip) || '—'));
+        var ipHtml = (EP_ACESSOS ? '<button type="button" class="pc-acesso-btn" data-lead="' + l.id + '" aria-label="Ver acessos" title="Ver acessos (admin)">!</button>' : '') + (esc(l.ip) || '—');
+        tr.appendChild(td(ipHtml, EP_ACESSOS ? 'pc-ip-cel' : ''));
         tr.appendChild(td(esc(l.dispositivo) || '—', 'pc-aparelho'));
         tr.appendChild(td(conexHTML(l)));
         tr.appendChild(td('<span class="pc-dot"></span><span class="pc-tempo">' + displayTempo(l) + '</span>'));
@@ -246,6 +248,60 @@
             var seta = e.target.closest ? e.target.closest('.pc-conex-seta') : null;
             if (seta && modalLead != null) abrirConexoes(modalLead, parseInt(seta.getAttribute('data-pag'), 10) || 1);
         });
+    }
+
+    // --- Pop-up "acessos" (botão "!", só admin) — hora / ip / destino / aparelho ---
+    var aModal = document.getElementById('acessos-modal');
+    var aTel   = document.getElementById('acessos-tel');
+    var aLista = document.getElementById('acessos-lista');
+    var aNav   = document.getElementById('acessos-nav');
+    var aLead  = null;
+    function fecharAcessos() { if (aModal) { aModal.classList.remove('aberto'); aModal.setAttribute('aria-hidden', 'true'); } }
+    function abrirAcessos(leadId, pagina) {
+        if (!aModal || !EP_ACESSOS) return;
+        aLead = leadId;
+        aLista.innerHTML = '<p class="pc-modal-info">Carregando…</p>';
+        if (aNav) aNav.innerHTML = '';
+        aModal.classList.add('aberto');
+        aModal.setAttribute('aria-hidden', 'false');
+        fetch(EP_ACESSOS + '?lead_id=' + encodeURIComponent(leadId) + '&pagina=' + (pagina || 1) + '&por_pagina=' + conexoesPorPagina(), { credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                if (!d || !d.ok) { aLista.innerHTML = '<p class="pc-modal-info">' + esc((d && d.erro) || 'Erro ao carregar.') + '</p>'; return; }
+                if (aTel) aTel.textContent = (d.nome || d.telefone) || '';
+                if (!d.acessos || !d.acessos.length) { aLista.innerHTML = '<p class="pc-modal-info">Nenhum acesso registrado ainda.</p>'; return; }
+                var html = '<div class="pc-conex-head pc-acesso-head"><span>Data e hora</span><span>IP cliente</span><span>Destino</span><span>Aparelho</span></div><ul class="pc-conex-list">';
+                d.acessos.forEach(function (a) {
+                    var destino = (a.host && a.host !== '') ? esc(a.host) : esc(a.ip_destino);
+                    html += '<li class="pc-acesso-row"><span class="pc-conex-data">' + esc(fmtData(a.visto_em)) + '</span>' +
+                            '<span class="pc-conex-ap">' + esc(a.ip_cliente || '—') + '</span>' +
+                            '<span class="pc-acesso-dst" title="' + esc(a.ip_destino) + '">' + destino + '</span>' +
+                            '<span class="pc-conex-ap">' + esc(a.dispositivo || '—') + '</span></li>';
+                });
+                aLista.innerHTML = html + '</ul>';
+                if (aNav) {
+                    aNav.innerHTML = d.paginas > 1
+                        ? '<div class="pc-conex-nav">' +
+                          (d.pagina > 1 ? '<button type="button" class="pc-conex-seta" data-apag="' + (d.pagina - 1) + '" aria-label="Página anterior">&lsaquo;</button>' : '') +
+                          (d.pagina < d.paginas ? '<button type="button" class="pc-conex-seta" data-apag="' + (d.pagina + 1) + '" aria-label="Próxima página">&rsaquo;</button>' : '') +
+                          '</div>'
+                        : '';
+                }
+            }).catch(function () { aLista.innerHTML = '<p class="pc-modal-info">Erro ao carregar.</p>'; });
+    }
+    if (EP_ACESSOS) {
+        tbody.addEventListener('click', function (e) {
+            var b = e.target.closest ? e.target.closest('.pc-acesso-btn') : null;
+            if (b) { e.preventDefault(); e.stopPropagation(); abrirAcessos(b.getAttribute('data-lead'), 1); }
+        });
+        if (aNav) aNav.addEventListener('click', function (e) {
+            var s = e.target.closest ? e.target.closest('.pc-conex-seta') : null;
+            if (s && aLead != null) abrirAcessos(aLead, parseInt(s.getAttribute('data-apag'), 10) || 1);
+        });
+        if (aModal) {
+            aModal.addEventListener('click', function (e) { if (e.target && e.target.hasAttribute && e.target.hasAttribute('data-close')) fecharAcessos(); });
+            document.addEventListener('keydown', function (e) { if (e.key === 'Escape') fecharAcessos(); });
+        }
     }
     if (modal) {
         modal.addEventListener('click', function (e) {
