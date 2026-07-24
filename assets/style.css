@@ -1102,7 +1102,10 @@ body.pc-menu-fechado .pc-sidebar { margin-left: -232px; }
 .dg-card .dg-var { margin-top: auto; padding-top: 12px; }
 .dg-card .dash-donut { width: 122px; height: 122px; flex: 0 0 auto; }
 .dg-card .dash-donut-row { justify-content: flex-start; gap: 16px; margin-top: 10px; }
-.dg-card .dash-legenda { max-width: 170px; }
+/* Legenda NUNCA corta nem quebra linha interna: se não couber ao lado do
+   donut, o flex-wrap a derruba para BAIXO dele com a largura toda do cartão. */
+.dg-card .dash-legenda { max-width: none; flex: 1 1 165px; }
+.dg-card .leg-nome { overflow: visible; text-overflow: clip; white-space: nowrap; }
 .dg-var { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.10); font-size: 13.5px; font-weight: 700; color: rgba(255,255,255,0.6); }
 .dg-var-bom { color: #34d399; }
 .dg-var-ruim { color: #f87171; }
@@ -1110,7 +1113,7 @@ body.pc-menu-fechado .pc-sidebar { margin-left: -232px; }
 .dash-legenda li { display: flex; align-items: center; gap: 8px; font-size: 12.5px; line-height: 1; }
 .leg-cor { width: 9px; height: 9px; border-radius: 3px; flex: 0 0 auto; }
 .leg-nome { color: rgba(255, 255, 255, 0.72); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.leg-pct { margin-left: auto; padding-left: 10px; color: #fff; font-weight: 700; font-variant-numeric: tabular-nums; }
+.leg-pct { margin-left: auto; padding-left: 10px; color: #fff; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .leg-pct small { color: rgba(255, 255, 255, 0.5); font-weight: 600; font-size: 11px; }
 html[data-tema="claro"] .leg-pct small { color: var(--g-fg3); }
 .dash-tt b { display: block; margin-bottom: 2px; }
