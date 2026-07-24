@@ -1544,3 +1544,38 @@ html[data-tema="claro"] .dg-var-ruim { color: #dc2626; }
 html[data-tema="claro"] .rm-hora { color: var(--g-fg3); }
 html[data-tema="claro"] .rm-rot { color: var(--g-fg2); }
 html[data-tema="claro"] .rm-cel { background: rgba(15,23,42,0.06); }
+
+/* ============================================================
+   Movimento do painel — estado, não decoração.
+   Entradas curtas (modal, menus, gráficos) + feedback de toque.
+   Dados nunca "flutuam": só a chegada anima, uma vez.
+   ============================================================ */
+@keyframes pc-fade { from { opacity: 0; } }
+@keyframes pc-pop  { from { opacity: 0; transform: scale(.965) translateY(6px); } }
+@keyframes pc-menu { from { opacity: 0; transform: scale(.96); } }
+@keyframes rel-bar-in { from { transform: scaleX(0); } }
+
+/* Modais: cartão "pousa" (scale+fade), fundo escurece suave */
+.pc-modal.aberto .pc-modal-backdrop { animation: pc-fade .25s ease both; }
+.pc-modal.aberto .pc-modal-card { animation: pc-pop .28s cubic-bezier(.23,1,.32,1) both; }
+
+/* Menus flutuantes crescem do canto de origem (spatial: nascem do gatilho) */
+.ctx-menu.aberto,
+.rt-sel[open] .rt-menu,
+.cal-pop { transform-origin: top left; animation: pc-menu .16s cubic-bezier(.23,1,.32,1) both; }
+
+/* Barras dos relatórios crescem da esquerda ao gerar; gráficos entram em fade */
+.rel-barra { transform-origin: left; animation: rel-bar-in .5s cubic-bezier(.23,1,.32,1) both; }
+.dash-pie, .dash-donut, .est-svg, .rel-mapa-wrap, .rel-sub { animation: pc-fade .3s ease both; }
+
+/* Feedback de toque: afunda no press (instantâneo, sem transition) */
+.painel-cliente .pc-btn:active, .painel-cliente .pc-btn-primary:active,
+.pc-side-item:active, .est-filtro:active, .pc-conex-seta:active,
+.pc-pag-btn:active, .pc-menu-btn:active, .rel-mais:active, .cal-nav:active { transform: scale(.96); }
+.painel-cliente .pc-metric:active .glow-body { transform: scale(.99); }
+
+@media (prefers-reduced-motion: reduce) {
+  .pc-tela.atual, .pc-modal.aberto .pc-modal-backdrop, .pc-modal.aberto .pc-modal-card,
+  .ctx-menu.aberto, .rt-sel[open] .rt-menu, .cal-pop, .rel-barra,
+  .dash-pie, .dash-donut, .est-svg, .rel-mapa-wrap, .rel-sub { animation-duration: .01s; }
+}
