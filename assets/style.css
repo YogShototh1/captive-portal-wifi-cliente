@@ -1142,6 +1142,8 @@ html[data-tema="claro"] .leg-pct small { color: var(--g-fg3); }
    "Modelo do relatório" (posição absoluta) precisa abrir por cima do cartão.
    Nada mais neste cartão encosta nos cantos, então o border-radius não sofre. */
 .pc-tela[data-tela="relatorios"] .glow-body { overflow: visible; }
+/* Anúncio: o dropdown de formato da logo precisa escapar do card (senão corta). */
+.pc-tela[data-tela="anuncio"] .glow-body { overflow: visible; }
 .rel-controles { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; position: relative; }
 .rel-controles .pc-dst-input.rel-data { flex: 0 1 auto; min-width: 130px; width: 150px; cursor: pointer; }
 /* Calendário próprio (pt-BR) dos campos de data */
