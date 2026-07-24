@@ -46,6 +46,7 @@ try {
         'CREATE TABLE IF NOT EXISTS host_cache (
             ip VARCHAR(45) PRIMARY KEY,
             host VARCHAR(190) NULL,
+            org VARCHAR(120) NULL,
             em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
     );
@@ -53,6 +54,8 @@ try {
     http_response_code(500);
     exit('');
 }
+// Auto-heal: host_cache antigo (sem a coluna org do rotulo resolvido).
+try { db()->exec('ALTER TABLE host_cache ADD COLUMN org VARCHAR(120) NULL'); } catch (Throwable $e) {}
 
 // IP do cliente -> MAC (do hotspot ativo).
 $ipMac = [];

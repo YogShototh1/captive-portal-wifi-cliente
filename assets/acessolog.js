@@ -54,13 +54,14 @@
             .then(function (d) {
                 if (!d || !d.ok) { out.innerHTML = '<p class="pc-anuncio-desc">Erro ao carregar o log.</p>'; return; }
                 if (!d.log || !d.log.length) { out.innerHTML = '<p class="pc-anuncio-desc">Nenhum acesso registrado ainda. (o roteador precisa estar com o leadsync novo e ter tráfego)</p>'; return; }
-                var html = '<div class="pc-conex-head pc-log-head"><span>Data e hora</span><span>Cliente</span><span>IP</span><span>Destino</span><span>Aparelho</span></div><ul class="pc-conex-list">';
+                var html = '<div class="pc-conex-head pc-log-head"><span>Data e hora</span><span>Cliente</span><span>IP</span><span>Destino</span><span>Serviço</span><span>Aparelho</span></div><ul class="pc-conex-list">';
                 d.log.forEach(function (a) {
                     var destino = (a.host && a.host !== '') ? esc(a.host) : esc(a.ip_destino);
                     html += '<li class="pc-log-row"><span class="pc-conex-data">' + fmtData(a.visto_em) + '</span>' +
                             '<span class="pc-log-cli">' + waLabel(a.telefone, a.nome) + '</span>' +
                             '<span class="pc-conex-ap">' + esc(a.ip_cliente || '—') + '</span>' +
                             '<span class="pc-acesso-dst-cel"><span class="pc-acesso-dst" title="' + esc(a.ip_destino) + '">' + destino + '</span>' + COPIA_BTN + '</span>' +
+                            '<span class="pc-acesso-org">' + esc(a.org || '—') + '</span>' +
                             '<span class="pc-conex-ap">' + esc(a.dispositivo || '—') + '</span></li>';
                 });
                 out.innerHTML = html + '</ul>';

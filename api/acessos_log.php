@@ -32,7 +32,7 @@ try {
 
     // Nome/telefone do dono do MAC (via conexão mais recente daquele MAC).
     $c = db()->prepare(
-        "SELECT a.visto_em, a.ip_cliente, a.ip_destino, a.mac, hc.host,
+        "SELECT a.visto_em, a.ip_cliente, a.ip_destino, a.mac, hc.host, hc.org,
                 (SELECT l.telefone FROM conexoes cx JOIN leads l ON l.id = cx.lead_id
                    WHERE cx.mac = a.mac AND l.roteador = a.roteador ORDER BY cx.id DESC LIMIT 1) AS telefone,
                 (SELECT l.nome FROM conexoes cx JOIN leads l ON l.id = cx.lead_id

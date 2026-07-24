@@ -285,12 +285,13 @@
                 if (!d || !d.ok) { aLista.innerHTML = '<p class="pc-modal-info">' + esc((d && d.erro) || 'Erro ao carregar.') + '</p>'; return; }
                 if (aTel) aTel.textContent = (d.nome || d.telefone) || '';
                 if (!d.acessos || !d.acessos.length) { aLista.innerHTML = '<p class="pc-modal-info">Nenhum acesso registrado ainda.</p>'; return; }
-                var html = '<div class="pc-conex-head pc-acesso-head"><span>Data e hora</span><span>IP cliente</span><span>Destino</span><span>Aparelho</span></div><ul class="pc-conex-list">';
+                var html = '<div class="pc-conex-head pc-acesso-head"><span>Data e hora</span><span>IP cliente</span><span>Destino</span><span>Serviço</span><span>Aparelho</span></div><ul class="pc-conex-list">';
                 d.acessos.forEach(function (a) {
                     var destino = (a.host && a.host !== '') ? esc(a.host) : esc(a.ip_destino);
                     html += '<li class="pc-acesso-row"><span class="pc-conex-data">' + esc(fmtData(a.visto_em)) + '</span>' +
                             '<span class="pc-conex-ap">' + esc(a.ip_cliente || '—') + '</span>' +
                             '<span class="pc-acesso-dst-cel"><span class="pc-acesso-dst" title="' + esc(a.ip_destino) + '">' + destino + '</span>' + COPIA_BTN + '</span>' +
+                            '<span class="pc-acesso-org">' + esc(a.org || '—') + '</span>' +
                             '<span class="pc-conex-ap">' + esc(a.dispositivo || '—') + '</span></li>';
                 });
                 aLista.innerHTML = html + '</ul>';

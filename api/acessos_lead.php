@@ -42,7 +42,7 @@ try {
     $pagina  = min($paginas, max(1, (int) ($_GET['pagina'] ?? 1)));
 
     $c = db()->prepare(
-        "SELECT a.visto_em, a.ip_cliente, a.ip_destino, a.hits, hc.host,
+        "SELECT a.visto_em, a.ip_cliente, a.ip_destino, a.hits, hc.host, hc.org,
                 (SELECT cx.dispositivo FROM conexoes cx WHERE cx.mac = a.mac ORDER BY cx.id DESC LIMIT 1) AS dispositivo
            FROM acessos a
            LEFT JOIN host_cache hc ON hc.ip = a.ip_destino
