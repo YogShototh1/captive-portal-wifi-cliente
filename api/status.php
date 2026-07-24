@@ -56,99 +56,114 @@ try {
     $dbNow = db_now();
     $nowTs = strtotime($dbNow);
 
-    // Lead "atual" (mais recente) de cada MAC online neste roteador.
-    $onlineIds  = [];
-    $macPorLead = [];
+    // Auto-heal: sessao rastreada POR CONEXAO precisa de visto_em em conexoes.
+    // ADD COLUMN em coluna existente da erro (1060), ignorado. Roda 1x na pratica.
+    try { db()->exec('ALTER TABLE conexoes ADD COLUMN visto_em TIMESTAMP NULL AFTER bytes'); } catch (Throwable $e) {}
+
+    // Sessao ABERTA (conexoes.segundos NULL) de cada MAC online, chaveada pelo
+    // MAC — nao pelo lead. Assim 2 aparelhos no mesmo numero contam separado.
+    $onlineConx    = []; // conexao id => ['mac'=>, 'lead'=>, 'ini'=> conectado_em]
+    $leadIdsOnline = []; // leads com >=1 aparelho online (agregado p/ o painel)
     foreach ($macs as $mac) {
         $q = db()->prepare(
-            'SELECT id FROM leads WHERE roteador = ? AND mac = ? ORDER BY conectado_em DESC LIMIT 1'
+            'SELECT c.id, c.lead_id, c.conectado_em FROM conexoes c JOIN leads l ON l.id = c.lead_id
+              WHERE l.roteador = ? AND c.mac = ? AND c.segundos IS NULL
+              ORDER BY c.id DESC LIMIT 1'
         );
         $q->execute([$roteador, $mac]);
-        $id = $q->fetchColumn();
-        if ($id !== false) {
-            $onlineIds[] = (int) $id;
-            $macPorLead[(int) $id] = $mac;
+        $row = $q->fetch();
+        if ($row) {
+            $cid = (int) $row['id'];
+            $onlineConx[$cid] = ['mac' => $mac, 'lead' => (int) $row['lead_id'], 'ini' => $row['conectado_em']];
+            $leadIdsOnline[(int) $row['lead_id']] = true;
         }
     }
 
-    // Quem estava online e não está mais -> marca offline + tempo final.
-    // O fim da sessão é o ÚLTIMO instante confirmado (visto_em), não "agora":
-    // se o MikroTik ficou fora do ar (ex.: fim de semana desligado), não somamos
-    // esse tempo todo — a sessão terminou quando paramos de ver o usuário.
+    // Marca as conexoes online como vistas agora + grava o consumo de cada uma.
+    $upSeen = db()->prepare('UPDATE conexoes SET visto_em = ? WHERE id = ?');
+    foreach ($onlineConx as $cid => $o) {
+        $upSeen->execute([$dbNow, $cid]);
+        if (isset($usoMap[$o['mac']])) {
+            try { db()->prepare('UPDATE conexoes SET bytes = ? WHERE id = ?')->execute([$usoMap[$o['mac']], $cid]); }
+            catch (Throwable $e) { /* banco sem a coluna bytes: ignora */ }
+        }
+    }
+
+    // Fecha as conexoes que estavam abertas+vistas mas cujo MAC sumiu. O fim e o
+    // ULTIMO instante confirmado (visto_em) daquela conexao — nao "agora".
+    $open = db()->prepare(
+        'SELECT c.id, c.conectado_em, c.visto_em FROM conexoes c JOIN leads l ON l.id = c.lead_id
+          WHERE l.roteador = ? AND c.segundos IS NULL AND c.visto_em IS NOT NULL'
+    );
+    $open->execute([$roteador]);
+    $closeC = db()->prepare('UPDATE conexoes SET segundos = ? WHERE id = ?');
+    foreach ($open->fetchAll() as $r) {
+        if (isset($onlineConx[(int) $r['id']])) { continue; } // ainda online
+        $seg = max(0, strtotime((string) $r['visto_em']) - strtotime((string) $r['conectado_em']));
+        $closeC->execute([$seg, (int) $r['id']]);
+    }
+
+    // Agregado por NUMERO (para a tabela principal / contador online): online se
+    // qualquer aparelho do numero estiver online.
     $prev = db()->prepare('SELECT id, conectado_em, visto_em FROM leads WHERE roteador = ? AND online = 1');
     $prev->execute([$roteador]);
-    $up = db()->prepare('UPDATE leads SET online = 0, desconectado_em = ?, segundos_conectado = ? WHERE id = ?');
-    // Grava a duração também no HISTÓRICO (a sessão que fecha é sempre a conexão
-    // mais recente do lead) — alimenta o "tempo online" do pop-up "ver conexões".
-    $upC = db()->prepare('UPDATE conexoes SET segundos = ? WHERE lead_id = ? ORDER BY id DESC LIMIT 1');
+    $upOff = db()->prepare('UPDATE leads SET online = 0, desconectado_em = ?, segundos_conectado = ? WHERE id = ?');
     foreach ($prev->fetchAll() as $r) {
-        if (!in_array((int) $r['id'], $onlineIds, true)) {
-            $fimTs = $r['visto_em'] ? strtotime((string) $r['visto_em']) : $nowTs;
-            $fim   = $r['visto_em'] ?: $dbNow;
-            $seg   = max(0, $fimTs - strtotime($r['conectado_em']));
-            $up->execute([$fim, $seg, (int) $r['id']]);
-            $upC->execute([$seg, (int) $r['id']]);
-        }
+        if (isset($leadIdsOnline[(int) $r['id']])) { continue; } // ainda tem aparelho online
+        $fimTs = $r['visto_em'] ? strtotime((string) $r['visto_em']) : $nowTs;
+        $fim   = $r['visto_em'] ?: $dbNow;
+        $seg   = max(0, $fimTs - strtotime($r['conectado_em']));
+        $upOff->execute([$fim, $seg, (int) $r['id']]);
+    }
+    if ($leadIdsOnline) {
+        $ids = array_keys($leadIdsOnline);
+        $ph  = implode(',', array_fill(0, count($ids), '?'));
+        db()->prepare("UPDATE leads SET online = 1, visto_em = ?, desconectado_em = NULL WHERE id IN ($ph)")
+            ->execute(array_merge([$dbNow], $ids));
     }
 
-    // Marca online os atuais.
-    if ($onlineIds) {
-        $ph = implode(',', array_fill(0, count($onlineIds), '?'));
-        $q  = db()->prepare("UPDATE leads SET online = 1, visto_em = ?, desconectado_em = NULL WHERE id IN ($ph)");
-        $q->execute(array_merge([$dbNow], $onlineIds));
-    }
-
-    // Consumo: atualiza os bytes da conexão ABERTA (a mais recente) de cada
-    // lead online. Silencioso se a coluna ainda não existir (migracao_bytes.sql)
-    // — o controle de tempo/banda nunca pode parar por causa disso.
-    if ($usoMap && $onlineIds) {
-        try {
-            $upB = db()->prepare('UPDATE conexoes SET bytes = ? WHERE lead_id = ? ORDER BY id DESC LIMIT 1');
-            foreach ($onlineIds as $lid) {
-                $m = $macPorLead[$lid] ?? null;
-                if ($m !== null && isset($usoMap[$m])) {
-                    $upB->execute([$usoMap[$m], $lid]);
-                }
-            }
-        } catch (Throwable $e) {
-            // banco sem a coluna `bytes`: ignora até a migração rodar
-        }
-    }
-
-    // kick = quem passou do tempo (desconectar); bw = mac=Mbps por usuário com limite.
-    // O limite de tempo é DIÁRIO: soma as sessões de hoje já fechadas (conexoes)
-    // + a sessão aberta agora. Antes contava só a sessão atual — reconectar
-    // zerava o cronômetro e o limite nunca valia de fato.
+    // kick = quem passou do tempo (desconectar); bw = mac=Mbps por aparelho.
+    // Limite DIARIO por NUMERO: sessoes de hoje ja fechadas + o aberto agora de
+    // TODOS os aparelhos daquele numero. Estourou -> desconecta todos os aparelhos.
     $kick = [];
     $bw   = [];
-    if ($onlineIds) {
-        $ph = implode(',', array_fill(0, count($onlineIds), '?'));
-        $qs = db()->prepare(
+    if ($leadIdsOnline) {
+        $ids = array_keys($leadIdsOnline);
+        $ph  = implode(',', array_fill(0, count($ids), '?'));
+        $qs  = db()->prepare(
             "SELECT lead_id, COALESCE(SUM(segundos), 0)
                FROM conexoes WHERE lead_id IN ($ph) AND conectado_em >= CURRENT_DATE
               GROUP BY lead_id"
         );
-        $qs->execute($onlineIds);
+        $qs->execute($ids);
         $usadoHoje = $qs->fetchAll(PDO::FETCH_KEY_PAIR);
 
-        $q = db()->prepare("SELECT id, mac, conectado_em, tempo_limite_min, banda_limite FROM leads WHERE id IN ($ph)");
-        $q->execute($onlineIds);
-        foreach ($q->fetchAll() as $r) {
-            if (!$r['mac']) {
-                continue;
-            }
-            $lim = $r['tempo_limite_min'];
-            if ($lim !== null && (int) $lim > 0) {
-                $usado = (int) ($usadoHoje[(int) $r['id']] ?? 0)
-                       + max(0, $nowTs - strtotime($r['conectado_em']));
-                if ($usado >= (int) $lim * 60) {
-                    $kick[] = $r['mac'];
-                    continue; // vai ser desconectado; não precisa de fila de banda
+        // Tempo aberto AGORA por numero (soma dos aparelhos online).
+        $abertoPorLead = [];
+        foreach ($onlineConx as $o) {
+            $abertoPorLead[$o['lead']] = ($abertoPorLead[$o['lead']] ?? 0) + max(0, $nowTs - strtotime((string) $o['ini']));
+        }
+
+        $ql = db()->prepare("SELECT id, tempo_limite_min, banda_limite FROM leads WHERE id IN ($ph)");
+        $ql->execute($ids);
+        $lim = [];
+        foreach ($ql->fetchAll() as $r) { $lim[(int) $r['id']] = $r; }
+
+        foreach ($ids as $lid) {
+            $r     = $lim[$lid];
+            $macsL = [];
+            foreach ($onlineConx as $o) { if ($o['lead'] === $lid) { $macsL[] = $o['mac']; } }
+            $tl = $r['tempo_limite_min'];
+            if ($tl !== null && (int) $tl > 0) {
+                $usado = (int) ($usadoHoje[$lid] ?? 0) + (int) ($abertoPorLead[$lid] ?? 0);
+                if ($usado >= (int) $tl * 60) {
+                    foreach ($macsL as $m) { $kick[] = $m; }
+                    continue;
                 }
             }
             $banda = $r['banda_limite'];
             if ($banda !== null && (int) $banda > 0) {
-                $bw[] = $r['mac'] . '=' . (int) $banda;
+                foreach ($macsL as $m) { $bw[] = $m . '=' . (int) $banda; }
             }
         }
     }

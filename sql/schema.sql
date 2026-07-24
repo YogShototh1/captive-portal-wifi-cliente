@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS conexoes (
   dispositivo  VARCHAR(60),
   segundos     INT NULL,             -- duração da sessão; preenchida quando ela termina (status.php)
   bytes        BIGINT NULL,          -- consumo da sessão (bytes-in+out, reportado pelo MikroTik)
+  visto_em     TIMESTAMP NULL,       -- última vez que ESTE aparelho foi visto online (rastreio por MAC)
   INDEX idx_lead (lead_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
