@@ -55,6 +55,9 @@ $csrf  = csrf_token();
 $anuncioOk   = isset($_GET['anuncio_ok'])   ? (string) $_GET['anuncio_ok']   : '';
 $anuncioErro = isset($_GET['anuncio_erro']) ? (string) $_GET['anuncio_erro'] : '';
 $temAnuncio  = $rotAtivo !== null && anuncio_atual($rotAtivo) !== null;
+$logoOk   = isset($_GET['logo_ok'])   ? (string) $_GET['logo_ok']   : '';
+$logoErro = isset($_GET['logo_erro']) ? (string) $_GET['logo_erro'] : '';
+$temLogo  = $rotAtivo !== null && logo_atual($rotAtivo) !== null;
 
 // Site de destino pós-anúncio do cliente aberto.
 $dstOk    = isset($_GET['dst_ok'])   ? (string) $_GET['dst_ok']   : '';
@@ -422,6 +425,36 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                                         <span class="pc-file-label">Escolher imagem…</span>
                                     </label>
                                     <button type="submit" class="pc-btn-primary">Enviar anúncio</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="glow-card pc-anuncio-card">
+                    <span class="glow-fx" aria-hidden="true"></span>
+                    <div class="glow-body">
+                        <div class="pc-anuncio">
+                            <div class="pc-anuncio-preview">
+                                <img src="logo.php?r=<?= urlencode($rotAtivo) ?>&t=<?= time() ?>" alt="Logo atual"
+                                     <?= $temLogo ? '' : 'style="display:none"' ?>
+                                     onerror="this.style.display='none';var v=this.nextElementSibling;if(v)v.style.display='flex';">
+                                <div class="pc-anuncio-vazio" <?= $temLogo ? 'style="display:none"' : '' ?>>Sem logo<br>enviada</div>
+                            </div>
+                            <div class="pc-anuncio-form">
+                                <h2 class="pc-anuncio-title">Logo da tela de login</h2>
+                                <div class="pc-anuncio-target">Enviando para: <strong><?= h($cliente['nome'] ?: $cliente['email']) ?></strong> — roteador <strong><?= h((string) $rotAtivo) ?></strong></div>
+                                <p class="pc-anuncio-desc">Aparece no topo da tela onde o cliente digita o número. Envie PNG (com fundo transparente, recomendado), JPG ou JPEG (até 2 MB). Troca na hora.</p>
+                                <?php if ($logoOk): ?><p class="pc-anuncio-msg ok"><?= h($logoOk) ?></p><?php endif; ?>
+                                <?php if ($logoErro): ?><p class="pc-anuncio-msg err"><?= h($logoErro) ?></p><?php endif; ?>
+                                <form class="pc-anuncio-envio" method="post" action="api/upload_logo.php" enctype="multipart/form-data">
+                                    <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+                                    <input type="hidden" name="cliente_id" value="<?= (int) $id ?>">
+                                    <input type="hidden" name="roteador" value="<?= h((string) $rotAtivo) ?>">
+                                    <label class="pc-file">
+                                        <input type="file" name="logo" accept=".png,.jpg,.jpeg,image/png,image/jpeg" required>
+                                        <span class="pc-file-label">Escolher imagem…</span>
+                                    </label>
+                                    <button type="submit" class="pc-btn-primary">Enviar logo</button>
                                 </form>
                             </div>
                         </div>

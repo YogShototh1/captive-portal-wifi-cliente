@@ -141,6 +141,23 @@ function anuncio_atual(string $roteador): ?string
     return null;
 }
 
+// Logo da tela de login, por roteador (mesma pasta/ideia do anúncio; prefixo
+// distinto pra não colidir com o arquivo do anúncio).
+function logo_base(string $roteador): string
+{
+    return ads_dir() . '/logo_' . sha1(trim($roteador));
+}
+function logo_atual(string $roteador): ?string
+{
+    foreach (['png', 'jpg'] as $ext) {
+        $p = logo_base($roteador) . '.' . $ext;
+        if (is_file($p)) {
+            return $p;
+        }
+    }
+    return null;
+}
+
 // --- Site de destino pós-anúncio (dst do hotspot), por roteador ---
 
 // Destino padrão quando o comprador ainda não configurou um.
