@@ -36,9 +36,11 @@ if ($roteador === '') {
     voltar_msg($voltar, 'logo_erro', 'Este cliente não tem roteador vinculado.');
 }
 
+// Sem imagem = mudar SÓ o formato (não precisa reenviar a logo).
 $err = $_FILES['logo']['error'] ?? UPLOAD_ERR_NO_FILE;
 if (empty($_FILES['logo']) || $err === UPLOAD_ERR_NO_FILE) {
-    voltar_msg($voltar, 'logo_erro', 'Selecione uma imagem.');
+    logo_forma_set($roteador, (string) ($_POST['forma'] ?? 'quadrado'));
+    voltar_msg($voltar, 'logo_ok', 'Formato da logo atualizado!');
 }
 if ($err === UPLOAD_ERR_INI_SIZE || $err === UPLOAD_ERR_FORM_SIZE) {
     voltar_msg($voltar, 'logo_erro', 'Imagem muito grande (máx. 2 MB).');

@@ -453,7 +453,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                                     <input type="hidden" name="forma" id="logo-forma-input" value="<?= h($logoForma) ?>">
                                     <div class="pc-logo-row">
                                         <label class="pc-file">
-                                            <input type="file" name="logo" accept=".png,.jpg,.jpeg,image/png,image/jpeg" required>
+                                            <input type="file" name="logo" accept=".png,.jpg,.jpeg,image/png,image/jpeg">
                                             <span class="pc-file-label">Escolher imagem…</span>
                                         </label>
                                         <details class="rt-sel pc-forma-sel" id="logo-forma-sel">
@@ -470,7 +470,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                                             </div>
                                         </details>
                                     </div>
-                                    <button type="submit" class="pc-btn-primary">Enviar logo</button>
+                                    <button type="submit" class="pc-btn-primary">Salvar</button>
                                 </form>
                             </div>
                         </div>
