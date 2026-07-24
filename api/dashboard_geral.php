@@ -89,10 +89,12 @@ try {
         $qN->execute(array_merge($lista, [$iniAtual]));
         $novos = (int) $qN->fetchColumn();
 
+        // CLIENTES DISTINTOS por janela (não conexões): quantas pessoas
+        // diferentes estiveram no estabelecimento em cada período.
         $qV = db()->prepare(
             "SELECT
-                SUM(c.conectado_em >= ?) AS atual,
-                SUM(c.conectado_em >= ? AND c.conectado_em < ?) AS passada
+                COUNT(DISTINCT CASE WHEN c.conectado_em >= ? THEN c.lead_id END) AS atual,
+                COUNT(DISTINCT CASE WHEN c.conectado_em >= ? AND c.conectado_em < ? THEN c.lead_id END) AS passada
                FROM conexoes c JOIN leads l ON l.id = c.lead_id
               WHERE l.roteador IN ($ph)"
         );
@@ -106,8 +108,8 @@ try {
             'revisitaram'     => $rev,
             'nao_revisitaram' => max(0, $anteriores - $rev),
             'novos'           => $novos,
-            'visitas'         => $atual,
-            'visitas_ant'     => $passada,
+            'clientes'        => $atual,
+            'clientes_ant'    => $passada,
             'pct'             => $passada > 0
                 ? round(($atual - $passada) * 100 / $passada, 1)
                 : ($atual > 0 ? 100.0 : 0.0),

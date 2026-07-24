@@ -30,15 +30,15 @@
         return base;
     }
 
-    // Linha de variação de visitas: % + números reais (atual vs anterior), em
-    // frase curta pra caber numa linha só. Ex.: "↑ 100% visitas vs ontem (12 vs 6)".
+    // Linha de variação de CLIENTES DISTINTOS (novos + revisitas) do período
+    // vs o anterior. Ex.: "↑ 80% clientes vs mês passado (36 vs 20)".
     function linhaVar(d, rotulo) {
         var pct = Number(d.pct) || 0;
         var abs = Math.abs(pct).toLocaleString('pt-BR');
-        var par = ' (' + (d.visitas || 0) + ' vs ' + (d.visitas_ant || 0) + ')';
-        if (pct > 0) return '<p class="dg-var dg-var-bom">&uarr; ' + abs + '% visitas vs ' + rotulo + par + '</p>';
-        if (pct < 0) return '<p class="dg-var dg-var-ruim">&darr; ' + abs + '% visitas vs ' + rotulo + par + '</p>';
-        return '<p class="dg-var">visitas iguais vs ' + rotulo + par + '</p>';
+        var par = ' (' + (d.clientes || 0) + ' vs ' + (d.clientes_ant || 0) + ')';
+        if (pct > 0) return '<p class="dg-var dg-var-bom">&uarr; ' + abs + '% clientes vs ' + rotulo + par + '</p>';
+        if (pct < 0) return '<p class="dg-var dg-var-ruim">&darr; ' + abs + '% clientes vs ' + rotulo + par + '</p>';
+        return '<p class="dg-var">clientes iguais vs ' + rotulo + par + '</p>';
     }
 
     // Donut + legenda de um período (revisitaram / não revisitaram / novos).
