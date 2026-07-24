@@ -42,7 +42,7 @@ $pagina  = min($paginas, max(1, (int) ($_GET['pagina'] ?? 1)));
 
 try {
     $c = db()->prepare(
-        'SELECT conectado_em, dispositivo, ip, segundos, bytes FROM conexoes WHERE lead_id = ?
+        'SELECT conectado_em, dispositivo, ip, segundos, bytes, visto_em FROM conexoes WHERE lead_id = ?
           ORDER BY conectado_em DESC, id DESC
           LIMIT ' . $POR_PAG . ' OFFSET ' . (($pagina - 1) * $POR_PAG)
     );
@@ -54,20 +54,24 @@ try {
     exit(json_encode(['ok' => false, 'erro' => 'Banco desatualizado: rode sql/migracao_conexoes.sql no phpMyAdmin.']));
 }
 
+// Sessão em andamento POR APARELHO: cada conexão aberta (segundos NULL) que
+// ainda está online (visto_em recente) mostra o tempo correndo dela — assim,
+// com 2 aparelhos no mesmo número, os DOIS aparecem com o tempo certo (antes só
+// o mais recente; o outro ficava "—"). Aberta sem confirmação recente = "—".
+$nowTs = strtotime(db_now());
 foreach ($conexoes as &$cx) {
-    $cx['segundos'] = $cx['segundos'] === null ? null : (int) $cx['segundos'];
-    $cx['bytes']    = $cx['bytes'] === null ? null : (int) $cx['bytes'];
+    $cx['bytes'] = $cx['bytes'] === null ? null : (int) $cx['bytes'];
+    if ($cx['segundos'] !== null) {
+        $cx['segundos'] = (int) $cx['segundos'];
+    } else {
+        $vt = ($cx['visto_em'] === null || $cx['visto_em'] === '') ? null : strtotime((string) $cx['visto_em']);
+        $cx['segundos'] = ($vt !== null && ($nowTs - $vt) <= MIKROTIK_TIMEOUT_SEG)
+            ? max(0, $nowTs - strtotime((string) $cx['conectado_em']))
+            : null;
+    }
+    unset($cx['visto_em']); // não vai para o cliente
 }
 unset($cx);
-
-// Sessão em andamento: a conexão mais recente ainda não tem duração gravada —
-// mostra o tempo decorrido até agora (lead_estado corrige o "online preso").
-if ($pagina === 1 && $conexoes && $conexoes[0]['segundos'] === null) {
-    $st = lead_estado($lead, strtotime(db_now()));
-    if ($st['online'] === 1) {
-        $conexoes[0]['segundos'] = $st['elapsed'];
-    }
-}
 
 echo json_encode([
     'ok'       => true,
