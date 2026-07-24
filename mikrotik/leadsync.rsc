@@ -115,3 +115,23 @@
     :if ($pfail = 0) do={ :set cdPortalVer $pver }
   }
 }
+
+# ============================================================
+#  Lista de aparelhos ja cadastrados (macs.js)
+#  O painel gera a lista (hashes dos MACs); aqui o roteador a baixa para a
+#  flash SO quando a versao muda. O login.html le o arquivo LOCAL e pula a
+#  pergunta do numero para quem ja tem cadastro — sem falar com o painel
+#  no momento da conexao. Painel fora do ar = lista congelada, tudo segue.
+# ============================================================
+:do {
+  :local mres [/tool fetch url=("https://captivedata.com.br/api/macs.php?token=$token&roteador=$ident") \
+      check-certificate=no output=user as-value]
+  :local mver ($mres->"data")
+  :global cdMacsVer
+  :if ([:typeof $cdMacsVer] = "nothing") do={ :set cdMacsVer "" }
+  :if ([:len $mver] > 0 && [:len $mver] < 16 && $mver != $cdMacsVer) do={
+    /tool fetch url=("https://captivedata.com.br/api/macs.php?token=$token&roteador=$ident&f=1") \
+        check-certificate=no dst-path="flash/hostsv7/macs.js"
+    :set cdMacsVer $mver
+  }
+} on-error={}

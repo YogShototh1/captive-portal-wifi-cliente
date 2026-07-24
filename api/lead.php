@@ -57,10 +57,10 @@ if ($isGet) {
 }
 
 // --- Validação ---
+// Telefone null = REVISITA de aparelho já cadastrado (login.html pulou a
+// pergunta pela lista local de MACs): só registra a conexão no lead que já
+// tem esse MAC neste roteador. Nunca cria lead novo sem telefone.
 $telefone = sanitiza_telefone((string) ($data['telefone'] ?? ''));
-if ($telefone === null) {
-    terminar($isGet, 422, ['ok' => false, 'erro' => 'telefone invalido']);
-}
 
 $roteador = trim((string) ($data['roteador'] ?? ''));
 if ($roteador === '' || strlen($roteador) > 120) {
@@ -104,6 +104,32 @@ try {
 
     $dispositivo = detecta_dispositivo($_SERVER['HTTP_USER_AGENT'] ?? '');
     $agora = db_now();
+
+    // Revisita sem telefone: acha o lead pelo MAC (mais recente) e registra.
+    if ($telefone === null) {
+        if ($mac === null || $mac === '') {
+            terminar($isGet, 422, ['ok' => false, 'erro' => 'telefone invalido']);
+        }
+        $sel = db()->prepare(
+            'SELECT l.id FROM leads l
+              WHERE l.roteador = ? AND l.id IN (SELECT c.lead_id FROM conexoes c WHERE c.mac = ?)
+              ORDER BY l.conectado_em DESC LIMIT 1'
+        );
+        $sel->execute([$roteador, $mac]);
+        $leadId = $sel->fetchColumn();
+        if ($leadId === false) {
+            terminar($isGet, 422, ['ok' => false, 'erro' => 'telefone invalido']);
+        }
+        $leadId = (int) $leadId;
+        $u = db()->prepare(
+            'UPDATE leads SET mac = ?, ip = ?, dispositivo = ?, conectado_em = ?,
+                    total_conexoes = total_conexoes + 1 WHERE id = ?'
+        );
+        $u->execute([$mac, $ip, $dispositivo, $agora, $leadId]);
+        $c = db()->prepare('INSERT INTO conexoes (lead_id, conectado_em, mac, ip, dispositivo) VALUES (?, ?, ?, ?, ?)');
+        $c->execute([$leadId, $agora, $mac, $ip, $dispositivo]);
+        terminar($isGet, 201, ['ok' => true, 'id' => $leadId]);
+    }
 
     // UM lead por (roteador, telefone): atualiza a linha existente ou cria.
     $sel = db()->prepare('SELECT id FROM leads WHERE roteador = ? AND telefone = ? LIMIT 1');
