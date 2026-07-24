@@ -21,7 +21,9 @@
   --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
   --sans:'Inter',system-ui,-apple-system,sans-serif;
   --max:1180px;
+  --ease-out:cubic-bezier(.23,1,.32,1);
 }
+html{interpolate-size:allow-keywords}
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{background:var(--bg);color:var(--fg);font-family:var(--sans);line-height:1.6;font-size:16px;-webkit-font-smoothing:antialiased;overflow-x:hidden}
@@ -45,19 +47,27 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;op
   padding:13px 22px;border:1px solid var(--line-2);background:transparent;color:var(--fg);cursor:pointer;transition:.18s}
 .btn svg{width:16px;height:16px}
 .btn:hover{border-color:#fff;background:rgba(255,255,255,.05)}
+.btn:active{transform:scale(.97);transition:transform .1s ease-out}
+.btn .ar{transition:transform .25s var(--ease-out)}
+.btn:hover .ar{transform:translateX(3px)}
 .btn-solid{background:#fff;color:#000;border-color:#fff}
 .btn-solid:hover{background:#e5e5e5}
 .btn-sm{padding:10px 16px;font-size:12.5px}
 
 /* ===== Navbar ===== */
-.nav{position:fixed;top:0;left:0;right:0;z-index:50;background:rgba(3,3,3,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+/* transparente no topo; o "material" (blur + borda) aparece ao rolar */
+.nav{position:fixed;top:0;left:0;right:0;z-index:50;background:transparent;backdrop-filter:blur(12px);border-bottom:1px solid transparent;transition:background .35s ease,border-color .35s ease}
+.nav.scrolled,.nav.open{background:rgba(3,3,3,.82);border-bottom-color:var(--line)}
 .nav-in{display:flex;align-items:center;gap:20px;height:64px;max-width:var(--max);margin:0 auto;padding:0 24px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;letter-spacing:-.02em}
 .brand img{width:30px;height:30px}
 /* banner-wordmark: altura fixa, largura proporcional */
 .brand-banner{height:30px;width:auto!important;display:block}
 .nav-links{display:flex;gap:26px;margin-left:auto;font-family:var(--mono);font-size:13px;color:var(--fg-2)}
+.nav-links a{position:relative;transition:color .2s}
+.nav-links a::after{content:"";position:absolute;left:0;right:0;bottom:-4px;height:1px;background:#fff;transform:scaleX(0);transform-origin:left;transition:transform .25s var(--ease-out)}
 .nav-links a:hover{color:#fff}
+.nav-links a:hover::after{transform:scaleX(1)}
 .nav-cta{display:flex;gap:10px;align-items:center}
 .nav-burger{display:none;background:none;border:1px solid var(--line-2);color:#fff;width:40px;height:40px;cursor:pointer}
 .nav-burger svg{width:18px;height:18px;margin:auto}
@@ -69,8 +79,26 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;op
 .hero .lead{font-size:clamp(16px,2.2vw,20px);color:var(--fg-2);max-width:640px;margin:0 auto 30px}
 .hero-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
 .hero-tags{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:34px;font-family:var(--mono);font-size:12px;color:var(--fg-3)}
-.hero-tags span{border:1px solid var(--line);padding:7px 12px}
+.hero-tags span{border:1px solid var(--line);padding:7px 12px;transition:border-color .25s,color .25s}
+.hero-tags span:hover{border-color:var(--line-2);color:var(--fg-2)}
 .hero-tags b{color:var(--fg);font-weight:500}
+
+/* ===== Entrada do hero (1x, no load) ===== */
+.hr{opacity:0;transform:translateY(16px);animation:hrIn .7s var(--ease-out) forwards}
+.hr-1{animation-delay:0s}.hr-2{animation-delay:.38s}.hr-3{animation-delay:.5s}.hr-4{animation-delay:.62s}
+@keyframes hrIn{to{opacity:1;transform:none}}
+/* linhas do h1 sobem por trás de uma máscara */
+.hl{display:inline-block;overflow:hidden;vertical-align:bottom}
+.hl>span{display:inline-block;transform:translateY(112%);animation:hlIn .8s var(--ease-out) forwards}
+.hl-1>span{animation-delay:.08s}.hl-2>span{animation-delay:.18s}
+@keyframes hlIn{to{transform:none}}
+
+/* ===== Reveal ao rolar ===== */
+.rv{opacity:0;transform:translateY(18px);transition:opacity .6s var(--ease-out),transform .6s var(--ease-out)}
+.rv.in{opacity:1;transform:none}
+.rv-scale{transform:translateY(14px) scale(.985)}
+[data-stagger]>*{opacity:0;transform:translateY(16px);transition:opacity .55s var(--ease-out),transform .55s var(--ease-out);transition-delay:calc(var(--i,0)*70ms)}
+[data-stagger].in>*{opacity:1;transform:none}
 
 /* ===== Faixa de números ===== */
 .stats{border-bottom:1px solid var(--line)}
@@ -91,18 +119,23 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;op
 .grid{display:grid;gap:0;border:1px solid var(--line)}
 .g3{grid-template-columns:repeat(3,1fr)}
 .g2{grid-template-columns:repeat(2,1fr)}
-.cell{padding:30px 26px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);transition:.18s}
+.cell{padding:30px 26px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);transition:background .18s;position:relative}
+.cell::after{content:"";position:absolute;top:-1px;left:0;width:100%;height:1px;background:rgba(255,255,255,.5);transform:scaleX(0);transform-origin:left;transition:transform .35s var(--ease-out)}
 .cell:hover{background:var(--panel)}
-.cell .num{font-family:var(--mono);font-size:12px;color:var(--fg-3);letter-spacing:.1em}
+.cell:hover::after{transform:scaleX(1)}
+.cell .num{font-family:var(--mono);font-size:12px;color:var(--fg-3);letter-spacing:.1em;transition:color .25s}
+.cell:hover .num{color:var(--fg)}
 .cell h3{font-size:18px;margin:14px 0 8px}
 .cell p{font-size:14.5px;color:var(--fg-2)}
 .cell .ic{width:22px;height:22px;color:#fff;margin-top:10px}
 
 /* ===== Como funciona (passos) ===== */
 .steps{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line)}
-.step{padding:34px 28px;border-right:1px solid var(--line)}
+.step{padding:34px 28px;border-right:1px solid var(--line);transition:background .18s}
+.step:hover{background:var(--panel)}
 .step:last-child{border-right:0}
-.step .k{font-family:var(--mono);font-size:34px;font-weight:600;color:var(--fg-3)}
+.step .k{font-family:var(--mono);font-size:34px;font-weight:600;color:var(--fg-3);transition:color .25s}
+.step:hover .k{color:var(--fg)}
 .step h3{font-size:19px;margin:16px 0 8px}
 .step p{color:var(--fg-2);font-size:14.5px}
 
@@ -117,7 +150,8 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;op
 
 /* ===== Planos ===== */
 .plans{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line)}
-.plan{padding:34px 28px;border-right:1px solid var(--line);display:flex;flex-direction:column}
+.plan{padding:34px 28px;border-right:1px solid var(--line);display:flex;flex-direction:column;transition:background .18s}
+.plan:hover{background:var(--panel)}
 .plan:last-child{border-right:0}
 .plan.destaque{background:var(--panel);position:relative}
 .plan.destaque::before{content:"MAIS ESCOLHIDO";position:absolute;top:0;right:0;font-family:var(--mono);font-size:10px;letter-spacing:.12em;background:#fff;color:#000;padding:5px 10px}
@@ -143,14 +177,29 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;op
 .faq details:last-child{border-bottom:0}
 .faq summary{list-style:none;cursor:pointer;padding:22px 26px;display:flex;align-items:center;gap:16px;font-size:16px;font-weight:500}
 .faq summary::-webkit-details-marker{display:none}
-.faq summary::after{content:"+";margin-left:auto;font-family:var(--mono);font-size:20px;color:var(--fg-3)}
-.faq details[open] summary::after{content:"–"}
+.faq summary::after{content:"+";margin-left:auto;font-family:var(--mono);font-size:20px;color:var(--fg-3);transition:transform .3s var(--ease-out),color .2s}
+.faq summary:hover::after{color:var(--fg)}
+.faq details[open] summary::after{transform:rotate(45deg)}
+/* abre animando a altura (Chrome/Edge; demais abrem direto) */
+.faq details::details-content{block-size:0;overflow:hidden;transition:block-size .35s var(--ease-out),content-visibility .35s allow-discrete}
+.faq details[open]::details-content{block-size:auto}
 .faq .a{padding:0 26px 22px;color:var(--fg-2);font-size:14.5px;max-width:760px}
 
 /* ===== CTA final ===== */
 .cta{padding:96px 0;text-align:center;border-bottom:1px solid var(--line)}
-.cta h2{font-size:clamp(28px,5vw,48px);margin:16px 0 26px}
+.cta h2{font-size:clamp(28px,5vw,48px);margin:16px 0 14px}
+.cta .sub{color:var(--fg-2);font-size:15.5px;margin-bottom:28px}
 .cta .row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+
+/* ===== Movimento reduzido: cross-fade curto, nada desliza ===== */
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .hr,.hl>span{animation:none;opacity:1;transform:none}
+  .rv,[data-stagger]>*{transition:opacity .25s ease;transform:none}
+  .btn:active{transform:none}
+  .btn .ar,.cell::after,.faq summary::after{transition:none}
+  .faq details::details-content{transition:none}
+}
 
 /* ===== Footer ===== */
 footer{padding:40px 0}
@@ -188,7 +237,7 @@ footer{padding:40px 0}
     </div>
     <div class="nav-cta">
       <a href="/painel" class="btn btn-solid btn-sm nav-painel">Acesso ao painel
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        <svg class="ar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
       </a>
       <button class="nav-burger" id="burger" aria-label="Menu">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
@@ -200,16 +249,16 @@ footer{padding:40px 0}
 <!-- ===== Hero ===== -->
 <header id="topo" class="hero">
   <div class="wrap hero-in">
-    <span class="eyebrow">Captive portal inteligente</span>
-    <h1>Transforme o Wi-Fi da sua loja em <br>leads de verdade.</h1>
-    <p class="lead">O cliente conecta, vê o seu anúncio e deixa o telefone. Você acompanha tudo em tempo real, direto no painel. Sem aplicativo, sem cadastro complicado.</p>
-    <div class="hero-cta">
+    <span class="eyebrow hr hr-1">Captive portal inteligente</span>
+    <h1><span class="hl hl-1"><span>Transforme o Wi-Fi da sua loja</span></span><br><span class="hl hl-2"><span>em leads de verdade.</span></span></h1>
+    <p class="lead hr hr-2">O cliente conecta, vê o seu anúncio e deixa o telefone. Você acompanha tudo em tempo real, direto no painel. Sem aplicativo, sem cadastro complicado.</p>
+    <div class="hero-cta hr hr-3">
       <a href="/painel" class="btn btn-solid">Acesso ao painel
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        <svg class="ar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
       </a>
       <a href="#contato" class="btn">Falar no WhatsApp</a>
     </div>
-    <div class="hero-tags">
+    <div class="hero-tags hr hr-4">
       <span><b>Sem app</b> · só Wi-Fi</span>
       <span>Leads em <b>tempo real</b></span>
       <span>Anúncio <b>por loja</b></span>
@@ -220,7 +269,7 @@ footer{padding:40px 0}
 
 <!-- ===== Números ===== -->
 <section class="stats">
-  <div class="wrap"><div class="stats-in">
+  <div class="wrap"><div class="stats-in" data-stagger>
     <div class="stat"><div class="n">0</div><div class="l">apps para instalar</div></div>
     <div class="stat"><div class="n">~10s</div><div class="l">do Wi-Fi ao lead</div></div>
     <div class="stat"><div class="n">1</div><div class="l">clique para o WhatsApp</div></div>
@@ -231,12 +280,12 @@ footer{padding:40px 0}
 <!-- ===== Recursos ===== -->
 <section id="recursos" class="sec">
   <div class="wrap">
-    <div class="sec-head">
+    <div class="sec-head rv">
       <span class="eyebrow">O que você recebe</span>
       <h2>Tudo para o Wi-Fi virar canal de vendas.</h2>
       <p>Cada pessoa que usa o Wi-Fi da sua loja vira um contato seu — organizado, em tempo real e pronto para o WhatsApp.</p>
     </div>
-    <div class="grid g3">
+    <div class="grid g3" data-stagger>
       <div class="cell"><div class="num">01</div><h3>Painel de leads ao vivo</h3><p>O telefone cai na sua tela no instante em que o cliente conecta. Online agora, conectados hoje, total.</p></div>
       <div class="cell"><div class="num">02</div><h3>Anúncio por loja</h3><p>Mostre a sua imagem nos segundos antes de liberar o Wi-Fi. Troca pelo painel, sem mexer no roteador.</p></div>
       <div class="cell"><div class="num">03</div><h3>Número no WhatsApp</h3><p>Um clique no lead abre a conversa no WhatsApp. Renomeie contatos para reconhecer quem é quem.</p></div>
@@ -250,11 +299,11 @@ footer{padding:40px 0}
 <!-- ===== Como funciona ===== -->
 <section id="como" class="sec">
   <div class="wrap">
-    <div class="sec-head center">
+    <div class="sec-head center rv">
       <span class="eyebrow">Como funciona</span>
       <h2>Do Wi-Fi ao seu painel em três passos.</h2>
     </div>
-    <div class="steps">
+    <div class="steps" data-stagger>
       <div class="step"><div class="k">01</div><h3>Cliente conecta</h3><p>Ele escolhe a rede da sua loja e cai na tela de acesso, com a sua marca.</p></div>
       <div class="step"><div class="k">02</div><h3>Anúncio + telefone</h3><p>Informa o número, vê o seu anúncio por alguns segundos e o Wi-Fi é liberado.</p></div>
       <div class="step"><div class="k">03</div><h3>Lead no painel</h3><p>O número aparece na hora no seu painel, pronto para o contato no WhatsApp.</p></div>
@@ -265,12 +314,12 @@ footer{padding:40px 0}
 <!-- ===== Demonstração ===== -->
 <section class="sec">
   <div class="wrap">
-    <div class="sec-head center">
+    <div class="sec-head center rv">
       <span class="eyebrow">Demonstração</span>
       <h2>Veja o fluxo acontecendo.</h2>
       <p>É isto que o cliente da sua loja vê — e é assim que o número dele chega até você.</p>
     </div>
-    <div class="demo-frame">
+    <div class="demo-frame rv rv-scale">
       <video class="demo-video" src="assets/demo.webm" autoplay loop muted playsinline preload="metadata" aria-label="Demonstração do Captive Data"></video>
       <button type="button" class="demo-fs" aria-label="Ver em tela cheia">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
@@ -282,11 +331,11 @@ footer{padding:40px 0}
 <!-- ===== Casos de uso ===== -->
 <section class="sec">
   <div class="wrap">
-    <div class="sec-head">
+    <div class="sec-head rv">
       <span class="eyebrow">Para quem é</span>
       <h2>Qualquer lugar com Wi-Fi e clientes.</h2>
     </div>
-    <div class="grid g3">
+    <div class="grid g3" data-stagger>
       <div class="cell"><h3>Cafeterias e bares</h3><p>Cliente pega o Wi-Fi, você pega o contato para promoções e novidades.</p></div>
       <div class="cell"><h3>Restaurantes</h3><p>Divulgue o cardápio e o delivery no anúncio; construa sua base de clientes.</p></div>
       <div class="cell"><h3>Lojas e mercados</h3><p>Cada visitante vira lead para campanhas no WhatsApp.</p></div>
@@ -300,12 +349,12 @@ footer{padding:40px 0}
 <!-- ===== Planos ===== -->
 <section id="planos" class="sec">
   <div class="wrap">
-    <div class="sec-head center">
+    <div class="sec-head center rv">
       <span class="eyebrow">Planos</span>
       <h2>Escolha o tamanho da sua operação.</h2>
       <p>Sem fidelidade complicada. Fale com a gente e ative na sua loja.</p>
     </div>
-    <div class="plans">
+    <div class="plans" data-stagger>
       <div class="plan">
         <h3>Mensal</h3>
         <div class="preco">R$ 119,90<small> /mês</small></div>
@@ -344,11 +393,11 @@ footer{padding:40px 0}
 <!-- ===== Depoimentos ===== -->
 <section class="sec">
   <div class="wrap">
-    <div class="sec-head">
+    <div class="sec-head rv">
       <span class="eyebrow">Quem usa</span>
       <h2>Wi-Fi que virou canal de vendas.</h2>
     </div>
-    <div class="quotes">
+    <div class="quotes" data-stagger>
       <div class="quote">
         <p>“Antes o Wi-Fi era só custo. Hoje todo cliente que conecta vira um contato que eu chamo no WhatsApp.”</p>
         <div class="who"><b>Dono de cafeteria</b>Centro</div>
@@ -368,11 +417,11 @@ footer{padding:40px 0}
 <!-- ===== FAQ ===== -->
 <section id="faq" class="sec">
   <div class="wrap">
-    <div class="sec-head center">
+    <div class="sec-head center rv">
       <span class="eyebrow">Perguntas frequentes</span>
       <h2>Ainda em dúvida?</h2>
     </div>
-    <div class="faq">
+    <div class="faq rv">
       <details><summary>Precisa instalar aplicativo?</summary><div class="a">Não. O cliente só conecta no Wi-Fi, informa o telefone e pronto. Tudo acontece no navegador, inclusive no iPhone.</div></details>
       <details><summary>Como o número chega até mim?</summary><div class="a">No momento em que o cliente libera o Wi-Fi, o telefone é registrado e aparece no seu painel em tempo real, pronto para o contato no WhatsApp.</div></details>
       <details><summary>Funciona com o meu roteador?</summary><div class="a">O sistema roda em MikroTik com captive portal. Se a sua loja já tem esse tipo de Wi-Fi, plugamos o Captive Data ao fluxo existente. Fale com a gente que verificamos.</div></details>
@@ -384,9 +433,10 @@ footer{padding:40px 0}
 
 <!-- ===== CTA final ===== -->
 <section id="contato" class="cta">
-  <div class="wrap">
+  <div class="wrap rv">
     <span class="eyebrow">Contato</span>
     <h2>Pronto para o seu Wi-Fi vender?</h2>
+    <p class="sub">A instalação é por nossa conta — você responde no WhatsApp e a gente cuida do resto.</p>
     <div class="row">
       <a href="https://wa.me/55" target="_blank" rel="noopener" class="btn btn-solid">
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.64.07-.3-.15-1.26-.46-2.4-1.48-.88-.79-1.48-1.76-1.65-2.06-.17-.3-.02-.46.13-.6.13-.14.3-.35.44-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.61-.92-2.21-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.08-.8.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.22 3.07c.15.2 2.1 3.2 5.08 4.49.7.3 1.26.49 1.7.63.71.22 1.36.19 1.87.12.57-.09 1.76-.72 2-1.41.25-.7.25-1.29.17-1.41-.07-.12-.27-.2-.57-.35M12.05 21.8h-.01a9.9 9.9 0 0 1-5.03-1.38l-.36-.21-3.74.98 1-3.65-.24-.37a9.86 9.86 0 0 1-1.51-5.26c0-5.45 4.44-9.88 9.9-9.88 2.64 0 5.12 1.03 6.99 2.9a9.82 9.82 0 0 1 2.89 6.99c0 5.45-4.44 9.88-9.88 9.88m8.41-18.3A11.82 11.82 0 0 0 12.05 0C5.5 0 .16 5.33.16 11.89c0 2.1.55 4.14 1.59 5.95L.06 24l6.3-1.65a11.88 11.88 0 0 0 5.69 1.45h.01c6.55 0 11.89-5.34 11.89-11.9 0-3.17-1.24-6.16-3.48-8.4"/></svg>
@@ -417,6 +467,28 @@ footer{padding:40px 0}
   var nav=document.getElementById('nav'),b=document.getElementById('burger');
   if(b) b.addEventListener('click',function(){nav.classList.toggle('open');});
   nav.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener('click',function(){nav.classList.remove('open');});});
+})();
+
+// Nav: o material (fundo + borda) só aparece depois de rolar
+(function(){
+  var n=document.getElementById('nav');
+  function s(){n.classList.toggle('scrolled',scrollY>8);}
+  addEventListener('scroll',s,{passive:true});s();
+})();
+
+// Reveal ao rolar: .rv e [data-stagger] entram quando ~15% visíveis (1x só)
+(function(){
+  var els=document.querySelectorAll('.rv,[data-stagger]');
+  if(!('IntersectionObserver' in window)){els.forEach(function(e){e.classList.add('in');});return;}
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){en.target.classList.add('in');io.unobserve(en.target);}
+    });
+  },{threshold:.15,rootMargin:'0px 0px -8% 0px'});
+  els.forEach(function(el){
+    if(el.hasAttribute('data-stagger'))Array.prototype.forEach.call(el.children,function(c,i){c.style.setProperty('--i',i);});
+    io.observe(el);
+  });
 })();
 
 // Vídeo: toca ao entrar na tela, pausa fora; botão de tela cheia.
