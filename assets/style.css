@@ -1096,6 +1096,14 @@ body.pc-menu-fechado .pc-sidebar { margin-left: -232px; }
 .dash-tt { white-space: nowrap; }
 /* Donut + legenda lado a lado (modelo da print) */
 .dash-donut-row { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
+/* Aba Informações: legenda em GRADE de colunas compactas — com 24 faixas de
+   horário a lista de 1 coluna esticava o bloco; aqui quebra em quantas
+   colunas couberem, poucas linhas. */
+.dash-card-donut .dash-legenda {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    gap: 6px 16px; flex: 1 1 220px; max-width: none;
+}
+.dash-card-donut .dash-legenda li { font-size: 12px; }
 /* Dashboard geral: 3 cartões (mês / semana / dia), donut + legenda em cada um */
 .dg-cards { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 14px; align-items: stretch; }
 .dg-card { flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; }
