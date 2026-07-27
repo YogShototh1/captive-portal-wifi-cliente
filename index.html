@@ -171,7 +171,61 @@ button{font:inherit}
 /* =====================================================================
    RECURSOS — galeria de telas reais + lista
    ===================================================================== */
-.gal{width:var(--shell);margin:36px auto 0;position:relative}
+/* Os prints sao 16:9. Em vez de ocupar a largura toda (e empurrar a legenda p/
+   fora da tela), a largura e limitada pela ALTURA que sobra — assim imagem +
+   legenda + pontos cabem juntos em qualquer aparelho, sem corte nem tarja.
+   --gal-reserva = tudo o que nao e a imagem (cabecalho, legenda, paddings). */
+.gal{
+  --gal-reserva:430px;
+  /* max(300px,...) impede o print de colapsar em telas muito baixas; o min()
+     externo garante que nunca passe da largura util. */
+  width:min(var(--shell),max(300px,calc((100svh - var(--gal-reserva)) * 16 / 9)));
+  margin:36px auto 0;position:relative;
+}
+@media(max-width:600px){
+  #recursos{padding-top:80px;padding-bottom:32px}
+  #recursos h2{font-size:1.65rem}
+  #recursos .sec-sub{font-size:.9rem;margin-top:10px}
+  .gal{--gal-reserva:470px;margin-top:22px}
+  .gal-cap{margin-top:16px;min-height:0}
+  .gal-cap h3{font-size:1.1rem;margin-bottom:6px}
+  .gal-cap p{font-size:.875rem}
+}
+/* Telas bem baixas (iPhone SE, celular deitado): corta a linha de apoio do
+   cabecalho — a legenda da propria galeria ja cumpre esse papel. */
+@media(max-height:620px){
+  #recursos{padding-top:64px;padding-bottom:20px}
+  #recursos .sec-sub{display:none}
+  .gal{margin-top:16px}
+}
+/* Larga e baixa (celular deitado): empilhar nao cabe — legenda vai p/ o LADO
+   da imagem, que passa a ser dimensionada pela altura disponivel. */
+@media(max-height:560px) and (min-width:740px){
+  #recursos{padding-top:58px;padding-bottom:16px}
+  #recursos h2{font-size:1.5rem}
+  .gal{
+    width:auto;max-width:var(--shell);margin-top:14px;
+    display:grid;grid-template-columns:auto minmax(210px,300px);
+    grid-template-areas:"view cap" "view dots";gap:8px 22px;align-content:center;
+  }
+  .gal-view{grid-area:view;height:calc(100svh - 190px);aspect-ratio:16/9}
+  .gal-track,.gal-item{height:100%}
+  .gal-item img{height:100%;width:100%;aspect-ratio:auto;object-fit:cover}
+  .gal-cap{grid-area:cap;margin-top:0;min-height:0;text-align:left;align-self:end}
+  .gal-cap p{margin-inline:0}
+  .gal-dots{grid-area:dots;justify-content:flex-start;align-self:start;margin-top:10px}
+}
+/* Tela baixa (notebook 1366x768, 1280x720): compacta o cabecalho e a legenda
+   p/ sobrar altura de imagem — senao o print fica ilegivel de tao pequeno. */
+@media(max-height:820px) and (min-width:601px){
+  #recursos{padding-top:76px;padding-bottom:32px}
+  #recursos h2{font-size:clamp(1.6rem,3.2vw,2.2rem)}
+  #recursos .sec-sub{font-size:.9rem;margin-top:10px}
+  .gal{--gal-reserva:370px;margin-top:22px}
+  .gal-cap{margin-top:16px;min-height:82px}
+  .gal-cap h3{font-size:1.15rem;margin-bottom:6px}
+  .gal-cap p{font-size:.875rem}
+}
 .gal-view{position:relative;overflow:hidden;border-radius:16px;background:var(--mist);box-shadow:0 22px 60px -30px rgba(23,26,32,.45)}
 .gal-track{display:flex;transition:transform .62s var(--ease)}
 .gal-item{min-width:100%}
