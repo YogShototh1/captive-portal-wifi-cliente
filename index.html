@@ -165,19 +165,19 @@ button{font:inherit}
 /* =====================================================================
    RECURSOS — galeria de telas reais + lista
    ===================================================================== */
-/* Galeria em DUAS COLUNAS: print grande de um lado, texto do outro. O lado do
-   texto alterna a cada troca de imagem (data-lado no .gal, posto pelo JS), o
-   que mantem a imagem no tamanho cheio e o texto sempre visivel junto dela. */
+/* Galeria em DUAS COLUNAS: texto a ESQUERDA (fixo), print grande a direita.
+   Ficando lado a lado, a altura do texto nao soma na do bloco — a imagem
+   mantem o tamanho cheio e o texto fica sempre visivel junto dela. */
 .gal{
   width:var(--shell);margin:40px auto 0;
-  display:grid;grid-template-columns:minmax(0,1fr) minmax(250px,340px);
+  display:grid;grid-template-columns:minmax(250px,340px) minmax(0,1fr);
   gap:36px;align-items:center;
 }
-.gal-view{grid-column:1;grid-row:1}
+.gal-view{grid-column:2;grid-row:1}
 /* Cartao preto so em volta do texto. Como o .gal usa align-items:center, a
    altura do cartao e a do proprio conteudo — nao vira faixa de ponta a ponta. */
 .gal-side{
-  grid-column:2;grid-row:1;text-align:left;align-self:center;
+  grid-column:1;grid-row:1;text-align:left;align-self:center;
   background:var(--ink);color:#fff;border-radius:18px;padding:32px 30px;
   box-shadow:0 18px 46px -28px rgba(23,26,32,.55);
 }
@@ -186,11 +186,6 @@ button{font:inherit}
 @media(min-width:901px){
   .gal-side{min-height:308px;display:flex;flex-direction:column;justify-content:center}
 }
-/* Ao inverter os lados, os TAMANHOS das colunas invertem junto — senao o print
-   cairia na coluna estreita. */
-.gal[data-lado="esq"]{grid-template-columns:minmax(250px,340px) minmax(0,1fr)}
-.gal[data-lado="esq"] .gal-view{grid-column:2}
-.gal[data-lado="esq"] .gal-side{grid-column:1}
 /* Monitor grande: a galeria passa da --shell p/ o print aproveitar a tela. */
 @media(min-width:1500px) and (min-height:900px){
   .gal{width:min(calc(100% - 80px),1520px)}
@@ -204,8 +199,7 @@ button{font:inherit}
 /* Empilhado quando nao ha largura p/ duas colunas. */
 @media(max-width:900px){
   .gal{grid-template-columns:1fr;gap:22px}
-  .gal-view,.gal-side,
-  .gal[data-lado="esq"] .gal-view,.gal[data-lado="esq"] .gal-side{grid-column:1}
+  .gal-view,.gal-side{grid-column:1}
   .gal-view{grid-row:1}
   .gal-side{grid-row:2;text-align:center}
 }
@@ -230,11 +224,9 @@ button{font:inherit}
 .gal-prev{left:14px}.gal-next{right:14px}
 .gal-cap h3{font-size:1.5rem;margin-bottom:12px}
 .gal-cap p{color:rgba(255,255,255,.72);font-size:.9375rem;line-height:1.6}
-/* O texto entra deslizando do lado em que ele acabou de parar. */
+/* O texto entra deslizando da esquerda, que e o lado onde ele fica. */
 .gal-cap .swap{animation:cap-in .5s var(--ease) both}
-@keyframes cap-in{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:none}}
-.gal[data-lado="esq"] .gal-cap .swap{animation-name:cap-in-esq}
-@keyframes cap-in-esq{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:none}}
+@keyframes cap-in{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:none}}
 .gal-dots{display:flex;gap:8px;justify-content:flex-start;margin-top:22px}
 @media(max-width:900px){.gal-dots{justify-content:center;margin-top:16px}
   .gal-cap h3{font-size:1.3rem}
@@ -680,11 +672,8 @@ footer{background:var(--ink);color:rgba(255,255,255,.5);padding:24px 0 34px;font
     dots.appendChild(b);
   });
 
-  var gal = document.getElementById('gal');
   function ir(k) {
     i = Math.max(0, Math.min(n - 1, k));
-    // Texto alterna de lado a cada imagem: par = direita, impar = esquerda.
-    gal.setAttribute('data-lado', i % 2 ? 'esq' : 'dir');
     track.style.transform = 'translateX(' + (-i * 100) + '%)';
     cap.innerHTML = '<div class="swap"><h3>' + LEGENDAS[i][0] + '</h3><p>' + LEGENDAS[i][1] + '</p></div>';
     Array.prototype.forEach.call(dots.children, function (d, k2) { d.classList.toggle('on', k2 === i); });
