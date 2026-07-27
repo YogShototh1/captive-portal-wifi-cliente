@@ -1667,7 +1667,7 @@ html[data-tema] body.painel-cliente { background: var(--t-bg); color: var(--t-fg
 html[data-tema] .painel-cliente .pc-bg-gradient { background: var(--t-bg); }
 html[data-tema] .painel-cliente .pc-bg-noise,
 html[data-tema] .painel-cliente .pc-glow { display: none; }
-html[data-tema] /* ---------- Menu lateral ---------- */
+/* ---------- Menu lateral ---------- */
 html[data-tema] .painel-cliente .pc-sidebar {
     background: var(--t-bg);
     border-right: 1px solid var(--t-line);
@@ -1702,7 +1702,7 @@ html[data-tema] .painel-cliente .pc-side-sair {
     font-size: 14px; font-weight: 500; color: var(--t-danger);
 }
 html[data-tema] .painel-cliente .pc-side-sair:hover { background: var(--t-hover); }
-html[data-tema] /* ---------- Topo ---------- */
+/* ---------- Topo ---------- */
 /* Padding proprio no celular (media abaixo) — aqui so o desktop. */
 @media (min-width: 601px) {
     html[data-tema] .painel-cliente .pc-shell { padding: 30px 26px 56px; }
@@ -1717,8 +1717,8 @@ html[data-tema] .painel-cliente .pc-menu-btn {
     border: 1px solid var(--t-line); color: var(--t-fg);
 }
 html[data-tema] .painel-cliente .pc-menu-btn:hover { background: var(--t-sel); }
-html[data-tema] /* Status do MikroTik: faixa reta,
-html[data-tema] sem degrade */
+/* Status do MikroTik: faixa reta,
+sem degrade */
 html[data-tema] .painel-cliente .mk-status {
     border-radius: var(--t-r); border: 1px solid var(--t-line);
     background: var(--t-surface); color: var(--t-fg2);
@@ -1727,7 +1727,7 @@ html[data-tema] .painel-cliente .mk-status {
 html[data-tema] .painel-cliente .mk-status.mk-on .mk-text { color: var(--t-ok); }
 html[data-tema] .painel-cliente .mk-status.mk-off .mk-text { color: var(--t-danger); }
 html[data-tema] .painel-cliente .mk-led { box-shadow: none; }
-html[data-tema] /* Seletor de MikroTik */
+/* Seletor de MikroTik */
 html[data-tema] .painel-cliente .rt-sel > summary {
     border-radius: var(--t-r); background: var(--t-surface-2);
     border: 1px solid var(--t-line); color: var(--t-fg);
@@ -1741,8 +1741,8 @@ html[data-tema] .painel-cliente .rt-menu-title { color: var(--t-fg3); font-weigh
 html[data-tema] .painel-cliente .rt-item { border-radius: var(--t-r); color: var(--t-fg2); font-weight: 500; }
 html[data-tema] .painel-cliente .rt-item:hover { background: var(--t-hover); color: var(--t-fg); }
 html[data-tema] .painel-cliente .rt-item.atual { background: var(--t-sel); color: var(--t-fg); }
-html[data-tema] /* ---------- Cartoes: retos,
-html[data-tema] sem brilho seguindo o mouse ---------- */
+/* ---------- Cartoes: retos,
+sem brilho seguindo o mouse ---------- */
 html[data-tema] .painel-cliente .glow-card {
     background: var(--t-surface);
     border: 1px solid var(--t-line);
@@ -1753,7 +1753,7 @@ html[data-tema] .painel-cliente .glow-fx { display: none; }
 html[data-tema] .painel-cliente .glow-body {
     background: transparent; border: 0; border-radius: var(--t-r);
 }
-html[data-tema] /* Cartoes de metrica */
+/* Cartoes de metrica */
 html[data-tema] .painel-cliente .pc-metric .glow-body { gap: 6px; }
 @media (min-width: 601px) {
     html[data-tema] .painel-cliente .pc-metric .glow-body { padding: 22px 24px; }
@@ -1772,7 +1772,7 @@ html[data-tema] .painel-cliente .pc-metric-label {
     text-transform: none; letter-spacing: 0;
 }
 html[data-tema] .painel-cliente .pc-metric.atual .pc-metric-label { color: var(--t-fg2); }
-html[data-tema] /* ---------- Tabela ---------- */
+/* ---------- Tabela ---------- */
 html[data-tema] .painel-cliente .pc-table-wrap { border-radius: var(--t-r); }
 html[data-tema] .painel-cliente thead th {
     padding: 18px 22px;
@@ -1798,17 +1798,22 @@ html[data-tema] .painel-cliente .pc-hora { color: var(--t-fg3); }
 /* Estas classes ficam no proprio <td> (server e leads-live.js), entao nada de
    display/border aqui: quebraria a tabela e brigaria com a linha divisoria.
    O "clique p/ editar" e sinalizado por sublinhado no texto. */
-html[data-tema] .painel-cliente .pc-banda,
-html[data-tema] .painel-cliente .pc-limite {
+/* Precisa do "td." p/ bater a especificidade das regras coloridas antigas. */
+html[data-tema] .painel-cliente td.pc-banda,
+html[data-tema] .painel-cliente td.pc-limite {
     color: var(--t-fg); cursor: pointer;
     text-decoration: underline; text-decoration-thickness: 1px;
     text-decoration-color: var(--t-line); text-underline-offset: 4px;
     transition: text-decoration-color .2s;
 }
-html[data-tema] .painel-cliente tr:hover .pc-banda,
-html[data-tema] .painel-cliente tr:hover .pc-limite { text-decoration-color: var(--t-fg); }
-html[data-tema] /* Botao WhatsApp: caixa reta e neutra,
-html[data-tema] icone mantem o verde da marca */
+html[data-tema] .painel-cliente td.pc-banda:hover,
+html[data-tema] .painel-cliente td.pc-limite:hover {
+    color: var(--t-fg); text-decoration: underline; text-decoration-color: var(--t-fg);
+}
+html[data-tema] .painel-cliente tr:hover td.pc-banda,
+html[data-tema] .painel-cliente tr:hover td.pc-limite { text-decoration-color: var(--t-fg); }
+/* Botao WhatsApp: caixa reta e neutra,
+icone mantem o verde da marca */
 html[data-tema] .painel-cliente .pc-wa-box {
     border-radius: var(--t-r); width: 32px; height: 32px;
     background: transparent; border: 1px solid var(--t-line);
@@ -1816,7 +1821,7 @@ html[data-tema] .painel-cliente .pc-wa-box {
 html[data-tema] .painel-cliente .pc-wa-box:hover { background: var(--t-hover); border-color: var(--t-ok); }
 html[data-tema] .painel-cliente .pc-lead-nome { color: var(--t-fg); font-weight: 600; }
 html[data-tema] .painel-cliente .pc-lead-tel { color: var(--t-fg3); }
-html[data-tema] /* Botao "ver conexoes" e contador */
+/* Botao "ver conexoes" e contador */
 html[data-tema] .painel-cliente .pc-ver-conexoes { border-radius: var(--t-r); }
 html[data-tema] .painel-cliente .pc-conex-ic { color: var(--t-fg3); }
 html[data-tema] .painel-cliente .pc-ver-conexoes:hover .pc-conex-ic { color: var(--t-fg); }
@@ -1826,7 +1831,7 @@ html[data-tema] .painel-cliente .pc-total {
 }
 /* Botao "!" do log de acessos (admin): mantem o laranja de alerta, reto */
 html[data-tema] .painel-cliente .pc-acesso-btn { border-radius: var(--t-r); }
-html[data-tema] /* Paginacao */
+/* Paginacao */
 html[data-tema] .painel-cliente .pc-pag-btn {
     border-radius: var(--t-r); background: transparent;
     border: 1px solid var(--t-line); color: var(--t-fg2); font-weight: 500;
@@ -1834,7 +1839,7 @@ html[data-tema] .painel-cliente .pc-pag-btn {
 html[data-tema] .painel-cliente .pc-pag-btn:hover { background: var(--t-hover); color: var(--t-fg); }
 html[data-tema] .painel-cliente .pc-pag-btn.atual { background: var(--t-fg); border-color: var(--t-fg); color: var(--t-bg); }
 html[data-tema] .painel-cliente .pc-pag-gap { color: var(--t-fg3); }
-html[data-tema] /* Links e selo */
+/* Links e selo */
 html[data-tema] .painel-cliente .pc-link {
     color: var(--t-fg); font-weight: 500; text-decoration: none;
     border-bottom: 1px solid var(--t-line); transition: border-color .2s, color .2s;
@@ -1847,7 +1852,7 @@ html[data-tema] .painel-cliente .pc-badge {
     font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
 }
 html[data-tema] .painel-cliente .pc-tipo-cliente { color: var(--t-fg3); }
-html[data-tema] /* ---------- Botoes de acao: pilula ---------- */
+/* ---------- Botoes de acao: pilula ---------- */
 html[data-tema] .painel-cliente .pc-btn,
 html[data-tema] .painel-cliente .pc-btn-primary {
     border-radius: 100px; height: 42px; padding: 0 24px;
@@ -1864,7 +1869,7 @@ html[data-tema] .painel-cliente .pc-btn { background: var(--t-surface-2); color:
 html[data-tema] .painel-cliente .pc-btn:hover { background: var(--t-sel); }
 html[data-tema] .painel-cliente .pc-btn:active,
 html[data-tema] .painel-cliente .pc-btn-primary:active { transform: scale(.985); }
-html[data-tema] /* Campos de formulario das abas */
+/* Campos de formulario das abas */
 html[data-tema] .painel-cliente .pc-file,
 html[data-tema] .painel-cliente .pc-file-label {
     border-radius: 100px; background: var(--t-surface-2);
@@ -1897,7 +1902,7 @@ html[data-tema] .painel-cliente input[type="number"],
 html[data-tema] .painel-cliente textarea {
     border-radius: var(--t-r);
 }
-html[data-tema] /* ---------- Modais (ver conexoes / editar / acessos) ---------- */
+/* ---------- Modais (ver conexoes / editar / acessos) ---------- */
 html[data-tema] .painel-cliente .pc-modal-backdrop { background: rgba(23,26,32,0.55); }
 html[data-tema="claro"] .painel-cliente .pc-modal-backdrop { background: rgba(23,26,32,0.30); }
 html[data-tema] .painel-cliente .pc-modal-card .glow-card,
@@ -1942,7 +1947,7 @@ html[data-tema] .painel-cliente .pc-conex-seta {
 html[data-tema] .painel-cliente .pc-conex-seta:hover { background: var(--t-sel); }
 html[data-tema] .painel-cliente .pc-copia { border-radius: var(--t-r); color: var(--t-fg3); }
 html[data-tema] .painel-cliente .pc-copia:hover { color: var(--t-fg); background: var(--t-hover); }
-html[data-tema] /* Modal de edicao do lead */
+/* Modal de edicao do lead */
 html[data-tema] .painel-cliente .pc-editar-body { padding: 22px; }
 html[data-tema] .painel-cliente .pc-editar-campo label,
 html[data-tema] .painel-cliente .pc-ed-label {
@@ -1957,7 +1962,7 @@ html[data-tema] .painel-cliente .pc-ed-input {
 html[data-tema] .painel-cliente .pc-editar-body input:focus,
 html[data-tema] .painel-cliente .pc-ed-input:focus { border-color: var(--t-fg); background: var(--t-surface); }
 html[data-tema] .painel-cliente .pc-editar-body .pc-btn-primary { border-radius: 100px; height: 46px; }
-html[data-tema] /* Menu de contexto da linha */
+/* Menu de contexto da linha */
 html[data-tema] .painel-cliente .pc-menu {
     border-radius: var(--t-r); background: var(--t-surface);
     border: 1px solid var(--t-line); box-shadow: var(--t-shadow);
@@ -1967,7 +1972,7 @@ html[data-tema] .painel-cliente .pc-menu-item { border-radius: var(--t-r); color
 html[data-tema] .painel-cliente .pc-menu button:hover,
 html[data-tema] .painel-cliente .pc-menu-item:hover { background: var(--t-hover); color: var(--t-fg); }
 html[data-tema] .painel-cliente .pc-menu-titulo { color: var(--t-fg3); }
-html[data-tema] /* ---------- Dashboard / relatorios / estatisticas ---------- */
+/* ---------- Dashboard / relatorios / estatisticas ---------- */
 html[data-tema] .painel-cliente .dash-card,
 html[data-tema] .painel-cliente .dg-card,
 html[data-tema] .painel-cliente .rel-card {
