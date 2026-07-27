@@ -171,60 +171,38 @@ button{font:inherit}
 /* =====================================================================
    RECURSOS — galeria de telas reais + lista
    ===================================================================== */
-/* Os prints sao 16:9. Em vez de ocupar a largura toda (e empurrar a legenda p/
-   fora da tela), a largura e limitada pela ALTURA que sobra — assim imagem +
-   legenda + pontos cabem juntos em qualquer aparelho, sem corte nem tarja.
-   --gal-reserva = tudo o que nao e a imagem (cabecalho, legenda, paddings). */
+/* Galeria em DUAS COLUNAS: print grande de um lado, texto do outro. O lado do
+   texto alterna a cada troca de imagem (data-lado no .gal, posto pelo JS), o
+   que mantem a imagem no tamanho cheio e o texto sempre visivel junto dela. */
 .gal{
-  --gal-reserva:430px;
-  /* max(300px,...) impede o print de colapsar em telas muito baixas; o min()
-     externo garante que nunca passe da largura util. */
-  width:min(var(--shell),max(300px,calc((100svh - var(--gal-reserva)) * 16 / 9)));
-  margin:36px auto 0;position:relative;
+  width:var(--shell);margin:40px auto 0;
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(250px,340px);
+  gap:36px;align-items:center;
 }
-@media(max-width:600px){
+.gal-view{grid-column:1;grid-row:1}
+.gal-side{grid-column:2;grid-row:1;text-align:left}
+/* Ao inverter os lados, os TAMANHOS das colunas invertem junto — senao o print
+   cairia na coluna estreita. */
+.gal[data-lado="esq"]{grid-template-columns:minmax(250px,340px) minmax(0,1fr)}
+.gal[data-lado="esq"] .gal-view{grid-column:2}
+.gal[data-lado="esq"] .gal-side{grid-column:1}
+/* Monitor grande: a galeria passa da --shell p/ o print aproveitar a tela. */
+@media(min-width:1500px) and (min-height:900px){
+  .gal{width:min(calc(100% - 80px),1520px)}
+}
+/* Tela baixa: aperta so o respiro do cabecalho — o print segue no tamanho cheio. */
+@media(max-height:780px) and (min-width:901px){
   #recursos{padding-top:80px;padding-bottom:32px}
-  #recursos h2{font-size:1.65rem}
-  #recursos .sec-sub{font-size:.9rem;margin-top:10px}
-  .gal{--gal-reserva:470px;margin-top:22px}
-  .gal-cap{margin-top:16px;min-height:0}
-  .gal-cap h3{font-size:1.1rem;margin-bottom:6px}
-  .gal-cap p{font-size:.875rem}
+  #recursos .sec-sub{margin-top:10px;font-size:.95rem}
+  .gal{margin-top:28px}
 }
-/* Telas bem baixas (iPhone SE, celular deitado): corta a linha de apoio do
-   cabecalho — a legenda da propria galeria ja cumpre esse papel. */
-@media(max-height:620px){
-  #recursos{padding-top:64px;padding-bottom:20px}
-  #recursos .sec-sub{display:none}
-  .gal{margin-top:16px}
-}
-/* Larga e baixa (celular deitado): empilhar nao cabe — legenda vai p/ o LADO
-   da imagem, que passa a ser dimensionada pela altura disponivel. */
-@media(max-height:560px) and (min-width:740px){
-  #recursos{padding-top:58px;padding-bottom:16px}
-  #recursos h2{font-size:1.5rem}
-  .gal{
-    width:auto;max-width:var(--shell);margin-top:14px;
-    display:grid;grid-template-columns:auto minmax(210px,300px);
-    grid-template-areas:"view cap" "view dots";gap:8px 22px;align-content:center;
-  }
-  .gal-view{grid-area:view;height:calc(100svh - 190px);aspect-ratio:16/9}
-  .gal-track,.gal-item{height:100%}
-  .gal-item img{height:100%;width:100%;aspect-ratio:auto;object-fit:cover}
-  .gal-cap{grid-area:cap;margin-top:0;min-height:0;text-align:left;align-self:end}
-  .gal-cap p{margin-inline:0}
-  .gal-dots{grid-area:dots;justify-content:flex-start;align-self:start;margin-top:10px}
-}
-/* Tela baixa (notebook 1366x768, 1280x720): compacta o cabecalho e a legenda
-   p/ sobrar altura de imagem — senao o print fica ilegivel de tao pequeno. */
-@media(max-height:820px) and (min-width:601px){
-  #recursos{padding-top:76px;padding-bottom:32px}
-  #recursos h2{font-size:clamp(1.6rem,3.2vw,2.2rem)}
-  #recursos .sec-sub{font-size:.9rem;margin-top:10px}
-  .gal{--gal-reserva:370px;margin-top:22px}
-  .gal-cap{margin-top:16px;min-height:82px}
-  .gal-cap h3{font-size:1.15rem;margin-bottom:6px}
-  .gal-cap p{font-size:.875rem}
+/* Empilhado quando nao ha largura p/ duas colunas. */
+@media(max-width:900px){
+  .gal{grid-template-columns:1fr;gap:22px}
+  .gal-view,.gal-side,
+  .gal[data-lado="esq"] .gal-view,.gal[data-lado="esq"] .gal-side{grid-column:1}
+  .gal-view{grid-row:1}
+  .gal-side{grid-row:2;text-align:center}
 }
 .gal-view{position:relative;overflow:hidden;border-radius:16px;background:var(--mist);box-shadow:0 22px 60px -30px rgba(23,26,32,.45)}
 .gal-track{display:flex;transition:transform .62s var(--ease)}
@@ -245,18 +223,23 @@ button{font:inherit}
 .gal-arrow[disabled]{opacity:.3;cursor:default;transform:none}
 .gal-arrow svg{width:20px;height:20px}
 .gal-prev{left:14px}.gal-next{right:14px}
-.gal-cap{margin-top:22px;text-align:center;min-height:96px}
-.gal-cap h3{font-size:1.3rem;margin-bottom:8px}
-.gal-cap p{color:var(--gray);max-width:62ch;margin-inline:auto;font-size:.9375rem}
-.gal-cap .swap{animation:cap-in .45s var(--ease) both}
-@keyframes cap-in{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
-.gal-dots{display:flex;gap:8px;justify-content:center;margin-top:14px}
+.gal-cap h3{font-size:1.5rem;margin-bottom:12px}
+.gal-cap p{color:var(--gray);font-size:.9375rem;line-height:1.6}
+/* O texto entra deslizando do lado em que ele acabou de parar. */
+.gal-cap .swap{animation:cap-in .5s var(--ease) both}
+@keyframes cap-in{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:none}}
+.gal[data-lado="esq"] .gal-cap .swap{animation-name:cap-in-esq}
+@keyframes cap-in-esq{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:none}}
+.gal-dots{display:flex;gap:8px;justify-content:flex-start;margin-top:22px}
+@media(max-width:900px){.gal-dots{justify-content:center;margin-top:16px}
+  .gal-cap h3{font-size:1.3rem}
+  .gal-cap p{max-width:62ch;margin-inline:auto}}
 .gal-dot{
   width:7px;height:7px;padding:0;border:0;border-radius:100px;cursor:pointer;
   background:var(--line);transition:background .25s var(--ease),width .25s var(--ease);
 }
 .gal-dot.on{background:var(--ink);width:22px}
-@media(max-width:600px){.gal-arrow{width:38px;height:38px}.gal-prev{left:8px}.gal-next{right:8px}.gal-cap{min-height:130px}}
+@media(max-width:600px){.gal-arrow{width:38px;height:38px}.gal-prev{left:8px}.gal-next{right:8px}}
 
 .feats{width:var(--shell);margin:52px auto 0;display:grid;grid-template-columns:repeat(3,1fr)}
 .feat{padding:24px 26px 24px 0;border-top:1px solid var(--line)}
@@ -500,8 +483,10 @@ footer{background:var(--ink);color:rgba(255,255,255,.5);padding:24px 0 34px;font
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
       </button>
     </div>
-    <div class="gal-cap" id="galCap" aria-live="polite"></div>
-    <div class="gal-dots" id="galDots"></div>
+    <div class="gal-side">
+      <div class="gal-cap" id="galCap" aria-live="polite"></div>
+      <div class="gal-dots" id="galDots"></div>
+    </div>
   </div>
 
   <div class="feats">
@@ -697,8 +682,11 @@ footer{background:var(--ink);color:rgba(255,255,255,.5);padding:24px 0 34px;font
     dots.appendChild(b);
   });
 
+  var gal = document.getElementById('gal');
   function ir(k) {
     i = Math.max(0, Math.min(n - 1, k));
+    // Texto alterna de lado a cada imagem: par = direita, impar = esquerda.
+    gal.setAttribute('data-lado', i % 2 ? 'esq' : 'dir');
     track.style.transform = 'translateX(' + (-i * 100) + '%)';
     cap.innerHTML = '<div class="swap"><h3>' + LEGENDAS[i][0] + '</h3><p>' + LEGENDAS[i][1] + '</p></div>';
     Array.prototype.forEach.call(dots.children, function (d, k2) { d.classList.toggle('on', k2 === i); });
