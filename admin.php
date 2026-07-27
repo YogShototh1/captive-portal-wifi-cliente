@@ -25,9 +25,12 @@ $csrf = csrf_token();
     <script>(function(){try{var t=localStorage.getItem('cd-tema');document.documentElement.setAttribute('data-tema',t==='escuro'?'escuro':'claro');}catch(e){document.documentElement.setAttribute('data-tema','claro');}})();</script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Administração</title>
-    <link rel="stylesheet" href="assets/style.css?v=85">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="assets/style.css?v=86">
 </head>
-<body class="painel-cliente">
+<body class="painel-cliente adm-tesla">
     <!-- Camadas de fundo (decorativas) -->
     <div class="pc-bg-gradient"></div>
     <div class="pc-bg-noise"></div>

@@ -1612,3 +1612,113 @@ html[data-tema="claro"] .rm-cel { background: rgba(15,23,42,0.06); }
   .ctx-menu.aberto, .rt-sel[open] .rt-menu, .cal-pop, .rel-barra,
   .dash-pie, .dash-donut, .est-svg, .rel-mapa-wrap, .rel-sub { animation-duration: .01s; }
 }
+
+/* ============================================================
+   Administração (admin.php) — design Tesla, igual à landing e à
+   tela de login. Escopo em .adm-tesla: as telas de LEADS
+   (painel.php / admin_leads.php) NÃO são afetadas.
+   Fica no fim do arquivo de propósito: empata em especificidade
+   com os overrides de tema acima e vence pela ordem.
+   ============================================================ */
+.adm-tesla, .adm-tesla * {
+    font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+body.painel-cliente.adm-tesla { background: #171a20; color: #fff; }
+.adm-tesla .pc-bg-gradient {
+    background: radial-gradient(120% 72% at 50% 0%, #23272f 0%, #1b1f26 46%, #171a20 78%);
+}
+.adm-tesla .pc-bg-noise, .adm-tesla .pc-glow { display: none; }
+
+.adm-tesla .pc-shell { max-width: 1120px; padding: 64px 24px 56px; }
+.adm-tesla .pc-topbar { margin-bottom: 28px; }
+.adm-tesla .pc-brand { font-size: 32px; font-weight: 600; letter-spacing: -0.028em; color: #fff; }
+.adm-tesla .pc-sub { font-size: 14px; color: rgba(255,255,255,0.6); margin-top: 6px; }
+
+/* Botões-pílula (mesmo par da landing) */
+.adm-tesla .pc-btn, .adm-tesla .pc-btn-primary {
+    display: inline-flex; align-items: center; justify-content: center;
+    height: 40px; padding: 0 22px; border-radius: 100px;
+    font-size: 14px; font-weight: 500; letter-spacing: .02em;
+    border: 1px solid transparent; text-decoration: none; cursor: pointer;
+    transition: background .2s cubic-bezier(.23,1,.32,1), transform .18s cubic-bezier(.23,1,.32,1);
+}
+.adm-tesla .pc-btn-primary { background: #fff; color: #171a20; box-shadow: none; }
+.adm-tesla .pc-btn-primary:hover { background: #e8e8e9; transform: none; box-shadow: none; }
+.adm-tesla .pc-btn { background: rgba(255,255,255,0.08); color: #fff; border-color: rgba(255,255,255,0.16); }
+.adm-tesla .pc-btn:hover { background: rgba(255,255,255,0.16); border-color: rgba(255,255,255,0.24); }
+.adm-tesla .pc-btn:active, .adm-tesla .pc-btn-primary:active { transform: scale(.985); }
+
+/* Cartão da tabela: liso, sem o brilho que segue o mouse */
+.adm-tesla .glow-card {
+    background: #1f232b; border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 18px; box-shadow: 0 30px 70px -34px rgba(0,0,0,0.85);
+}
+.adm-tesla .glow-fx { display: none; }
+.adm-tesla .glow-body { padding: 0; background: transparent; border: 0; border-radius: 18px; overflow: hidden; }
+.adm-tesla .pc-table-wrap { border-radius: 18px; }
+
+.adm-tesla thead th {
+    padding: 18px 26px; font-size: 11.5px; font-weight: 600;
+    letter-spacing: .14em; text-transform: uppercase;
+    color: rgba(255,255,255,0.5); border-bottom: 1px solid rgba(255,255,255,0.10);
+}
+.adm-tesla tbody td {
+    padding: 18px 26px; font-size: 14.5px; color: rgba(255,255,255,0.92);
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.adm-tesla tbody tr:last-child td { border-bottom: none; }
+.adm-tesla tbody tr:hover { background: rgba(255,255,255,0.04); }
+
+/* Tipo da conta */
+.adm-tesla .pc-badge {
+    display: inline-block; padding: 4px 12px; border-radius: 100px;
+    background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.18);
+    color: #fff; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+}
+.adm-tesla .pc-tipo-cliente { color: rgba(255,255,255,0.5); font-size: 13.5px; }
+
+/* Ações: texto sublinhado fino em vez de link colorido */
+.adm-tesla .pc-link {
+    color: #fff; font-size: 13.5px; font-weight: 500; text-decoration: none;
+    border: 0; background: none; cursor: pointer; padding: 0; margin-right: 18px;
+    border-bottom: 1px solid rgba(255,255,255,0.28);
+    transition: border-color .2s, color .2s;
+}
+.adm-tesla .pc-link:hover { color: #fff; border-bottom-color: #fff; }
+.adm-tesla .pc-link-danger { color: #ff8a8a; border-bottom-color: rgba(255,138,138,0.35); }
+.adm-tesla .pc-link-danger:hover { color: #ffb3b3; border-bottom-color: #ffb3b3; }
+.adm-tesla td.pc-actions .pc-inline-form { margin-left: 0; }
+.adm-tesla td.pc-actions .pc-inline-form .pc-link { margin-right: 0; }
+
+/* Botão de tema */
+.adm-tesla .tema-toggle {
+    border-radius: 100px; background: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.16); color: #fff;
+}
+.adm-tesla .tema-toggle:hover { background: rgba(255,255,255,0.16); transform: none; }
+
+/* ---------- Administração no tema CLARO (= a landing) ---------- */
+html[data-tema="claro"] body.painel-cliente.adm-tesla { background: #fff; color: #171a20; }
+html[data-tema="claro"] .adm-tesla .pc-bg-gradient {
+    background: radial-gradient(122% 78% at 50% 0%, #e9f4fa 0%, #f6fafc 44%, #fff 78%);
+}
+html[data-tema="claro"] .adm-tesla .pc-brand { color: #171a20; }
+html[data-tema="claro"] .adm-tesla .pc-sub { color: #5c5e62; }
+html[data-tema="claro"] .adm-tesla .pc-btn-primary { background: #171a20; color: #fff; border-color: #171a20; }
+html[data-tema="claro"] .adm-tesla .pc-btn-primary:hover { background: #2b2f36; }
+html[data-tema="claro"] .adm-tesla .pc-btn { background: #f4f4f4; color: #171a20; border-color: #d0d1d2; }
+html[data-tema="claro"] .adm-tesla .pc-btn:hover { background: #e8e8e9; }
+html[data-tema="claro"] .adm-tesla .glow-card {
+    background: #fff; border-color: #d0d1d2; box-shadow: 0 26px 62px -34px rgba(23,26,32,0.42);
+}
+html[data-tema="claro"] .adm-tesla thead th { color: #5c5e62; border-bottom-color: #d0d1d2; }
+html[data-tema="claro"] .adm-tesla tbody td { color: #171a20; border-bottom-color: #e6e6e7; }
+html[data-tema="claro"] .adm-tesla tbody tr:hover { background: #fafafa; }
+html[data-tema="claro"] .adm-tesla .pc-badge { background: #171a20; border-color: #171a20; color: #fff; }
+html[data-tema="claro"] .adm-tesla .pc-tipo-cliente { color: #5c5e62; }
+html[data-tema="claro"] .adm-tesla .pc-link { color: #171a20; border-bottom-color: rgba(23,26,32,0.25); }
+html[data-tema="claro"] .adm-tesla .pc-link:hover { color: #171a20; border-bottom-color: #171a20; }
+html[data-tema="claro"] .adm-tesla .pc-link-danger { color: #b42318; border-bottom-color: rgba(180,35,24,0.3); }
+html[data-tema="claro"] .adm-tesla .pc-link-danger:hover { color: #912018; border-bottom-color: #912018; }
+html[data-tema="claro"] .adm-tesla .tema-toggle { background: #f4f4f4; border-color: #d0d1d2; color: #171a20; }
+html[data-tema="claro"] .adm-tesla .tema-toggle:hover { background: #e8e8e9; }
