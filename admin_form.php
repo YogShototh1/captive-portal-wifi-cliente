@@ -93,7 +93,10 @@ $csrf = csrf_token();
     <script>(function(){try{var t=localStorage.getItem('cd-tema');document.documentElement.setAttribute('data-tema',t==='escuro'?'escuro':'claro');}catch(e){document.documentElement.setAttribute('data-tema','claro');}})();</script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $editando ? 'Editar usuário' : 'Novo usuário' ?></title>
-    <link rel="stylesheet" href="assets/style.css?v=84">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="assets/style.css?v=85">
 </head>
 <body class="login-screen">
     <div class="lp-bg-gradient"></div>
@@ -103,13 +106,6 @@ $csrf = csrf_token();
 
     <main class="lp-card-wrap af-wide">
         <div class="lp-card">
-            <div class="lp-beams" aria-hidden="true">
-                <span class="lp-beam lp-beam-top"></span>
-                <span class="lp-beam lp-beam-right"></span>
-                <span class="lp-beam lp-beam-bottom"></span>
-                <span class="lp-beam lp-beam-left"></span>
-            </div>
-
             <div class="lp-card-inner">
                 <div class="lp-header">
                     <div class="lp-logo" aria-hidden="true">

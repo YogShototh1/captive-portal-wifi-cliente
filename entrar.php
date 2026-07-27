@@ -37,7 +37,10 @@ $csrf = csrf_token();
     <script>(function(){try{var t=localStorage.getItem('cd-tema');document.documentElement.setAttribute('data-tema',t==='escuro'?'escuro':'claro');}catch(e){document.documentElement.setAttribute('data-tema','claro');}})();</script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
     <title>Painel — Acesso</title>
-    <link rel="stylesheet" href="assets/style.css?v=84">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="assets/style.css?v=85">
 </head>
 <body class="login-screen">
     <!-- Camadas de fundo (decorativas) -->
@@ -48,13 +51,6 @@ $csrf = csrf_token();
 
     <main class="lp-card-wrap">
         <div class="lp-card">
-            <!-- Feixes de luz percorrendo a borda -->
-            <div class="lp-beams" aria-hidden="true">
-                <span class="lp-beam lp-beam-top"></span>
-                <span class="lp-beam lp-beam-right"></span>
-                <span class="lp-beam lp-beam-bottom"></span>
-                <span class="lp-beam lp-beam-left"></span>
-            </div>
 
             <div class="lp-card-inner">
                 <div class="lp-header">
@@ -100,30 +96,6 @@ $csrf = csrf_token();
         window.scrollTo(0, 0);
         var email = document.querySelector('input[name="email"]');
         if (email) { try { email.focus({ preventScroll: true }); } catch (e) {} }
-    })();
-    </script>
-    <script>
-    // Inclinação 3D do cartão seguindo o mouse (como no exemplo de referência).
-    (function () {
-        var wrap = document.querySelector('.login-screen .lp-card-wrap');
-        var card = document.querySelector('.login-screen .lp-card');
-        if (!wrap || !card) return;
-        var MAX = 12;
-        wrap.style.perspective = '1500px';
-        card.style.transformStyle = 'preserve-3d';
-        card.style.transition = 'transform .18s ease-out';
-        card.style.willChange = 'transform';
-        document.addEventListener('mousemove', function (e) {
-            var r = card.getBoundingClientRect();
-            var near = e.clientX > r.left - 60 && e.clientX < r.right + 60 &&
-                       e.clientY > r.top - 60 && e.clientY < r.bottom + 60;
-            if (!near) { card.style.transform = 'rotateX(0deg) rotateY(0deg)'; return; }
-            var mx = e.clientX - r.left - r.width / 2;
-            var my = e.clientY - r.top - r.height / 2;
-            var rx = Math.max(-MAX, Math.min(MAX, (my / 300) * -MAX));
-            var ry = Math.max(-MAX, Math.min(MAX, (mx / 300) * MAX));
-            card.style.transform = 'rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg)';
-        }, { passive: true });
     })();
     </script>
     <?php require __DIR__ . '/inc/tema.php'; ?>

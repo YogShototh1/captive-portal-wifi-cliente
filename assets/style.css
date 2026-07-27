@@ -163,169 +163,120 @@ label.check {
 label.check input { width: auto; }
 
 /* ============================================================
-   Tela de login do cliente (index.php) — tema escuro/glass.
-   Escopo total em body.login-screen: NÃO afeta as demais páginas.
+   Tela de login (entrar.php) e formulario de usuario
+   (admin_form.php) — design Tesla, igual ao da landing:
+   fundo liso, cartao branco, tipografia Inter apertada e
+   botao-pilula preto. O tema escuro e a versao noturna do
+   mesmo desenho. Escopo em body.login-screen.
    ============================================================ */
 body.login-screen {
-    background: #0a0e17;
+    background: #171a20;
     color: #fff;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     padding: 0;
     /* dvh acompanha o teclado/barras do navegador no celular; 100vh fica
-       como fallback. Evita que a tela "perca a proporção" ao abrir/fechar
-       o teclado e mostre faixas pretas arrastáveis. */
+       como fallback. */
     min-height: 100vh;
     min-height: 100dvh;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
-    /* Rolagem vertical LIBERADA: cartões maiores que a tela (ex.: editar
-       usuário em notebook baixo) precisam rolar até os botões. Os fundos
-       decorativos são fixed e não criam scroll sozinhos. */
     overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior: none;
 }
+body.login-screen * { font-family: inherit; }
 
-/* --- Camadas de fundo (fixed: cobrem a viewport sem inflar o layout) --- */
+/* Fundo liso. Ruido, brilhos e feixes da versao antiga saem de cena — o
+   desenho Tesla nao usa nada disso (o markup segue nos dois arquivos). */
 .login-screen .lp-bg-gradient {
     position: fixed; inset: 0; z-index: 0;
-    background: linear-gradient(180deg, #0e1524 0%, #0a0e17 60%, #070a12 100%);
+    background: radial-gradient(120% 72% at 50% 0%, #23272f 0%, #1b1f26 46%, #171a20 78%);
 }
-.login-screen .lp-bg-noise {
-    position: fixed; inset: 0; z-index: 0;
-    opacity: 0.03; mix-blend-mode: soft-light;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-    background-size: 200px 200px;
-}
-.login-screen .lp-glow {
-    position: fixed; left: 50%; transform: translateX(-50%);
-    z-index: 0; pointer-events: none; filter: blur(70px);
-    background: rgba(34,211,238,0.20);
-}
-.login-screen .lp-glow-top {
-    top: -30vh; width: 120vh; height: 60vh; border-radius: 0 0 50% 50%;
-    animation: lp-pulse 8s ease-in-out infinite;
-}
-.login-screen .lp-glow-bottom {
-    bottom: -40vh; width: 90vh; height: 90vh; border-radius: 50% 50% 0 0;
-    animation: lp-pulse 6s ease-in-out infinite 1s;
-}
-@keyframes lp-pulse { 0%, 100% { opacity: .25; } 50% { opacity: .45; } }
+.login-screen .lp-bg-noise,
+.login-screen .lp-glow,
+.login-screen .lp-beams { display: none; }
 
-/* --- Cartão --- */
+/* --- Cartao --- */
 .login-screen .lp-card-wrap {
     position: relative; z-index: 10;
-    width: 100%; max-width: 360px; padding: 20px;
-    /* margin:auto (e não só o flex-center): quando o cartão é MAIOR que a
-       tela, o flex centrado esconderia o topo/rodapé; com margin auto ele
-       centraliza quando cabe e rola do início ao fim quando não cabe. */
+    width: 100%; max-width: 400px; padding: 24px;
+    /* margin:auto centraliza quando cabe e deixa rolar quando nao cabe. */
     margin: auto;
-    animation: lp-rise .8s ease-out;
+    animation: lp-rise .7s cubic-bezier(.23,1,.32,1) both;
 }
-@keyframes lp-rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes lp-rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
 
 .login-screen .lp-card { position: relative; }
 
 .login-screen .lp-card-inner {
     position: relative;
-    background: rgba(17,25,42,0.85);
-    backdrop-filter: blur(22px);
-    -webkit-backdrop-filter: blur(22px);
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 16px;
-    padding: 28px 24px;
-    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7);
-    overflow: hidden;
+    background: #1f232b;
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 18px;
+    padding: 38px 32px 34px;
+    box-shadow: 0 30px 70px -34px rgba(0,0,0,0.85);
 }
 
-/* --- Feixes de luz na borda --- */
-.login-screen .lp-beams {
-    position: absolute; inset: -1px; border-radius: 16px;
-    overflow: hidden; pointer-events: none;
-}
-.login-screen .lp-beam { position: absolute; opacity: 0.7; }
-.login-screen .lp-beam-top {
-    top: 0; left: 0; height: 2px; width: 50%;
-    background: linear-gradient(to right, transparent, #fff, transparent);
-    animation: lp-beam-x 3.5s ease-in-out infinite;
-}
-.login-screen .lp-beam-right {
-    top: 0; right: 0; width: 2px; height: 50%;
-    background: linear-gradient(to bottom, transparent, #fff, transparent);
-    animation: lp-beam-y 3.5s ease-in-out infinite .9s;
-}
-.login-screen .lp-beam-bottom {
-    bottom: 0; right: 0; height: 2px; width: 50%;
-    background: linear-gradient(to right, transparent, #fff, transparent);
-    animation: lp-beam-x-rev 3.5s ease-in-out infinite 1.8s;
-}
-.login-screen .lp-beam-left {
-    bottom: 0; left: 0; width: 2px; height: 50%;
-    background: linear-gradient(to bottom, transparent, #fff, transparent);
-    animation: lp-beam-y-rev 3.5s ease-in-out infinite 2.7s;
-}
-@keyframes lp-beam-x { 0% { left: -50%; } 100% { left: 100%; } }
-@keyframes lp-beam-y { 0% { top: -50%; } 100% { top: 100%; } }
-@keyframes lp-beam-x-rev { 0% { right: -50%; } 100% { right: 100%; } }
-@keyframes lp-beam-y-rev { 0% { bottom: -50%; } 100% { bottom: 100%; } }
-
-/* --- Cabeçalho --- */
-.login-screen .lp-header { text-align: center; margin-bottom: 20px; }
+/* --- Cabecalho --- */
+.login-screen .lp-header { text-align: center; margin-bottom: 26px; }
 .login-screen .lp-logo {
-    width: 44px; height: 44px; margin: 0 auto 12px;
+    width: 46px; height: 46px; margin: 0 auto 16px;
     display: flex; align-items: center; justify-content: center;
-    border-radius: 50%; border: 1px solid rgba(255,255,255,0.12);
-    background: linear-gradient(to bottom right, rgba(255,255,255,0.10), transparent);
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.07);
     color: #fff;
 }
-.login-screen .lp-logo svg { width: 20px; height: 20px; }
-.login-screen .lp-title { font-size: 20px; font-weight: 700; color: #fff; letter-spacing: -0.2px; }
-.login-screen .lp-subtitle { font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 4px; }
+.login-screen .lp-logo svg { width: 22px; height: 22px; }
+.login-screen .lp-title {
+    font-size: 26px; font-weight: 600; color: #fff;
+    letter-spacing: -0.028em; line-height: 1.1;
+}
+.login-screen .lp-subtitle { font-size: 14px; color: rgba(255,255,255,0.6); margin-top: 8px; }
 
-/* --- Formulário (apenas e-mail, senha e botão) --- */
-.login-screen .lp-form { display: flex; flex-direction: column; gap: 14px; }
+/* --- Formulario --- */
+.login-screen .lp-form { display: flex; flex-direction: column; gap: 12px; }
 .login-screen .lp-field { position: relative; display: flex; align-items: center; }
 .login-screen .lp-field-icon {
-    position: absolute; left: 12px; width: 16px; height: 16px;
-    color: rgba(255,255,255,0.4); pointer-events: none; transition: color .3s;
+    position: absolute; left: 15px; width: 17px; height: 17px;
+    color: rgba(255,255,255,0.42); pointer-events: none; transition: color .2s;
 }
 .login-screen .lp-field input {
-    width: 100%; height: 44px; padding: 0 14px 0 38px;
+    width: 100%; height: 50px; padding: 0 16px 0 42px;
     font-size: 15px; color: #fff;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid transparent; border-radius: 10px;
-    outline: none; transition: background .3s, border-color .3s;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.10); border-radius: 12px;
+    outline: none; transition: background .2s, border-color .2s;
 }
-.login-screen .lp-field input::placeholder { color: rgba(255,255,255,0.35); }
-.login-screen .lp-field input:focus { background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.20); }
+.login-screen .lp-field input::placeholder { color: rgba(255,255,255,0.38); }
+.login-screen .lp-field input:focus { background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.30); }
 .login-screen .lp-field:focus-within .lp-field-icon { color: #fff; }
 
-/* --- Botão Entrar --- */
+/* --- Botao Entrar (pilula, igual ao da landing) --- */
 .login-screen .lp-submit {
-    position: relative; display: flex; align-items: center; justify-content: center; gap: 6px;
-    width: 100%; height: 44px; margin-top: 6px;
-    background: #fff; color: #000; font-weight: 600; font-size: 14px;
-    border: none; border-radius: 10px; cursor: pointer;
-    transition: transform .2s, box-shadow .3s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; height: 48px; margin-top: 10px;
+    background: #fff; color: #171a20;
+    font-size: 14px; font-weight: 500; letter-spacing: .02em;
+    border: none; border-radius: 100px; cursor: pointer;
+    transition: background .2s cubic-bezier(.23,1,.32,1), transform .18s cubic-bezier(.23,1,.32,1);
 }
-.login-screen .lp-submit:hover { transform: scale(1.02); box-shadow: 0 0 20px rgba(255,255,255,0.15); }
-.login-screen .lp-submit:active { transform: scale(.98); }
-.login-screen .lp-submit svg { width: 14px; height: 14px; transition: transform .3s; }
+.login-screen .lp-submit:hover { background: #e8e8e9; }
+.login-screen .lp-submit:active { transform: scale(.985); }
+.login-screen .lp-submit svg { width: 15px; height: 15px; transition: transform .25s cubic-bezier(.23,1,.32,1); }
 .login-screen .lp-submit:hover svg { transform: translateX(3px); }
 
 /* --- Mensagem de erro --- */
 .login-screen .lp-alerta {
-    margin-bottom: 14px; padding: 10px 12px;
-    border-radius: 8px; text-align: center; font-size: 13px;
-    color: #ff9b9b; background: rgba(255,80,80,0.10); border: 1px solid rgba(255,80,80,0.30);
+    margin-bottom: 16px; padding: 11px 14px;
+    border-radius: 12px; text-align: center; font-size: 13.5px;
+    color: #ff9b9b; background: rgba(255,80,80,0.10); border: 1px solid rgba(255,80,80,0.28);
 }
 
-/* Acessibilidade: respeita quem prefere menos movimento */
 @media (prefers-reduced-motion: reduce) {
-    .login-screen .lp-card-wrap,
-    .login-screen .lp-glow,
-    .login-screen .lp-beam { animation: none; }
+    .login-screen .lp-card-wrap { animation: none; }
 }
 
 /* ============================================================
@@ -699,7 +650,7 @@ a.pc-pag-btn:hover { background: rgba(34,211,238, 0.2); border-color: #22d3ee; c
    Formulário de cadastro/edição de usuário (admin_form.php)
    Reaproveita o tema da tela de login (escopo em body.login-screen).
    ============================================================ */
-.login-screen .lp-card-wrap.af-wide { max-width: 420px; }
+.login-screen .lp-card-wrap.af-wide { max-width: 460px; }
 
 /* Formulário de usuário COMPACTO em telas baixas (notebooks): encolhe
    espaçamentos, campos e cabeçalho para o cartão caber INTEIRO na tela,
@@ -724,12 +675,12 @@ a.pc-pag-btn:hover { background: rgba(34,211,238, 0.2); border-color: #22d3ee; c
 }
 .login-screen .af-form { display: flex; flex-direction: column; gap: 14px; }
 .login-screen .af-field { display: flex; flex-direction: column; gap: 6px; }
-.login-screen .af-field label { font-size: 12px; font-weight: 600; color: rgba(255, 255, 255, 0.6); }
+.login-screen .af-field label { font-size: 12.5px; font-weight: 500; color: rgba(255, 255, 255, 0.62); }
 .login-screen .af-field input,
 .login-screen .af-field textarea {
-    width: 100%; height: 44px; padding: 0 14px; font-size: 15px; color: #fff;
-    background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.10);
-    border-radius: 10px; outline: none; transition: background .3s, border-color .3s;
+    width: 100%; height: 48px; padding: 0 16px; font-size: 15px; color: #fff;
+    background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 12px; outline: none; transition: background .2s, border-color .2s;
 }
 .login-screen .af-field textarea { height: auto; min-height: 88px; padding: 10px 14px; resize: vertical; font-family: inherit; line-height: 1.5; }
 .login-screen .af-field input:focus,
@@ -743,13 +694,14 @@ a.pc-pag-btn:hover { background: rgba(34,211,238, 0.2); border-color: #22d3ee; c
 .login-screen .af-check input { width: 16px; height: 16px; accent-color: #06b6d4; }
 .login-screen .af-actions { display: flex; gap: 12px; margin-top: 6px; }
 .login-screen .af-btn {
-    flex: 1; height: 44px; border-radius: 10px; font-size: 14px; font-weight: 600;
+    flex: 1; height: 48px; border-radius: 100px; font-size: 14px; font-weight: 500; letter-spacing: .02em;
     cursor: pointer; border: none; display: flex; align-items: center; justify-content: center;
-    text-decoration: none; transition: transform .2s, box-shadow .3s, background .2s;
+    text-decoration: none; transition: transform .18s cubic-bezier(.23,1,.32,1), background .2s;
 }
-.login-screen .af-btn-primary { background: #fff; color: #000; }
-.login-screen .af-btn-primary:hover { transform: scale(1.02); box-shadow: 0 0 20px rgba(255, 255, 255, 0.15); }
-.login-screen .af-btn-secondary { background: rgba(255, 255, 255, 0.06); color: #fff; border: 1px solid rgba(255, 255, 255, 0.15); }
+.login-screen .af-btn-primary { background: #fff; color: #171a20; }
+.login-screen .af-btn-primary:hover { background: #e8e8e9; }
+.login-screen .af-btn:active { transform: scale(.985); }
+.login-screen .af-btn-secondary { background: rgba(255, 255, 255, 0.08); color: #fff; border: 1px solid rgba(255, 255, 255, 0.16); }
 .login-screen .af-btn-secondary:hover { background: rgba(255, 255, 255, 0.12); }
 
 /* ============================================================
@@ -1327,33 +1279,50 @@ html[data-tema="claro"] .tema-toggle:hover { background: var(--l-bg); border-col
    ============================================================ */
 html[data-tema="claro"] { --g-fg: #1e293b; --g-fg2: #475569; --g-fg3: #64748b; --g-cyan: #0891b2; }
 
-/* --- Login --- */
-html[data-tema="claro"] body.login-screen { background: #e6ecf5; color: var(--g-fg); }
+/* --- Login / formulario de usuario: tema CLARO = mesmo desenho da landing --- */
+html[data-tema="claro"] body.login-screen { background: #fff; color: #171a20; }
 html[data-tema="claro"] .login-screen .lp-bg-gradient {
-    background:
-        radial-gradient(70% 55% at 15% 0%, rgba(6,182,212,0.20), transparent 60%),
-        radial-gradient(60% 45% at 90% 8%, rgba(99,102,241,0.16), transparent 60%),
-        linear-gradient(180deg, #eef3fb, #dfe7f2);
+    background: radial-gradient(122% 78% at 50% 0%, #e9f4fa 0%, #f6fafc 44%, #fff 78%);
 }
-html[data-tema="claro"] .login-screen .lp-glow { opacity: .3; }
 html[data-tema="claro"] .login-screen .lp-card-inner {
-    background: rgba(255,255,255,0.55); -webkit-backdrop-filter: blur(18px) saturate(1.5); backdrop-filter: blur(18px) saturate(1.5);
-    border-color: rgba(255,255,255,0.75); box-shadow: 0 10px 34px -14px rgba(15,23,42,0.28);
+    background: #fff;
+    border-color: #d0d1d2;
+    box-shadow: 0 26px 62px -34px rgba(23,26,32,0.42);
 }
-html[data-tema="claro"] .login-screen .lp-title { color: var(--g-fg); }
-html[data-tema="claro"] .login-screen .lp-subtitle,
-html[data-tema="claro"] .login-screen .lp-field-icon { color: var(--g-fg3); }
+html[data-tema="claro"] .login-screen .lp-logo {
+    background: #f4f4f4; border-color: #d0d1d2; color: #171a20;
+}
+html[data-tema="claro"] .login-screen .lp-title { color: #171a20; }
+html[data-tema="claro"] .login-screen .lp-subtitle { color: #5c5e62; }
+html[data-tema="claro"] .login-screen .lp-field-icon { color: #8b8d90; }
+html[data-tema="claro"] .login-screen .lp-field:focus-within .lp-field-icon { color: #171a20; }
 html[data-tema="claro"] .login-screen .lp-field input,
 html[data-tema="claro"] .login-screen .af-field input,
 html[data-tema="claro"] .login-screen .af-field textarea {
-    background: rgba(255,255,255,0.6); color: var(--g-fg); border-color: rgba(15,23,42,0.14);
+    background: #f4f4f4; color: #171a20; border-color: transparent;
+}
+html[data-tema="claro"] .login-screen .lp-field input:focus,
+html[data-tema="claro"] .login-screen .af-field input:focus,
+html[data-tema="claro"] .login-screen .af-field textarea:focus {
+    background: #fff; border-color: #171a20;
 }
 html[data-tema="claro"] .login-screen .lp-field input::placeholder,
 html[data-tema="claro"] .login-screen .af-field input::placeholder,
-html[data-tema="claro"] .login-screen .af-field textarea::placeholder { color: var(--g-fg3); }
-html[data-tema="claro"] .login-screen .af-field label { color: var(--g-fg2); }
-html[data-tema="claro"] .login-screen .af-check { color: var(--g-fg2); }
-html[data-tema="claro"] .login-screen .af-btn-secondary { background: rgba(255,255,255,0.6); color: var(--g-fg); border-color: rgba(15,23,42,0.14); }
+html[data-tema="claro"] .login-screen .af-field textarea::placeholder { color: #8b8d90; }
+/* Botao invertido no claro: preto com texto branco (igual ao .btn-solid). */
+html[data-tema="claro"] .login-screen .lp-submit,
+html[data-tema="claro"] .login-screen .af-btn-primary { background: #171a20; color: #fff; }
+html[data-tema="claro"] .login-screen .lp-submit:hover,
+html[data-tema="claro"] .login-screen .af-btn-primary:hover { background: #2b2f36; }
+html[data-tema="claro"] .login-screen .af-field label { color: #5c5e62; }
+html[data-tema="claro"] .login-screen .af-check { color: #3e4147; }
+html[data-tema="claro"] .login-screen .af-btn-secondary {
+    background: #f4f4f4; color: #171a20; border-color: #d0d1d2;
+}
+html[data-tema="claro"] .login-screen .af-btn-secondary:hover { background: #e8e8e9; }
+html[data-tema="claro"] .login-screen .lp-alerta {
+    color: #b42318; background: #fef3f2; border-color: #fda29b;
+}
 
 /* --- Painel: fundo com leve gradiente --- */
 html[data-tema="claro"] body.painel-cliente { background: #e6ecf5; color: var(--g-fg); }
@@ -1489,13 +1458,7 @@ html[data-tema="claro"] .pc-pag-btn { background: rgba(255,255,255,0.6); border-
 html[data-tema="claro"] .pc-pag-btn.atual { background: var(--g-cyan); border-color: var(--g-cyan); color: #fff; }
 
 /* --- Correções de contraste no claro: ícones/textos que ficavam brancos sobre branco --- */
-/* Ícone do topo do card de login/form (era branco -> invisível) + seu anel */
-html[data-tema="claro"] .login-screen .lp-logo {
-    color: var(--g-fg);
-    border-color: rgba(15,23,42,0.14);
-    background: linear-gradient(to bottom right, rgba(15,23,42,0.06), transparent);
-}
-html[data-tema="claro"] .login-screen .lp-field:focus-within .lp-field-icon { color: var(--g-cyan); }
+/* (O ícone e o foco do campo do login agora vêm do bloco Tesla acima.) */
 /* Links utilitários */
 html[data-tema="claro"] .link { color: var(--g-cyan); }
 html[data-tema="claro"] .link:hover { color: var(--g-fg); }
