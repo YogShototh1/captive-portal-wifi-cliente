@@ -35,7 +35,7 @@
     var DIAS_NOMES = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
     var DIAS_CURTO = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
     // Paleta fria do tema, com mais variedade: teal/esmeralda/cyan/azul/índigo/violeta.
-    var DIAS_CORES = ['#2dd4bf', '#3b82f6', '#34d399', '#818cf8', '#22d3ee', '#a78bfa', '#0ea5e9'];
+    var DIAS_CORES = ['#06b6d4', '#3b82f6', '#0f9d63', '#6366f1', '#0ea5e9', '#8b5cf6', '#64748b'];
     var MESES_NOMES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
                        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
     var DOW_LETRAS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];

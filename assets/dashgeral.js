@@ -40,8 +40,8 @@
         // Cores do tema (navy/cyan): quem esteve no período em tons vivos;
         // "não revisitaram" apagado (cinza-ardósia) e sempre do lado ESQUERDO.
         var itens = [
-            { k: 'rev', nome: 'Revisitaram',      n: d.revisitaram,     cor: '#22d3ee' },
-            { k: 'nao', nome: 'Não revisitaram', n: d.nao_revisitaram, cor: '#64748b' },
+            { k: 'rev', nome: 'Revisitaram',      n: d.revisitaram,     cor: '#06b6d4' },
+            { k: 'nao', nome: 'Não revisitaram', n: d.nao_revisitaram, cor: '#6b7280' },
             { k: 'nov', nome: 'Novos',            n: d.novos,           cor: '#3b82f6' }
         ];
         var comDado = itens.filter(function (f) { return f.n > 0; });

@@ -1614,6 +1614,443 @@ html[data-tema="claro"] .rm-cel { background: rgba(15,23,42,0.06); }
 }
 
 /* ============================================================
+   PAINEL (painel.php + admin_leads.php) — design Tesla.
+   Superficie reta (4px) e espacosa, acao em pilula, paleta
+   monocromatica; ciano so no status online e nos graficos.
+   Um unico conjunto de regras serve os dois temas: as cores
+   vem dos tokens --t-* logo abaixo.
+   Fica DEPOIS dos overrides de tema antigos (para vencer por
+   ordem) e ANTES do bloco .adm-tesla (para nao sobrescrever a
+   tela de administracao, que tem desenho proprio).
+   ============================================================ */
+html[data-tema] .painel-cliente {
+    --t-bg: #171a20;
+    --t-surface: #1f232b;
+    --t-surface-2: #262b34;
+    --t-line: rgba(255,255,255,0.12);
+    --t-line-soft: rgba(255,255,255,0.07);
+    --t-fg: #fff;
+    --t-fg2: rgba(255,255,255,0.72);
+    --t-fg3: rgba(255,255,255,0.48);
+    --t-hover: rgba(255,255,255,0.05);
+    --t-sel: rgba(255,255,255,0.10);
+    --t-accent: #22d3ee;
+    --t-ok: #34d399;
+    --t-danger: #ff8a8a;
+    --t-r: 4px;              /* raio das superficies */
+    --t-shadow: 0 30px 70px -34px rgba(0,0,0,0.85);
+    font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+html[data-tema="claro"] .painel-cliente {
+    --t-bg: #fff;
+    --t-surface: #fff;
+    --t-surface-2: #f4f4f4;
+    --t-line: #d0d1d2;
+    --t-line-soft: #e6e6e7;
+    --t-fg: #171a20;
+    --t-fg2: #3e4147;
+    --t-fg3: #5c5e62;
+    --t-hover: #fafafa;
+    --t-sel: #f4f4f4;
+    --t-accent: #0891b2;
+    --t-ok: #0f9d63;
+    --t-danger: #b42318;
+    --t-shadow: 0 26px 62px -34px rgba(23,26,32,0.42);
+}
+html[data-tema] .painel-cliente,
+html[data-tema] .painel-cliente button,
+html[data-tema] .painel-cliente input,
+html[data-tema] .painel-cliente textarea,
+html[data-tema] .painel-cliente select { font-family: inherit; }
+html[data-tema] body.painel-cliente { background: var(--t-bg); color: var(--t-fg); }
+/* Fundo liso: saem manchas de luz e textura de ruido. */
+html[data-tema] .painel-cliente .pc-bg-gradient { background: var(--t-bg); }
+html[data-tema] .painel-cliente .pc-bg-noise,
+html[data-tema] .painel-cliente .pc-glow { display: none; }
+html[data-tema] /* ---------- Menu lateral ---------- */
+html[data-tema] .painel-cliente .pc-sidebar {
+    background: var(--t-bg);
+    border-right: 1px solid var(--t-line);
+    padding: 26px 12px;
+    gap: 26px;
+}
+html[data-tema] .painel-cliente .pc-side-brand { padding: 0 10px; }
+html[data-tema] .painel-cliente .pc-side-brand img { border-radius: var(--t-r); }
+html[data-tema] .painel-cliente .pc-side-brand span {
+    font-size: 16px; font-weight: 600; letter-spacing: -0.028em; color: var(--t-fg);
+}
+html[data-tema] .painel-cliente .pc-side-nav { gap: 2px; }
+html[data-tema] .painel-cliente .pc-side-item {
+    border-radius: var(--t-r);
+    padding: 12px 14px;
+    font-size: 14px; font-weight: 500; letter-spacing: -0.01em;
+    color: var(--t-fg3);
+}
+html[data-tema] .painel-cliente .pc-side-item svg { opacity: 1; }
+html[data-tema] .painel-cliente .pc-side-item:hover { background: var(--t-hover); color: var(--t-fg); }
+html[data-tema] .painel-cliente .pc-side-item.atual { background: var(--t-sel); color: var(--t-fg); }
+/* O ponto de "aba ativa" vira uma barra reta na borda esquerda. */
+html[data-tema] .painel-cliente .pc-side-item.atual::after {
+    content: ""; position: absolute; left: 0; top: 8px; bottom: 8px;
+    width: 2px; height: auto; right: auto;
+    border-radius: 0; background: var(--t-fg); box-shadow: none;
+}
+html[data-tema] .painel-cliente .pc-side-item { position: relative; }
+html[data-tema] .painel-cliente .pc-side-foot { border-top: 1px solid var(--t-line); padding-top: 14px; }
+html[data-tema] .painel-cliente .pc-side-sair {
+    border-radius: var(--t-r); padding: 12px 14px;
+    font-size: 14px; font-weight: 500; color: var(--t-danger);
+}
+html[data-tema] .painel-cliente .pc-side-sair:hover { background: var(--t-hover); }
+html[data-tema] /* ---------- Topo ---------- */
+/* Padding proprio no celular (media abaixo) — aqui so o desktop. */
+@media (min-width: 601px) {
+    html[data-tema] .painel-cliente .pc-shell { padding: 30px 26px 56px; }
+}
+html[data-tema] .painel-cliente .pc-brand {
+    font-size: 30px; font-weight: 600; letter-spacing: -0.028em; color: var(--t-fg);
+}
+html[data-tema] .painel-cliente .pc-sub { font-size: 14px; color: var(--t-fg3); margin-top: 6px; }
+html[data-tema] .painel-cliente .pc-sub strong { color: var(--t-fg); font-weight: 600; }
+html[data-tema] .painel-cliente .pc-menu-btn {
+    border-radius: var(--t-r); background: var(--t-surface-2);
+    border: 1px solid var(--t-line); color: var(--t-fg);
+}
+html[data-tema] .painel-cliente .pc-menu-btn:hover { background: var(--t-sel); }
+html[data-tema] /* Status do MikroTik: faixa reta,
+html[data-tema] sem degrade */
+html[data-tema] .painel-cliente .mk-status {
+    border-radius: var(--t-r); border: 1px solid var(--t-line);
+    background: var(--t-surface); color: var(--t-fg2);
+    font-size: 13px; font-weight: 500; padding: 11px 16px;
+}
+html[data-tema] .painel-cliente .mk-status.mk-on .mk-text { color: var(--t-ok); }
+html[data-tema] .painel-cliente .mk-status.mk-off .mk-text { color: var(--t-danger); }
+html[data-tema] .painel-cliente .mk-led { box-shadow: none; }
+html[data-tema] /* Seletor de MikroTik */
+html[data-tema] .painel-cliente .rt-sel > summary {
+    border-radius: var(--t-r); background: var(--t-surface-2);
+    border: 1px solid var(--t-line); color: var(--t-fg);
+    font-size: 13.5px; font-weight: 500;
+}
+html[data-tema] .painel-cliente .rt-menu {
+    border-radius: var(--t-r); background: var(--t-surface);
+    border: 1px solid var(--t-line); box-shadow: var(--t-shadow);
+}
+html[data-tema] .painel-cliente .rt-menu-title { color: var(--t-fg3); font-weight: 600; letter-spacing: .1em; }
+html[data-tema] .painel-cliente .rt-item { border-radius: var(--t-r); color: var(--t-fg2); font-weight: 500; }
+html[data-tema] .painel-cliente .rt-item:hover { background: var(--t-hover); color: var(--t-fg); }
+html[data-tema] .painel-cliente .rt-item.atual { background: var(--t-sel); color: var(--t-fg); }
+html[data-tema] /* ---------- Cartoes: retos,
+html[data-tema] sem brilho seguindo o mouse ---------- */
+html[data-tema] .painel-cliente .glow-card {
+    background: var(--t-surface);
+    border: 1px solid var(--t-line);
+    border-radius: var(--t-r);
+    box-shadow: none;
+}
+html[data-tema] .painel-cliente .glow-fx { display: none; }
+html[data-tema] .painel-cliente .glow-body {
+    background: transparent; border: 0; border-radius: var(--t-r);
+}
+html[data-tema] /* Cartoes de metrica */
+html[data-tema] .painel-cliente .pc-metric .glow-body { gap: 6px; }
+@media (min-width: 601px) {
+    html[data-tema] .painel-cliente .pc-metric .glow-body { padding: 22px 24px; }
+}
+html[data-tema] .painel-cliente .pc-metric:hover .glow-card,
+html[data-tema] .painel-cliente .pc-metric:hover .glow-body { border-color: var(--t-fg3); }
+html[data-tema] .painel-cliente .pc-metric.atual .glow-card,
+html[data-tema] .painel-cliente .pc-metric.atual .glow-body {
+    border-color: var(--t-fg); box-shadow: none; background: transparent;
+}
+html[data-tema] .painel-cliente .pc-metric-num {
+    font-size: 32px; font-weight: 600; letter-spacing: -0.03em; color: var(--t-fg);
+}
+html[data-tema] .painel-cliente .pc-metric-label {
+    font-size: 12px; font-weight: 500; color: var(--t-fg3);
+    text-transform: none; letter-spacing: 0;
+}
+html[data-tema] .painel-cliente .pc-metric.atual .pc-metric-label { color: var(--t-fg2); }
+html[data-tema] /* ---------- Tabela ---------- */
+html[data-tema] .painel-cliente .pc-table-wrap { border-radius: var(--t-r); }
+html[data-tema] .painel-cliente thead th {
+    padding: 18px 22px;
+    font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--t-fg3); background: transparent;
+    border-bottom: 1px solid var(--t-line);
+}
+html[data-tema] .painel-cliente .pc-th-hint { font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--t-fg3); }
+html[data-tema] .painel-cliente tbody td {
+    padding: 20px 22px; font-size: 14px; color: var(--t-fg2);
+    border-bottom: 1px solid var(--t-line-soft);
+}
+html[data-tema] .painel-cliente tbody tr:last-child td { border-bottom: none; }
+html[data-tema] .painel-cliente tbody tr:hover { background: var(--t-hover); }
+html[data-tema] .painel-cliente .pc-vazio { color: var(--t-fg3); }
+html[data-tema] .painel-cliente .pc-aparelho,
+html[data-tema] .painel-cliente .pc-uso { color: var(--t-fg2); }
+html[data-tema] .painel-cliente .pc-tempo { color: var(--t-fg); font-variant-numeric: tabular-nums; }
+html[data-tema] .painel-cliente .pc-dot { box-shadow: none; }
+html[data-tema] .painel-cliente .pc-data { color: var(--t-fg); }
+html[data-tema] .painel-cliente .pc-hora { color: var(--t-fg3); }
+/* Banda / tempo limite: editaveis -> sublinhado fino, sem cor */
+/* Estas classes ficam no proprio <td> (server e leads-live.js), entao nada de
+   display/border aqui: quebraria a tabela e brigaria com a linha divisoria.
+   O "clique p/ editar" e sinalizado por sublinhado no texto. */
+html[data-tema] .painel-cliente .pc-banda,
+html[data-tema] .painel-cliente .pc-limite {
+    color: var(--t-fg); cursor: pointer;
+    text-decoration: underline; text-decoration-thickness: 1px;
+    text-decoration-color: var(--t-line); text-underline-offset: 4px;
+    transition: text-decoration-color .2s;
+}
+html[data-tema] .painel-cliente tr:hover .pc-banda,
+html[data-tema] .painel-cliente tr:hover .pc-limite { text-decoration-color: var(--t-fg); }
+html[data-tema] /* Botao WhatsApp: caixa reta e neutra,
+html[data-tema] icone mantem o verde da marca */
+html[data-tema] .painel-cliente .pc-wa-box {
+    border-radius: var(--t-r); width: 32px; height: 32px;
+    background: transparent; border: 1px solid var(--t-line);
+}
+html[data-tema] .painel-cliente .pc-wa-box:hover { background: var(--t-hover); border-color: var(--t-ok); }
+html[data-tema] .painel-cliente .pc-lead-nome { color: var(--t-fg); font-weight: 600; }
+html[data-tema] .painel-cliente .pc-lead-tel { color: var(--t-fg3); }
+html[data-tema] /* Botao "ver conexoes" e contador */
+html[data-tema] .painel-cliente .pc-ver-conexoes { border-radius: var(--t-r); }
+html[data-tema] .painel-cliente .pc-conex-ic { color: var(--t-fg3); }
+html[data-tema] .painel-cliente .pc-ver-conexoes:hover .pc-conex-ic { color: var(--t-fg); }
+html[data-tema] .painel-cliente .pc-total {
+    background: var(--t-fg); color: var(--t-bg);
+    border-radius: 100px; border: none; box-shadow: none; font-weight: 600;
+}
+/* Botao "!" do log de acessos (admin): mantem o laranja de alerta, reto */
+html[data-tema] .painel-cliente .pc-acesso-btn { border-radius: var(--t-r); }
+html[data-tema] /* Paginacao */
+html[data-tema] .painel-cliente .pc-pag-btn {
+    border-radius: var(--t-r); background: transparent;
+    border: 1px solid var(--t-line); color: var(--t-fg2); font-weight: 500;
+}
+html[data-tema] .painel-cliente .pc-pag-btn:hover { background: var(--t-hover); color: var(--t-fg); }
+html[data-tema] .painel-cliente .pc-pag-btn.atual { background: var(--t-fg); border-color: var(--t-fg); color: var(--t-bg); }
+html[data-tema] .painel-cliente .pc-pag-gap { color: var(--t-fg3); }
+html[data-tema] /* Links e selo */
+html[data-tema] .painel-cliente .pc-link {
+    color: var(--t-fg); font-weight: 500; text-decoration: none;
+    border-bottom: 1px solid var(--t-line); transition: border-color .2s, color .2s;
+}
+html[data-tema] .painel-cliente .pc-link:hover { color: var(--t-fg); border-bottom-color: var(--t-fg); }
+html[data-tema] .painel-cliente .pc-link-danger { color: var(--t-danger); border-bottom-color: transparent; }
+html[data-tema] .painel-cliente .pc-link-danger:hover { border-bottom-color: var(--t-danger); }
+html[data-tema] .painel-cliente .pc-badge {
+    border-radius: 100px; background: var(--t-fg); border: none; color: var(--t-bg);
+    font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+}
+html[data-tema] .painel-cliente .pc-tipo-cliente { color: var(--t-fg3); }
+html[data-tema] /* ---------- Botoes de acao: pilula ---------- */
+html[data-tema] .painel-cliente .pc-btn,
+html[data-tema] .painel-cliente .pc-btn-primary {
+    border-radius: 100px; height: 42px; padding: 0 24px;
+    font-size: 14px; font-weight: 500; letter-spacing: .02em;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid transparent; cursor: pointer; text-decoration: none;
+    transition: background .2s cubic-bezier(.23,1,.32,1), transform .18s cubic-bezier(.23,1,.32,1);
+}
+html[data-tema] .painel-cliente .pc-btn-primary {
+    background: var(--t-fg); color: var(--t-bg); box-shadow: none;
+}
+html[data-tema] .painel-cliente .pc-btn-primary:hover { background: var(--t-fg2); transform: none; box-shadow: none; }
+html[data-tema] .painel-cliente .pc-btn { background: var(--t-surface-2); color: var(--t-fg); border-color: var(--t-line); }
+html[data-tema] .painel-cliente .pc-btn:hover { background: var(--t-sel); }
+html[data-tema] .painel-cliente .pc-btn:active,
+html[data-tema] .painel-cliente .pc-btn-primary:active { transform: scale(.985); }
+html[data-tema] /* Campos de formulario das abas */
+html[data-tema] .painel-cliente .pc-file,
+html[data-tema] .painel-cliente .pc-file-label {
+    border-radius: 100px; background: var(--t-surface-2);
+    border: 1px solid var(--t-line); color: var(--t-fg); font-weight: 500;
+}
+html[data-tema] .painel-cliente .pc-file:hover .pc-file-label { background: var(--t-sel); }
+html[data-tema] .painel-cliente .pc-anuncio-title {
+    font-size: 19px; font-weight: 600; letter-spacing: -0.028em; color: var(--t-fg);
+}
+html[data-tema] .painel-cliente .pc-anuncio-desc { font-size: 13.5px; color: var(--t-fg3); }
+html[data-tema] .painel-cliente .pc-anuncio-preview {
+    border-radius: var(--t-r); background: var(--t-surface-2); border: 1px solid var(--t-line);
+}
+html[data-tema] .painel-cliente .pc-anuncio-vazio { color: var(--t-fg3); }
+html[data-tema] .painel-cliente .pc-anuncio-target {
+    border-radius: var(--t-r); background: var(--t-surface-2);
+    border: 1px solid var(--t-line); color: var(--t-fg2);
+}
+html[data-tema] .painel-cliente .pc-anuncio-target strong { color: var(--t-fg); }
+html[data-tema] .painel-cliente .pc-anuncio-msg { border-radius: var(--t-r); font-weight: 500; }
+html[data-tema] .painel-cliente .pc-cor-row { border-radius: var(--t-r); border: 1px solid var(--t-line); background: transparent; }
+html[data-tema] .painel-cliente .pc-cor-nome { color: var(--t-fg2); }
+html[data-tema] .painel-cliente .pc-cor-hex {
+    border-radius: var(--t-r); background: var(--t-surface-2);
+    border: 1px solid var(--t-line); color: var(--t-fg);
+}
+html[data-tema] .painel-cliente input[type="text"],
+html[data-tema] .painel-cliente input[type="url"],
+html[data-tema] .painel-cliente input[type="number"],
+html[data-tema] .painel-cliente textarea {
+    border-radius: var(--t-r);
+}
+html[data-tema] /* ---------- Modais (ver conexoes / editar / acessos) ---------- */
+html[data-tema] .painel-cliente .pc-modal-backdrop { background: rgba(23,26,32,0.55); }
+html[data-tema="claro"] .painel-cliente .pc-modal-backdrop { background: rgba(23,26,32,0.30); }
+html[data-tema] .painel-cliente .pc-modal-card .glow-card,
+html[data-tema] .painel-cliente .pc-modal-card {
+    border-radius: var(--t-r);
+}
+html[data-tema] .painel-cliente .pc-modal-card .glow-body {
+    background: var(--t-surface); border: 1px solid var(--t-line);
+    border-radius: var(--t-r); box-shadow: var(--t-shadow);
+}
+html[data-tema] .painel-cliente .pc-modal-head { border-bottom: 1px solid var(--t-line); padding: 20px 22px; }
+html[data-tema] .painel-cliente .pc-modal-title {
+    font-size: 17px; font-weight: 600; letter-spacing: -0.028em; color: var(--t-fg);
+}
+html[data-tema] .painel-cliente .pc-modal-title span { color: var(--t-fg); }
+html[data-tema] .painel-cliente .pc-modal-x { color: var(--t-fg3); }
+html[data-tema] .painel-cliente .pc-modal-x:hover { color: var(--t-fg); }
+html[data-tema] .painel-cliente .pc-modal-info { color: var(--t-fg3); }
+html[data-tema] .painel-cliente .pc-conex-head {
+    padding: 14px 22px 12px;
+    font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--t-fg3); border-bottom: 1px solid var(--t-line);
+}
+html[data-tema] .painel-cliente .pc-conex-list li,
+html[data-tema] .painel-cliente .pc-acesso-row,
+html[data-tema] .painel-cliente .pc-log-row {
+    padding: 15px 22px; border-bottom: 1px solid var(--t-line-soft);
+}
+html[data-tema] .painel-cliente .pc-conex-list li:last-child { border-bottom: none; }
+html[data-tema] .painel-cliente .pc-conex-data { color: var(--t-fg); }
+html[data-tema] .painel-cliente .pc-conex-ap { color: var(--t-fg3); }
+html[data-tema] .painel-cliente .pc-conex-tempo { color: var(--t-fg); font-variant-numeric: tabular-nums; }
+html[data-tema] .painel-cliente .pc-log-head {
+    font-size: 11px; font-weight: 600; letter-spacing: .14em;
+    color: var(--t-fg3); border-bottom-color: var(--t-line);
+}
+html[data-tema] .painel-cliente .pc-log-cli { color: var(--t-fg); }
+html[data-tema] .painel-cliente .pc-conex-seta {
+    border-radius: 100px; background: var(--t-surface-2);
+    border: 1px solid var(--t-line); color: var(--t-fg);
+}
+html[data-tema] .painel-cliente .pc-conex-seta:hover { background: var(--t-sel); }
+html[data-tema] .painel-cliente .pc-copia { border-radius: var(--t-r); color: var(--t-fg3); }
+html[data-tema] .painel-cliente .pc-copia:hover { color: var(--t-fg); background: var(--t-hover); }
+html[data-tema] /* Modal de edicao do lead */
+html[data-tema] .painel-cliente .pc-editar-body { padding: 22px; }
+html[data-tema] .painel-cliente .pc-editar-campo label,
+html[data-tema] .painel-cliente .pc-ed-label {
+    font-size: 12px; font-weight: 500; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--t-fg3);
+}
+html[data-tema] .painel-cliente .pc-editar-body input,
+html[data-tema] .painel-cliente .pc-ed-input {
+    border-radius: var(--t-r); background: var(--t-surface-2);
+    border: 1px solid var(--t-line); color: var(--t-fg);
+}
+html[data-tema] .painel-cliente .pc-editar-body input:focus,
+html[data-tema] .painel-cliente .pc-ed-input:focus { border-color: var(--t-fg); background: var(--t-surface); }
+html[data-tema] .painel-cliente .pc-editar-body .pc-btn-primary { border-radius: 100px; height: 46px; }
+html[data-tema] /* Menu de contexto da linha */
+html[data-tema] .painel-cliente .pc-menu {
+    border-radius: var(--t-r); background: var(--t-surface);
+    border: 1px solid var(--t-line); box-shadow: var(--t-shadow);
+}
+html[data-tema] .painel-cliente .pc-menu button,
+html[data-tema] .painel-cliente .pc-menu-item { border-radius: var(--t-r); color: var(--t-fg2); font-weight: 500; }
+html[data-tema] .painel-cliente .pc-menu button:hover,
+html[data-tema] .painel-cliente .pc-menu-item:hover { background: var(--t-hover); color: var(--t-fg); }
+html[data-tema] .painel-cliente .pc-menu-titulo { color: var(--t-fg3); }
+html[data-tema] /* ---------- Dashboard / relatorios / estatisticas ---------- */
+html[data-tema] .painel-cliente .dash-card,
+html[data-tema] .painel-cliente .dg-card,
+html[data-tema] .painel-cliente .rel-card {
+    border-radius: var(--t-r); background: var(--t-surface-2);
+    border: 1px solid var(--t-line); box-shadow: none;
+}
+html[data-tema] .painel-cliente .dash-card > span:first-child,
+html[data-tema] .painel-cliente .dg-card > span:first-child {
+    font-size: 11px; font-weight: 600; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--t-fg3);
+}
+html[data-tema] .painel-cliente .dash-donut-centro { fill: var(--t-fg); font-weight: 600; }
+html[data-tema] .painel-cliente .dash-donut-sub { fill: var(--t-fg3); }
+html[data-tema] .painel-cliente .dg-guia { stroke: var(--t-line); }
+html[data-tema] .painel-cliente .dash-legenda li { color: var(--t-fg2); font-size: 12.5px; }
+html[data-tema] .painel-cliente .leg-nome { color: var(--t-fg2); text-transform: uppercase; letter-spacing: .08em; font-size: 11px; }
+html[data-tema] .painel-cliente .leg-pct { color: var(--t-fg); font-weight: 600; }
+html[data-tema] .painel-cliente .leg-cor { border-radius: 2px; }
+html[data-tema] .painel-cliente .dg-var { color: var(--t-fg3); font-weight: 500; }
+html[data-tema] .painel-cliente .dg-var-bom { color: var(--t-ok); }
+html[data-tema] .painel-cliente .dg-var-ruim { color: var(--t-danger); }
+html[data-tema] .painel-cliente .pc-dst { color: var(--t-fg2); }
+
+/* --- Ajustes finos do painel Tesla --- */
+/* Botao "ver conexoes": caixa neutra e reta (era ciano) */
+html[data-tema] .painel-cliente .pc-ver-conexoes {
+    background: transparent; border: 1px solid var(--t-line);
+    color: var(--t-fg3); border-radius: var(--t-r);
+}
+html[data-tema] .painel-cliente .pc-ver-conexoes:hover {
+    background: var(--t-hover); border-color: var(--t-fg); color: var(--t-fg);
+}
+/* Metrica selecionada: contorno duplo em tinta — inconfundivel, sem cor */
+html[data-tema] .painel-cliente .pc-metric.atual > .glow-card,
+html[data-tema] .painel-cliente .pc-metric.atual.glow-card {
+    border-color: var(--t-fg);
+    box-shadow: inset 0 0 0 1px var(--t-fg);
+}
+html[data-tema] .painel-cliente .pc-metric.atual .pc-metric-label {
+    color: var(--t-fg); font-weight: 600;
+}
+/* Banda / tempo limite numa linha so */
+html[data-tema] .painel-cliente .pc-banda,
+html[data-tema] .painel-cliente .pc-limite { white-space: nowrap; }
+/* Colunas editaveis com respiro suficiente p/ "sem limite" */
+html[data-tema] .painel-cliente td.pc-banda,
+html[data-tema] .painel-cliente td.pc-limite { white-space: nowrap; }
+
+/* Celular: os valores editaveis tinham cor propria dentro da media query
+   antiga (empatam em especificidade), entao repetimos aqui p/ vencer por ordem. */
+@media (max-width: 600px) {
+    html[data-tema] .painel-cliente td.pc-banda,
+    html[data-tema] .painel-cliente td.pc-limite { color: var(--t-fg); }
+    html[data-tema] .painel-cliente td.pc-banda::before,
+    html[data-tema] .painel-cliente td.pc-limite::before { color: var(--t-fg3); }
+}
+
+/* Controles de interface que sobraram cianos (o TRACADO dos graficos segue
+   colorido de proposito — aqui e so a "casca"). */
+html[data-tema] .painel-cliente .rel-mais {
+    background: transparent; border: 1px solid var(--t-line);
+    color: var(--t-fg2); border-radius: var(--t-r);
+}
+html[data-tema] .painel-cliente .rel-mais:hover {
+    background: var(--t-hover); border-color: var(--t-fg); color: var(--t-fg);
+}
+html[data-tema] .painel-cliente .est-filtro {
+    background: transparent; border: 1px solid var(--t-line);
+    color: var(--t-fg2); border-radius: 100px; font-weight: 500;
+}
+html[data-tema] .painel-cliente .est-filtro:hover {
+    border-color: var(--t-fg); color: var(--t-fg); background: var(--t-hover);
+}
+html[data-tema] .painel-cliente .est-filtro.atual {
+    background: var(--t-fg); border-color: var(--t-fg); color: var(--t-bg);
+}
+html[data-tema] .painel-cliente .pc-dst-atual strong { color: var(--t-fg); }
+html[data-tema] .painel-cliente .dash-dia { border-radius: var(--t-r); }
+html[data-tema] .painel-cliente .dash-dia.visitado {
+    background: var(--t-fg); border-color: var(--t-fg); color: var(--t-bg);
+}
+
+/* ============================================================
    Administração (admin.php) — design Tesla, igual à landing e à
    tela de login. Escopo em .adm-tesla: as telas de LEADS
    (painel.php / admin_leads.php) NÃO são afetadas.
