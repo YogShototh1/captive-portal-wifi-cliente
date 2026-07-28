@@ -142,6 +142,25 @@ button{font:inherit}
   .flow svg{max-height:27svh}
 }
 
+/* --- Pin do topo com scrub de rolagem (SO desktop) ---
+   O JS liga html.can-pin quando (>=941px e sem prefers-reduced-motion).
+   O topo vira um trilho de 210vh; o conteudo (.hero-pin) fica grudado
+   (sticky) na tela enquanto o scroll "esfrega" a transicao: o texto
+   dissolve, o diagrama cresce ate preencher e os botoes sobem junto.
+   Como o progresso vem da posicao do scroll, subir a pagina reverte
+   tudo sozinho. No celular .hero-pin e um wrapper neutro. */
+.hero-pin{
+  display:flex;flex-direction:column;align-items:center;text-align:center;
+  flex:1;width:100%;min-height:0;
+}
+@media(min-width:941px){
+  html.can-pin .hero{height:210vh;min-height:0;padding:0;display:block;scroll-snap-align:none}
+  html.can-pin .hero-pin{position:sticky;top:0;height:100svh;padding:96px 0 36px;overflow:hidden}
+  html.can-pin .hero-head,
+  html.can-pin .flow svg,
+  html.can-pin .sec-foot{will-change:transform,opacity}
+}
+
 /* --- Diagrama do fluxo: aparelhos -> Captive Data -> o que voce recebe --- */
 .flow{width:var(--shell);max-width:1000px;margin:20px auto 0;flex:1;display:flex;align-items:center;min-height:0}
 .flow svg{width:100%;height:auto;max-height:40svh}
@@ -376,9 +395,12 @@ footer{background:var(--ink);color:rgba(255,255,255,.5);padding:24px 0 34px;font
 
 <!-- ===================== TOPO ===================== -->
 <header id="topo" class="hero">
-  <span class="eyebrow rv">Captive portal para MikroTik</span>
-  <h1 class="rv rv-2">O Wi-Fi da sua loja,<br>virando clientes.</h1>
-  <p class="sec-sub rv rv-3">O cliente conecta, vê o seu anúncio e deixa o telefone. Você acompanha tudo em tempo real, direto no painel. Sem aplicativo, sem cadastro complicado.</p>
+  <div class="hero-pin">
+  <div class="hero-head">
+    <span class="eyebrow rv">Captive portal para MikroTik</span>
+    <h1 class="rv rv-2">O Wi-Fi da sua loja,<br>virando clientes.</h1>
+    <p class="sec-sub rv rv-3">O cliente conecta, vê o seu anúncio e deixa o telefone. Você acompanha tudo em tempo real, direto no painel. Sem aplicativo, sem cadastro complicado.</p>
+  </div>
 
   <div class="flow rv rv-3" aria-hidden="true">
     <svg viewBox="0 0 1000 400" role="img">
@@ -450,6 +472,7 @@ footer{background:var(--ink);color:rgba(255,255,255,.5);padding:24px 0 34px;font
       <a href="https://wa.me/5548988290878" target="_blank" rel="noopener" class="btn">Falar no WhatsApp</a>
     </div>
   </div>
+  </div><!-- /.hero-pin -->
 </header>
 
 <!-- ===================== RECURSOS ===================== -->
@@ -701,6 +724,98 @@ footer{background:var(--ink);color:rgba(255,255,255,.5);padding:24px 0 34px;font
   }, { passive: true });
 
   ir(0);
+
+  /* ---------- Pin do topo com scrub de rolagem (so desktop) ---------- */
+  (function () {
+    var hero = document.getElementById('topo');
+    var pin  = hero && hero.querySelector('.hero-pin');
+    var head = hero && hero.querySelector('.hero-head');
+    var flow = hero && hero.querySelector('.flow svg');
+    var foot = hero && hero.querySelector('.sec-foot');
+    if (!hero || !pin || !head || !flow || !foot) return;
+
+    var mqDesk  = matchMedia('(min-width: 941px)');
+    var mqCalmo = matchMedia('(prefers-reduced-motion: reduce)');
+    var ligado = false, raf = 0, med = null, pAtual = -1;
+
+    function suave(t) { return t * t * (3 - 2 * t); } // smoothstep
+
+    // Mede com os transforms zerados: alvos de escala e de deslocamento.
+    function medir() {
+      head.style.transform = foot.style.transform = flow.style.transform = '';
+      var vh = innerHeight;
+      var pr = pin.getBoundingClientRect();
+      var fr = flow.getBoundingClientRect();
+      var br = foot.getBoundingClientRect();
+      // Escala p/ o diagrama preencher a tela sem estourar as bordas.
+      var esc = Math.min((vh * 0.74) / fr.height, (innerWidth * 0.95) / fr.width);
+      med = {
+        vh: vh,
+        // Piso 1 (nunca encolhe) e NAO um piso maior: forcar escala acima do
+        // que a largura comporta faria o diagrama ser cortado pelo
+        // overflow:hidden do pin em telas estreitas. Se ja preenche, so
+        // centraliza.
+        esc: Math.max(1, Math.min(esc, 2.2)),
+        // No fim do trilho o conjunto fica centrado: diagrama com o centro a
+        // 44% da tela e os botoes logo abaixo, a 80%.
+        dyFlow: vh * 0.44 - ((fr.top + fr.bottom) / 2 - pr.top),
+        dyFoot: vh * 0.80 - ((br.top + br.bottom) / 2 - pr.top)
+      };
+      pAtual = -1;
+    }
+
+    function aplicar(p) {
+      if (p === pAtual) return;
+      pAtual = p;
+      // O texto dissolve nos primeiros 45% do trilho, subindo de leve.
+      var pt = Math.min(1, p / 0.45);
+      head.style.opacity = String(1 - pt);
+      head.style.visibility = pt >= 1 ? 'hidden' : '';
+      head.style.transform = 'translateY(' + (-36 * pt).toFixed(1) + 'px)';
+      // Diagrama cresce e centraliza; botoes acompanham e ganham corpo.
+      var pf = suave(p);
+      flow.style.transform = 'translateY(' + (med.dyFlow * pf).toFixed(1) + 'px) scale(' + (1 + (med.esc - 1) * pf).toFixed(4) + ')';
+      foot.style.transform = 'translateY(' + (med.dyFoot * pf).toFixed(1) + 'px) scale(' + (1 + 0.12 * pf).toFixed(4) + ')';
+    }
+
+    function quadro() {
+      raf = 0;
+      var trilho = hero.offsetHeight - med.vh;   // altura extra = duracao do pin
+      var topo = hero.getBoundingClientRect().top;
+      aplicar(trilho > 0 ? Math.min(1, Math.max(0, -topo / trilho)) : 0);
+    }
+    function aoRolar() { if (ligado && !raf) raf = requestAnimationFrame(quadro); }
+
+    function ligar() {
+      if (ligado) return;
+      ligado = true;
+      document.documentElement.classList.add('can-pin');
+      medir(); quadro();
+    }
+    function desligar() {
+      if (!ligado) return;
+      ligado = false;
+      document.documentElement.classList.remove('can-pin');
+      head.style.cssText = foot.style.cssText = flow.style.cssText = '';
+      pAtual = -1;
+    }
+    function decidir() { if (mqDesk.matches && !mqCalmo.matches) ligar(); else desligar(); }
+
+    addEventListener('scroll', aoRolar, { passive: true });
+    var tR;
+    addEventListener('resize', function () {
+      if (!ligado) return;
+      clearTimeout(tR);
+      tR = setTimeout(function () { medir(); quadro(); }, 120);
+    });
+    if (mqDesk.addEventListener) {
+      mqDesk.addEventListener('change', decidir);
+      mqCalmo.addEventListener('change', decidir);
+    }
+    // Mede depois do load: fontes assentadas mudam a altura do texto.
+    if (document.readyState === 'complete') decidir();
+    else addEventListener('load', decidir);
+  })();
 
   /* ---------- Video em tela cheia ---------- */
   var vid = document.getElementById('demoVid');
