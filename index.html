@@ -156,6 +156,11 @@ button{font:inherit}
 @media(min-width:941px){
   html.can-pin .hero{height:210vh;min-height:0;padding:0;display:block;scroll-snap-align:none}
   html.can-pin .hero-pin{position:sticky;top:0;height:100svh;padding:96px 0 36px;overflow:hidden}
+  /* O JS alarga o svg alem do .flow (max-width:1000px): centraliza o excesso
+     p/ os dois lados e impede o flex de ENCOLHER a caixa de volta (o svg e
+     item flex do .flow; sem flex:none o shrink anula a largura inline). */
+  html.can-pin .flow{justify-content:center}
+  html.can-pin .flow svg{flex:none}
   html.can-pin .hero-head,
   html.can-pin .flow svg,
   html.can-pin .sec-foot{will-change:transform,opacity}
@@ -743,22 +748,33 @@ footer{background:var(--ink);color:rgba(255,255,255,.5);padding:24px 0 34px;font
     // Mede com os transforms zerados: alvos de escala e de deslocamento.
     function medir() {
       head.style.transform = foot.style.transform = flow.style.transform = '';
+      flow.style.width = ''; flow.style.maxHeight = '';
       var vh = innerHeight;
       var pr = pin.getBoundingClientRect();
       var fr = flow.getBoundingClientRect();
+      // Tamanho do CONTEUDO desenhado (o viewBox e 2.5:1; com o max-height o
+      // svg fica em letterbox e a caixa mente sobre a largura visivel).
+      var cw = Math.min(fr.width, fr.height * 2.5);
+      var ch = cw / 2.5;
+      // Escala p/ preencher a tela sem estourar as bordas. Piso 1 (nunca
+      // encolhe) e NAO um piso maior: forcar escala acima do que a largura
+      // comporta faria o overflow:hidden do pin cortar o diagrama.
+      var esc = Math.min((vh * 0.74) / ch, (innerWidth * 0.95) / cw);
+      esc = Math.max(1, Math.min(esc, 2.2));
+      // NITIDEZ: o svg e rasterizado no tamanho do layout; escalar a textura
+      // p/ cima pixela. Entao o layout ja nasce no tamanho FINAL (conteudo *
+      // esc) e o scrub escala de 1/esc ate 1 — em tela cheia a escala e 1 e o
+      // traco fica nitido; no comeco e reducao, que nao perde qualidade.
+      flow.style.maxHeight = 'none';
+      flow.style.width = Math.round(cw * esc) + 'px';
+      var fr2 = flow.getBoundingClientRect();
       var br = foot.getBoundingClientRect();
-      // Escala p/ o diagrama preencher a tela sem estourar as bordas.
-      var esc = Math.min((vh * 0.74) / fr.height, (innerWidth * 0.95) / fr.width);
       med = {
         vh: vh,
-        // Piso 1 (nunca encolhe) e NAO um piso maior: forcar escala acima do
-        // que a largura comporta faria o diagrama ser cortado pelo
-        // overflow:hidden do pin em telas estreitas. Se ja preenche, so
-        // centraliza.
-        esc: Math.max(1, Math.min(esc, 2.2)),
+        esc: esc,
         // No fim do trilho o conjunto fica centrado: diagrama com o centro a
         // 44% da tela e os botoes logo abaixo, a 80%.
-        dyFlow: vh * 0.44 - ((fr.top + fr.bottom) / 2 - pr.top),
+        dyFlow: vh * 0.44 - ((fr2.top + fr2.bottom) / 2 - pr.top),
         dyFoot: vh * 0.80 - ((br.top + br.bottom) / 2 - pr.top)
       };
       pAtual = -1;
@@ -773,8 +789,10 @@ footer{background:var(--ink);color:rgba(255,255,255,.5);padding:24px 0 34px;font
       head.style.visibility = pt >= 1 ? 'hidden' : '';
       head.style.transform = 'translateY(' + (-36 * pt).toFixed(1) + 'px)';
       // Diagrama cresce e centraliza; botoes acompanham e ganham corpo.
+      // O layout ja esta no tamanho final, entao a escala vai de 1/esc a 1.
       var pf = suave(p);
-      flow.style.transform = 'translateY(' + (med.dyFlow * pf).toFixed(1) + 'px) scale(' + (1 + (med.esc - 1) * pf).toFixed(4) + ')';
+      var s0 = 1 / med.esc;
+      flow.style.transform = 'translateY(' + (med.dyFlow * pf).toFixed(1) + 'px) scale(' + (s0 + (1 - s0) * pf).toFixed(4) + ')';
       foot.style.transform = 'translateY(' + (med.dyFoot * pf).toFixed(1) + 'px) scale(' + (1 + 0.12 * pf).toFixed(4) + ')';
     }
 
