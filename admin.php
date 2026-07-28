@@ -28,7 +28,7 @@ $csrf = csrf_token();
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-    <link rel="stylesheet" href="assets/style.css?v=89">
+    <link rel="stylesheet" href="assets/style.css?v=91">
 </head>
 <body class="painel-cliente adm-tesla">
     <!-- Camadas de fundo (decorativas) -->
@@ -59,6 +59,7 @@ $csrf = csrf_token();
                                 <th>Nome</th>
                                 <th>E-mail</th>
                                 <th>Roteadores (identity)</th>
+                                <th>Status</th>
                                 <th>Leads</th>
                                 <th>Tipo</th>
                                 <th>Ações</th>
@@ -70,6 +71,29 @@ $csrf = csrf_token();
                                 <td><?= h($r['nome']) ?></td>
                                 <td><?= h($r['email']) ?></td>
                                 <td><?= $r['rots'] ? h($r['rots']) : '—' ?></td>
+                                <td class="adm-status-cel">
+                                    <?php
+                                    // Heartbeat por roteador (mesma regra do painel). Uma conta pode
+                                    // ter vários MikroTiks: aí mostra quantos estão no ar.
+                                    $rots = roteadores_conta((int) $r['id']);
+                                    $nOn  = 0;
+                                    foreach ($rots as $rt) {
+                                        if (mikrotik_online($rt)) {
+                                            $nOn++;
+                                        }
+                                    }
+                                    if (!$rots) {
+                                        echo '—';
+                                    } else {
+                                        $cls = $nOn === count($rots) ? 'on' : ($nOn === 0 ? 'off' : 'meio');
+                                        // "2/3 online" (e nao "2 de 3"): cabe em tela de 320px.
+                                        $txt = count($rots) === 1
+                                            ? ($nOn ? 'online' : 'offline')
+                                            : $nOn . '/' . count($rots) . ' online';
+                                        echo '<span class="adm-st ' . $cls . '"><span class="adm-led"></span>' . h($txt) . '</span>';
+                                    }
+                                    ?>
+                                </td>
                                 <td><?= (int) $r['total_leads'] ?></td>
                                 <td><?= ((int) $r['is_admin'] === 1) ? '<span class="pc-badge">admin</span>' : '<span class="pc-tipo-cliente">cliente</span>' ?></td>
                                 <td class="pc-actions">

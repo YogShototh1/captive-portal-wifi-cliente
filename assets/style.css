@@ -2035,3 +2035,40 @@ html[data-tema="claro"] .adm-tesla .pc-link-danger { color: #b42318; border-bott
 html[data-tema="claro"] .adm-tesla .pc-link-danger:hover { color: #912018; border-bottom-color: #912018; }
 html[data-tema="claro"] .adm-tesla .tema-toggle { background: #f4f4f4; border-color: #d0d1d2; color: #171a20; }
 html[data-tema="claro"] .adm-tesla .tema-toggle:hover { background: #e8e8e9; }
+
+/* Coluna Status da lista de contas (admin.php): ponto + texto.
+   Verde/vermelho sao semanticos (igual ao selo do painel), nao decorativos. */
+.adm-tesla .adm-st {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 13.5px; font-weight: 500; white-space: nowrap;
+}
+.adm-tesla .adm-led { width: 8px; height: 8px; border-radius: 100px; background: currentColor; flex: none; }
+.adm-tesla .adm-st.on   { color: #34d399; }
+.adm-tesla .adm-st.off  { color: #f87171; }
+.adm-tesla .adm-st.meio { color: #fbbf24; }   /* parte dos MikroTiks da conta */
+html[data-tema="claro"] .adm-tesla .adm-st.on   { color: #0f9d63; }
+html[data-tema="claro"] .adm-tesla .adm-st.off  { color: #b42318; }
+html[data-tema="claro"] .adm-tesla .adm-st.meio { color: #b45309; }
+
+/* Lista de contas no CELULAR: em 3 colunas o e-mail e o identity do MikroTik
+   nao cabiam e viravam "…". Passa a 2 colunas, com e-mail e roteadores
+   ocupando a linha inteira. A ordem visual e reorganizada com "order":
+     nome | tipo
+     e-mail (linha toda)
+     roteadores (linha toda)
+     status | leads
+     acoes (linha toda)                                                     */
+@media (max-width: 600px) {
+    .adm-tesla tbody tr { grid-template-columns: 1fr auto; gap: 9px 12px; }
+    .adm-tesla tbody td { white-space: normal; overflow: visible; text-overflow: clip; }
+    .adm-tesla tbody td:nth-child(1) { order: 1; grid-column: 1; font-weight: 600; }
+    .adm-tesla tbody td:nth-child(6) { order: 2; grid-column: 2; justify-self: end; }
+    .adm-tesla tbody td:nth-child(2) { order: 3; grid-column: 1 / -1; word-break: break-all; }
+    .adm-tesla tbody td:nth-child(3) { order: 4; grid-column: 1 / -1; }
+    .adm-tesla tbody td:nth-child(4) { order: 5; grid-column: 1; }
+    .adm-tesla tbody td:nth-child(5) { order: 6; grid-column: 2; justify-self: end; }
+    .adm-tesla tbody td:nth-child(7) { order: 7; grid-column: 1 / -1; }
+    /* Sem cabecalho no celular: rotula o que sozinho fica ambiguo. */
+    .adm-tesla tbody td:nth-child(3)::before { content: "mikrotik: "; color: var(--t-fg3); }
+    .adm-tesla tbody td:nth-child(5)::before { content: "leads: ";    color: var(--t-fg3); }
+}
