@@ -176,8 +176,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                     </button>
                     <div>
                         <h1 class="pc-brand">Painel de Leads</h1>
-                        <p class="pc-sub">Olá, <?= h($comprador['nome'] ?: $comprador['email']) ?>
-                            — <?= $multi ? '<strong>' . count($rotLista) . ' MikroTiks</strong>' : 'roteador <strong>' . h((string) ($rotLista[0] ?? '—')) . '</strong>' ?></p>
+                        <p class="pc-sub">Olá, <?= h($comprador['nome'] ?: $comprador['email']) ?></p>
                     </div>
                 </div>
                 <div class="pc-topbar-right">
