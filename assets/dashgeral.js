@@ -33,16 +33,18 @@
         return '<p class="dg-var">clientes iguais vs ' + rotulo + par + '</p>';
     }
 
-    // Pizza (cheia) + legenda de um período (revisitaram / não revisitaram / novos).
-    // À direita da pizza: SOMA de revisitas + novos (clientes que estiveram no
-    // período), com linhas-guia saindo do meio dessas duas fatias até o número.
+    // Pizza (cheia) + legenda de um período.
+    // As TRÊS fatias de quem esteve no período (revisitaram / reativados /
+    // novos) ficam juntas, centradas no eixo do número, e somam exatamente o
+    // número mostrado à direita — que é o mesmo da comparação embaixo.
+    // "Não revisitaram" (esteve na janela anterior e não voltou) fica sempre do
+    // lado ESQUERDO e fora dessa soma.
     function donutPeriodo(titulo, d, rotuloVar) {
-        // Cores do tema (navy/cyan): quem esteve no período em tons vivos;
-        // "não revisitaram" apagado (cinza-ardósia) e sempre do lado ESQUERDO.
         var itens = [
-            { k: 'rev', nome: 'Revisitaram',      n: d.revisitaram,     cor: '#06b6d4' },
-            { k: 'nao', nome: 'Não revisitaram', n: d.nao_revisitaram, cor: '#6b7280' },
-            { k: 'nov', nome: 'Novos',            n: d.novos,           cor: '#3b82f6' }
+            { k: 'rev', nome: 'Revisitaram',      n: d.revisitaram || 0,     cor: '#06b6d4' },
+            { k: 'rea', nome: 'Reativados',       n: d.reativados || 0,      cor: '#8b5cf6' },
+            { k: 'nov', nome: 'Novos',            n: d.novos || 0,           cor: '#3b82f6' },
+            { k: 'nao', nome: 'Não revisitaram', n: d.nao_revisitaram || 0, cor: '#6b7280' }
         ];
         var comDado = itens.filter(function (f) { return f.n > 0; });
         var corpo;
@@ -51,42 +53,40 @@
         } else {
             var cx = 75, cy = 75, r = 70;
             function pt(rr, a) { return (cx + rr * Math.cos(a)).toFixed(2) + ' ' + (cy + rr * Math.sin(a)).toFixed(2); }
-            var soma = (d.revisitaram || 0) + (d.novos || 0);
-            var meios = {}; // ângulo do meio das fatias rev/nov (p/ as linhas-guia)
+            var presentes = [itens[0], itens[1], itens[2]];   // rev, reativados, novos
+            var naoN = itens[3].n;
+            var soma = presentes[0].n + presentes[1].n + presentes[2].n;
+            var total = soma + naoN;
+            var TAU = 2 * Math.PI;
+            // Arco do grupo "esteve no período", centrado no eixo leste (o do
+            // número): comeca em -P/2 e termina em +P/2. O "não revisitaram"
+            // ocupa o resto, sempre do lado esquerdo.
+            var P = total ? soma / total * TAU : 0;
             var s = '<svg class="dash-pie" viewBox="0 0 265 150">';
             if (comDado.length === 1) {
                 s += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="' + comDado[0].cor + '"/>';
-                if (comDado[0].k !== 'nao') meios[comDado[0].k] = 0; // círculo inteiro: guia sai da direita
             } else {
-                // Desenha rev -> novos -> não. O giro inicial é calculado para os
-                // MEIOS das fatias rev e novos caírem simétricos ao eixo do número
-                // (±θ do leste): as duas guias ficam do MESMO tamanho, e o "não"
-                // sobra sempre do lado esquerdo.
-                var ordem = [itens[0], itens[2], itens[1]].filter(function (f) { return f.n > 0; });
-                var total = 0, i;
-                for (i = 0; i < ordem.length; i++) total += ordem[i].n;
-                var R = d.revisitaram / total * 2 * Math.PI; // arco de rev (rad)
-                var N = d.novos / total * 2 * Math.PI;       // arco de novos
-                var ang;
-                if (R > 0 && N > 0)  ang = -(3 * R + N) / 4; // meio_rev = -θ, meio_nov = +θ
-                else if (R > 0)      ang = -R / 2;           // só rev: meio no eixo
-                else if (N > 0)      ang = -N / 2;           // só novos: meio no eixo
-                else                 ang = -Math.PI / 2;     // só "não": tanto faz
+                var ang = -P / 2, i, a0, a1, laf;
+                var ordem = presentes.filter(function (f) { return f.n > 0; });
+                if (naoN > 0) ordem = ordem.concat([itens[3]]);
                 for (i = 0; i < ordem.length; i++) {
-                    var a0 = ang, a1 = ang + ordem[i].n / total * 2 * Math.PI;
-                    var laf = (a1 - a0) > Math.PI ? 1 : 0;
+                    a0 = ang; a1 = ang + ordem[i].n / total * TAU;
+                    laf = (a1 - a0) > Math.PI ? 1 : 0;
                     s += '<path d="M' + cx + ' ' + cy + ' L' + pt(r, a0) + ' A' + r + ' ' + r + ' 0 ' + laf + ' 1 ' + pt(r, a1) + ' Z" fill="' + ordem[i].cor + '"/>';
-                    if (ordem[i].k !== 'nao') meios[ordem[i].k] = (a0 + a1) / 2;
                     ang = a1;
                 }
             }
-            // Linhas-guia: do meio das fatias de revisitas/novos até o número.
+            // Linhas-guia: das duas pontas do grupo até o número, como uma
+            // chave. Simetricas por construcao (±g); limitadas a 45 graus para
+            // nao atravessarem a pizza quando o grupo e quase o circulo todo.
             var alvoX = 190, alvoY = 75;
-            ['rev', 'nov'].forEach(function (k) {
-                if (meios[k] === undefined) return;
-                s += '<line class="dg-guia" x1="' + pt(r * 0.62, meios[k]).replace(' ', '" y1="') + '" x2="' + alvoX + '" y2="' + alvoY + '"/>';
-            });
-            // Número = revisitas + novos ("clientes do período"), à direita.
+            if (soma > 0) {
+                var g = Math.min(P / 2, Math.PI / 4);
+                [-g, g].forEach(function (a) {
+                    s += '<line class="dg-guia" x1="' + pt(r * 0.62, a).replace(' ', '" y1="') + '" x2="' + alvoX + '" y2="' + alvoY + '"/>';
+                });
+            }
+            // Número = revisitaram + reativados + novos = clientes do período.
             s += '<text class="dash-donut-centro" x="222" y="79" text-anchor="middle">' + soma + '</text>';
             s += '<text class="dash-donut-sub" x="222" y="96" text-anchor="middle">cliente' + (soma === 1 ? '' : 's') + '</text>';
             s += '</svg>';

@@ -31,7 +31,8 @@ if ($isAdmin) {
     }
 }
 if (!$lista) {
-    $zero = ['total' => 0, 'revisitaram' => 0, 'nao_revisitaram' => 0, 'novos' => 0, 'pct' => 0];
+    $zero = ['total' => 0, 'revisitaram' => 0, 'reativados' => 0, 'nao_revisitaram' => 0, 'novos' => 0,
+             'clientes' => 0, 'clientes_ant' => 0, 'pct' => 0];
     exit(json_encode(['ok' => true, 'mes' => $zero, 'semana' => $zero, 'dia' => $zero]));
 }
 
@@ -63,11 +64,21 @@ try {
     $primeira = 'COALESCE(l.primeira_conexao, (SELECT MIN(c2.conectado_em) FROM conexoes c2 WHERE c2.lead_id = l.id), l.conectado_em)';
 
     // Janela ATUAL [iniAtual, agora] vs janela ANTERIOR truncada [iniAnt, fimAnt).
-    //   revisitaram     = visitaram na anterior E voltaram na atual
-    //   nao_revisitaram = visitaram na anterior e (ainda) não voltaram na atual
-    //   novos           = 1ª conexão dentro da janela atual
-    //   pct             = conexões da atual vs conexões da anterior
+    //
+    // Quem esteve na janela ATUAL e classificado em TRES baldes exclusivos, a
+    // partir do MESMO conjunto (leads com conexao na janela atual). Assim
+    //     novos + revisitaram + reativados == clientes da janela atual
+    // sempre fecha com o numero da comparacao mostrada embaixo do grafico:
+    //   novos       = 1a conexao dentro da janela atual
+    //   revisitaram = ja vinha de antes E tambem esteve na janela anterior
+    //   reativados  = ja vinha de antes, FALTOU a janela anterior inteira e
+    //                 voltou agora  (antes esse grupo nao entrava em lugar
+    //                 nenhum e o grafico ficava menor que a comparacao)
+    //
+    // Do lado da janela ANTERIOR continua valendo:
+    //     revisitaram + nao_revisitaram == clientes da janela anterior
     $periodo = function (string $iniAnt, string $fimAntStr, string $iniAtual) use ($lista, $ph, $primeira): array {
+        // Clientes distintos da janela anterior (= "clientes_ant" da comparacao).
         $qB = db()->prepare(
             "SELECT COUNT(DISTINCT l.id) FROM leads l
                JOIN conexoes c ON c.lead_id = l.id AND c.conectado_em >= ? AND c.conectado_em < ?
@@ -76,42 +87,46 @@ try {
         $qB->execute(array_merge([$iniAnt, $fimAntStr], $lista));
         $anteriores = (int) $qB->fetchColumn();
 
-        $qR = db()->prepare(
-            "SELECT COUNT(DISTINCT l.id) FROM leads l
-               JOIN conexoes ca ON ca.lead_id = l.id AND ca.conectado_em >= ?
-               JOIN conexoes cb ON cb.lead_id = l.id AND cb.conectado_em >= ? AND cb.conectado_em < ?
-              WHERE l.roteador IN ($ph)"
-        );
-        $qR->execute(array_merge([$iniAtual, $iniAnt, $fimAntStr], $lista));
-        $rev = (int) $qR->fetchColumn();
-
-        $qN = db()->prepare("SELECT COUNT(*) FROM leads l WHERE l.roteador IN ($ph) AND $primeira >= ?");
-        $qN->execute(array_merge($lista, [$iniAtual]));
-        $novos = (int) $qN->fetchColumn();
-
-        // CLIENTES DISTINTOS por janela (não conexões): quantas pessoas
-        // diferentes estiveram no estabelecimento em cada período.
-        $qV = db()->prepare(
+        // Uma passada so: pega quem tem conexao na janela atual (HAVING) e
+        // marca se tambem apareceu na anterior (veio_ant).
+        $qA = db()->prepare(
             "SELECT
-                COUNT(DISTINCT CASE WHEN c.conectado_em >= ? THEN c.lead_id END) AS atual,
-                COUNT(DISTINCT CASE WHEN c.conectado_em >= ? AND c.conectado_em < ? THEN c.lead_id END) AS passada
-               FROM conexoes c JOIN leads l ON l.id = c.lead_id
-              WHERE l.roteador IN ($ph)"
+                SUM(CASE WHEN t.primeira >= ? THEN 1 ELSE 0 END)                        AS novos,
+                SUM(CASE WHEN t.primeira <  ? AND t.veio_ant = 1 THEN 1 ELSE 0 END)     AS revisitaram,
+                SUM(CASE WHEN t.primeira <  ? AND t.veio_ant = 0 THEN 1 ELSE 0 END)     AS reativados,
+                COUNT(*)                                                                AS atual
+               FROM (
+                    SELECT l.id,
+                           $primeira AS primeira,
+                           MAX(CASE WHEN c.conectado_em >= ? AND c.conectado_em < ? THEN 1 ELSE 0 END) AS veio_ant
+                      FROM leads l
+                      JOIN conexoes c ON c.lead_id = l.id
+                     WHERE l.roteador IN ($ph)
+                     GROUP BY l.id
+                    HAVING MAX(CASE WHEN c.conectado_em >= ? THEN 1 ELSE 0 END) = 1
+               ) t"
         );
-        $qV->execute(array_merge([$iniAtual, $iniAnt, $fimAntStr], $lista));
-        $v = $qV->fetch();
-        $atual   = (int) ($v['atual'] ?? 0);
-        $passada = (int) ($v['passada'] ?? 0);
+        $qA->execute(array_merge(
+            [$iniAtual, $iniAtual, $iniAtual, $iniAnt, $fimAntStr],
+            $lista,
+            [$iniAtual]
+        ));
+        $a = $qA->fetch();
+        $novos      = (int) ($a['novos'] ?? 0);
+        $rev        = (int) ($a['revisitaram'] ?? 0);
+        $reativados = (int) ($a['reativados'] ?? 0);
+        $atual      = (int) ($a['atual'] ?? 0);
 
         return [
-            'total'           => $anteriores + $novos,
+            'total'           => $atual + $anteriores,
             'revisitaram'     => $rev,
+            'reativados'      => $reativados,
             'nao_revisitaram' => max(0, $anteriores - $rev),
             'novos'           => $novos,
             'clientes'        => $atual,
-            'clientes_ant'    => $passada,
-            'pct'             => $passada > 0
-                ? round(($atual - $passada) * 100 / $passada, 1)
+            'clientes_ant'    => $anteriores,
+            'pct'             => $anteriores > 0
+                ? round(($atual - $anteriores) * 100 / $anteriores, 1)
                 : ($atual > 0 ? 100.0 : 0.0),
         ];
     };
