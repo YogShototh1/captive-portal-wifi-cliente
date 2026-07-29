@@ -15,7 +15,35 @@
     if (modal.parentNode !== document.body) document.body.appendChild(modal);
 
     var frame = document.getElementById('cm-frame');
+    var palco = document.getElementById('cm-palco');
     var pronto = false;
+
+    // O palco tem medidas fixas de celular (390x693 = 9:16). Aqui so achamos o
+    // fator p/ ele caber na moldura, sem nunca passar de 1: ampliar deixaria a
+    // previa maior que o aparelho real.
+    var LARG = 390, ALT = 693.33;   // 390 x 16/9 = 9:16 exato
+    function ajustarEscala() {
+        if (!palco) return;
+        var pai = palco.parentNode, cs = getComputedStyle(pai);
+        var caixa = pai.getBoundingClientRect();
+        // Desconta o padding real do container (a faixa de baixo e maior, por
+        // causa da dica) em vez de assumir um valor fixo.
+        var livreL = caixa.width  - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+        var livreA = caixa.height - parseFloat(cs.paddingTop)  - parseFloat(cs.paddingBottom);
+        if (livreL <= 0 || livreA <= 0) return;
+        var e = Math.min(livreL / LARG, livreA / ALT, 1);
+        // O PALCO fica com o tamanho ja reduzido (participa do layout e
+        // centraliza sozinho); quem encolhe e o iframe, ancorado no canto.
+        // Escalar o palco em si o deixava maior que a moldura, e o grid o
+        // alinhava ao topo em vez de centralizar.
+        palco.style.width  = (LARG * e).toFixed(2) + 'px';
+        palco.style.height = (ALT  * e).toFixed(2) + 'px';
+        frame.style.transform = 'scale(' + e.toFixed(4) + ')';
+    }
+    addEventListener('resize', ajustarEscala);
+    // ResizeObserver em vez de depender so do rAF ao abrir: dispara assim que a
+    // moldura ganha tamanho, inclusive quando o modal passa de oculto p/ visivel.
+    if (window.ResizeObserver && palco) new ResizeObserver(ajustarEscala).observe(palco.parentNode);
 
     function estado(destaque) {
         var cores = {}, flags = {};
@@ -40,6 +68,9 @@
         modal.classList.add('aberto');
         modal.setAttribute('aria-hidden', 'false');
         document.documentElement.style.overflow = 'hidden';
+        // So da p/ medir a moldura depois de o modal virar visivel.
+        ajustarEscala();
+        requestAnimationFrame(ajustarEscala);
         enviar(null);
     });
     modal.addEventListener('click', function (e) {

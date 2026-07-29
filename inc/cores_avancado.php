@@ -47,9 +47,17 @@ $cid = isset($coresClienteId) ? (int) $coresClienteId : null;
                      (checkbox desmarcado nao e enviado). -->
                 <input type="hidden" name="tem_flags" value="1">
 
-                <!-- PREVIA: a pagina real do hotspot, isolada num iframe -->
+                <!-- PREVIA: a pagina real do hotspot, isolada num iframe.
+                     O palco tem o tamanho de um celular DE VERDADE (390x693,
+                     que e 9:16); o JS so o escala p/ caber na moldura. Assim o
+                     login e desenhado na largura real do cliente — se o iframe
+                     fosse do tamanho da moldura, o layout sairia de uma tela
+                     estreita demais e as fontes/quebras ficariam erradas. -->
                 <div class="cm-previa">
-                    <iframe id="cm-frame" src="assets/portal_preview.html?v=2" title="Prévia da tela de login" loading="lazy"></iframe>
+                    <div class="cm-palco" id="cm-palco">
+                        <iframe id="cm-frame" src="assets/portal_preview.html?v=3" title="Prévia da tela de login"></iframe>
+                    </div>
+                    <p class="cm-dica">Clique num elemento para mudar a cor</p>
                 </div>
 
                 <div class="cm-lado">

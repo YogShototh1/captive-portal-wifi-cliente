@@ -7,23 +7,17 @@
 <!-- MESMO css do hotspot: o que aparece aqui e o que o cliente ve no Wi-Fi. -->
 <link rel="stylesheet" href="portal.css">
 <style>
-  /* Só o necessário p/ caber na moldura do modal (não vai pro roteador).
-     A moldura é 9:16 (tela de celular), então o layout já é o do mobile —
-     sem zoom, é a proporção real que o cliente vê. */
+  /* Só o necessário p/ a prévia (não vai pro roteador). O padding e as
+     medidas vêm do portal.css — a página é desenhada em 390px, largura de
+     celular real, e o painel só escala o resultado. */
   html,body{height:100%}
-  body{padding:18px 14px;min-height:100%}
+  html{scrollbar-width:none}
+  body::-webkit-scrollbar{display:none}
   .cd-zona{cursor:pointer;position:relative}
   .cd-zona.cd-hi{outline:2px dashed #2563eb;outline-offset:3px;border-radius:8px}
-  .cd-dica{
-    position:fixed;top:8px;left:0;right:0;text-align:center;z-index:9;
-    font:600 11px/1 'Nunito Sans',system-ui,sans-serif;letter-spacing:.04em;
-    color:var(--fg-3);opacity:.75;pointer-events:none;
-  }
 </style>
 </head>
 <body>
-<p class="cd-dica">Clique num elemento para mudar a cor</p>
-
 <!-- Markup REAL do login.html (parte visível do cartão). data-cor marca a
      variável que cada elemento usa. -->
 <div class="ie-fixMinHeight">

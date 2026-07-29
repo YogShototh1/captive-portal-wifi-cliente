@@ -2112,24 +2112,36 @@ html[data-tema="claro"] .adm-tesla .adm-st.meio { color: #b45309; }
 #cores-modal .cm-row.realce, #cores-modal .cm-row.alvo { background: var(--t-hover); }
 #cores-modal .cm-row.alvo { outline: 1px solid var(--t-fg); outline-offset: -1px; }
 
-/* --- Previa: a pagina real do hotspot, em 9:16 (tela de celular) --- */
+/* --- Previa: a pagina real do hotspot num "celular" 9:16 ---
+   O palco tem medidas FIXAS de celular real (390x693). O JS aplica um
+   transform:scale p/ caber na moldura. Escalar o render (e nao encolher o
+   iframe) e o que mantem o layout identico ao do aparelho do cliente: um
+   iframe estreito faria o site renderizar numa viewport que nao existe. */
 #cores-modal .cm-previa {
-    grid-column: 1; min-height: 0; overflow: hidden; padding: 16px;
-    display: grid; place-items: center;
+    grid-column: 1; min-height: 0; overflow: hidden;
+    padding: 16px 16px 34px;   /* faixa de baixo reservada p/ a dica */
+    display: grid; place-items: center; position: relative;
     background: var(--t-surface-2);
 }
-/* Fallback: sem container queries vale a altura cheia (a coluna e larga o
-   bastante p/ o 9:16 caber nas alturas que o modal assume). */
-#cores-modal .cm-previa iframe {
-    aspect-ratio: 9 / 16; height: 100%; width: auto; max-width: 100%;
-    border: 0; display: block; border-radius: 16px;
-    box-shadow: 0 14px 40px -18px rgba(0,0,0,.45);
+#cores-modal .cm-palco {
+    /* Tamanho definido pelo JS (390x693.33 vezes a escala). Nasce com a medida
+       cheia p/ o caso de o JS nao rodar. */
+    width: 390px; height: 693.33px; flex: none;
+    border-radius: 26px; overflow: hidden;
+    box-shadow: 0 16px 44px -18px rgba(0,0,0,.5);
+    background: #fff;
 }
-@supports (height: 1cqh) {
-    #cores-modal .cm-previa { container-type: size; }
-    /* Encolhe pela altura OU pela largura, o que apertar primeiro — mantendo
-       o 9:16 exato em vez de distorcer. */
-    #cores-modal .cm-previa iframe { height: min(100cqh, calc(100cqw * 16 / 9)); }
+/* O iframe mantem SEMPRE 390x693.33 (viewport de celular real) e so e
+   reduzido por transform — e isso que faz o login ser desenhado na largura
+   verdadeira do aparelho do cliente. */
+#cores-modal .cm-palco iframe {
+    width: 390px; height: 693.33px; border: 0; display: block;
+    transform-origin: top left;
+}
+#cores-modal .cm-dica {
+    position: absolute; left: 0; right: 0; bottom: 10px; text-align: center;
+    font-size: 11px; letter-spacing: .04em; color: var(--t-fg3);
+    pointer-events: none; margin: 0;
 }
 
 /* --- Coluna da direita: abas fixas, lista rolando, rodape fixo --- */
