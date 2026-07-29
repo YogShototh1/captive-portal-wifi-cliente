@@ -93,7 +93,7 @@ $sai = function (array $extra) use ($tipo, $inicio, $fim) {
     exit(json_encode(['ok' => true, 'tipo' => $tipo, 'inicio' => $inicio, 'fim' => $fim] + $extra));
 };
 
-// --- Clientes sumidos: sem datas — "sumido há N+ dias" e "mínimo de M visitas".
+// --- Clientes sem retorno: sem datas — "sem vir há N+ dias" e "mínimo de M visitas".
 //     valor = dias sem vir (até hoje). ---
 if ($tipo === 'sumidos') {
     $diasMin = max(1, (int) ($_GET['dias'] ?? 7));
@@ -129,7 +129,7 @@ if ($tipo === 'sumidos') {
     $sai(['total' => count($itens), 'lista' => $itens, 'dias' => $diasMin, 'visitas' => $visMin]);
 }
 
-// --- Ranking de fidelidade: top 20 por acessos (conexões) no período. ---
+// --- Clientes mais frequentes: top 20 por acessos (conexões) no período. ---
 if ($tipo === 'ranking') {
     $itens = [];
     if ($lista) {
@@ -160,7 +160,7 @@ if ($tipo === 'ranking') {
     $sai(['total' => count($itens), 'lista' => $itens]);
 }
 
-// --- Mapa semana × hora: conexões do período por (dia da semana, hora). ---
+// --- Movimento por dia e hora: conexões do período por (dia da semana, hora). ---
 if ($tipo === 'mapa') {
     $grade = []; // "d-h" => n (d = DAYOFWEEK 1..7, 1=domingo; h = 0..23)
     $total = 0;
@@ -186,7 +186,7 @@ if ($tipo === 'mapa') {
     $sai(['total' => $total, 'grade' => $grade]);
 }
 
-// --- Aniversários: marcos de 3/6/12 meses da 1ª conexão nos PRÓXIMOS N dias
+// --- Marcos de relacionamento: 3/6/12 meses da 1ª conexão nos PRÓXIMOS N dias
 //     (sem datas — o útil é saber quem está fazendo "aniversário" agora/em breve). ---
 if ($tipo === 'aniversario') {
     $prox   = max(1, (int) ($_GET['proximos'] ?? 30));
@@ -226,7 +226,7 @@ if ($tipo === 'aniversario') {
     $sai(['total' => count($itens), 'lista' => $itens, 'proximos' => $prox]);
 }
 
-// --- Intervalo de retorno: SEM inputs — histórico completo (do 1º lead até hoje).
+// --- Intervalo entre visitas: SEM inputs — histórico completo (do 1º lead até hoje).
 //     Por cliente com >=2 dias de visita: média de dias entre visitas
 //     consecutivas; distribuição em faixas + mediana. ---
 if ($tipo === 'intervalo') {

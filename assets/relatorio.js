@@ -18,13 +18,13 @@
     var NOMES = {
         semana: 'Acessos por dia da semana',
         hora: 'Acessos por horário',
-        clientes_dias: 'Clientes - Dias',
-        clientes_tempo: 'Clientes - Tempo',
-        sumidos: 'Clientes sumidos',
-        ranking: 'Ranking de fidelidade',
-        mapa: 'Mapa semana × hora',
-        aniversario: 'Aniversários de cliente',
-        intervalo: 'Intervalo de retorno'
+        clientes_dias: 'Dias de visita por cliente',
+        clientes_tempo: 'Tempo de conexão por cliente',
+        sumidos: 'Clientes sem retorno',
+        ranking: 'Clientes mais frequentes',
+        mapa: 'Movimento por dia e hora',
+        aniversario: 'Marcos de relacionamento',
+        intervalo: 'Intervalo entre visitas'
     };
     var DIAS  = { 1: 'Dom', 2: 'Seg', 3: 'Ter', 4: 'Qua', 5: 'Qui', 6: 'Sex', 7: 'Sáb' }; // DAYOFWEEK do MySQL
     var tipo  = null;
@@ -147,7 +147,7 @@
     function fmtD(iso) { return String(iso || '').split('-').reverse().join('/'); }
     function vazio() { grafico.innerHTML = '<p class="pc-anuncio-desc">Nenhum resultado no período selecionado.</p>'; }
 
-    // Clientes sumidos: barra = dias sem vir; direita = visitas e última visita.
+    // Clientes sem retorno: barra = dias sem vir; direita = visitas e última visita.
     function renderSumidos(d) {
         if (!d.lista || !d.lista.length) return vazio();
         var max = 0, i;
@@ -163,7 +163,7 @@
         grafico.innerHTML = html;
     }
 
-    // Ranking de fidelidade: top 20 por acessos no período.
+    // Clientes mais frequentes: top 20 por acessos no período.
     function renderRanking(d) {
         if (!d.lista || !d.lista.length) return vazio();
         var max = d.lista[0].valor || 1;
@@ -178,7 +178,7 @@
         grafico.innerHTML = html;
     }
 
-    // Aniversários: marcos de 3/6/12 meses da 1ª conexão dentro do período.
+    // Marcos de relacionamento: 3/6/12 meses da 1ª conexão dentro do período.
     function renderAniversario(d) {
         if (!d.lista || !d.lista.length) return vazio();
         var html = resumo2(d, d.total + ' marco(s) nos próximos ' + d.proximos + ' dias');
@@ -192,10 +192,10 @@
         grafico.innerHTML = html;
     }
 
-    // Intervalo de retorno: faixas do intervalo médio entre visitas + mediana.
+    // Intervalo entre visitas: faixas do intervalo médio entre visitas + mediana.
     function renderIntervalo(d) {
         if (!d.total) return vazio();
-        var LBL = ['volta em 1-2 dias', '3-4 dias', '5-7 dias', '8-14 dias', '15-30 dias', '31+ dias', 'sem retorno'];
+        var LBL = ['volta em 1-2 dias', '3-4 dias', '5-7 dias', '8-14 dias', '15-30 dias', '31+ dias', 'visita única'];
         var vals = d.faixas || [];
         var ps = pcts1(vals);
         var html = resumo2(d, d.total + ' cliente(s) — histórico completo');
@@ -238,7 +238,7 @@
         b.textContent = aberto ? '+' : '−';
     });
 
-    // Mapa semana × hora: grade de calor (intensidade = acessos).
+    // Movimento por dia e hora: grade de calor (intensidade = acessos).
     function renderMapa(d) {
         if (!d.total) return vazio();
         var DIAS_MAPA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']; // DAYOFWEEK 1..7

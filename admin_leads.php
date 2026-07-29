@@ -1,5 +1,5 @@
-<?php
-// Admin vê os leads de um cliente específico.
+﻿<?php
+// Admin vÃª os leads de um cliente especÃ­fico.
 require_once __DIR__ . '/inc/auth.php';
 require_once __DIR__ . '/inc/util.php';
 
@@ -21,15 +21,15 @@ $rotAtivo = roteador_escolhido($rotLista, $_GET['r'] ?? null); // null = todos
 $rotQuery = $rotAtivo !== null ? [$rotAtivo] : $rotLista;
 $multi    = count($rotLista) > 1;
 
-// Contadores dos 4 cartões de resumo (online / conectados hoje / cadastrados hoje / total).
+// Contadores dos 4 cartÃµes de resumo (online / conectados hoje / cadastrados hoje / total).
 $resumo = resumo_leads($rotQuery);
 
-// Filtro dos cartões (?f=): a tabela mostra só o grupo do cartão clicado.
-// A paginação usa o contador do grupo filtrado (mesmos critérios do cartão).
+// Filtro dos cartÃµes (?f=): a tabela mostra sÃ³ o grupo do cartÃ£o clicado.
+// A paginaÃ§Ã£o usa o contador do grupo filtrado (mesmos critÃ©rios do cartÃ£o).
 $filtro    = filtro_leads($_GET['f'] ?? '');
 $totalBase = $resumo[$filtro === '' ? 'total' : $filtro];
 
-// Tabela paginada: 50 leads mais recentes por página (?pagina=N).
+// Tabela paginada: 50 leads mais recentes por pÃ¡gina (?pagina=N).
 $POR_PAG      = 50;
 $totalPaginas = max(1, (int) ceil($totalBase / $POR_PAG));
 $pagina       = min($totalPaginas, max(1, (int) ($_GET['pagina'] ?? 1)));
@@ -51,7 +51,7 @@ $dbNow = db_now();
 $nowTs = strtotime($dbNow);
 $csrf  = csrf_token();
 
-// Mensagens de retorno do upload de anúncio (via query string).
+// Mensagens de retorno do upload de anÃºncio (via query string).
 $anuncioOk   = isset($_GET['anuncio_ok'])   ? (string) $_GET['anuncio_ok']   : '';
 $anuncioErro = isset($_GET['anuncio_erro']) ? (string) $_GET['anuncio_erro'] : '';
 $temAnuncio  = $rotAtivo !== null && anuncio_atual($rotAtivo) !== null;
@@ -64,7 +64,7 @@ $coresErro = isset($_GET['cores_erro']) ? (string) $_GET['cores_erro'] : '';
 $cores     = $rotAtivo !== null ? cores_get($rotAtivo) : cores_padrao();
 $estilo    = $rotAtivo !== null ? estilo_get($rotAtivo) : estilo_padrao();
 
-// Site de destino pós-anúncio do cliente aberto.
+// Site de destino pÃ³s-anÃºncio do cliente aberto.
 $dstOk    = isset($_GET['dst_ok'])   ? (string) $_GET['dst_ok']   : '';
 $dstErro  = isset($_GET['dst_erro']) ? (string) $_GET['dst_erro'] : '';
 $dstAtual = $rotAtivo !== null ? dst_atual($rotAtivo) : null;
@@ -72,7 +72,7 @@ $dstAtual = $rotAtivo !== null ? dst_atual($rotAtivo) : null;
 // Status do MikroTik deste cliente. O JS reatualiza a cada poll de leads_online.php.
 $mkOnline = mikrotiks_online($rotQuery);
 
-// Limites-padrão do roteador (aplicados aos novos usuários) + mensagens de retorno.
+// Limites-padrÃ£o do roteador (aplicados aos novos usuÃ¡rios) + mensagens de retorno.
 $tlPadrao    = $rotAtivo !== null ? roteador_cfg_get($rotAtivo, 'tlimit') : null;
 $bandaPadrao = $rotAtivo !== null ? roteador_cfg_get($rotAtivo, 'banda') : null;
 $tlimOk   = isset($_GET['tlim_ok'])   ? (string) $_GET['tlim_ok']   : '';
@@ -80,15 +80,15 @@ $tlimErro = isset($_GET['tlim_erro']) ? (string) $_GET['tlim_erro'] : '';
 $bandaOk   = isset($_GET['banda_ok'])   ? (string) $_GET['banda_ok']   : '';
 $bandaErro = isset($_GET['banda_erro']) ? (string) $_GET['banda_erro'] : '';
 
-// Página de login do hotspot (o admin sempre pode editar).
+// PÃ¡gina de login do hotspot (o admin sempre pode editar).
 $portalOk    = isset($_GET['portal_ok'])   ? (string) $_GET['portal_ok']   : '';
 $portalErro  = isset($_GET['portal_erro']) ? (string) $_GET['portal_erro'] : '';
 $portalFiles = $rotAtivo !== null ? portal_files($rotAtivo) : [];
 
-// Aviso mostrado nas abas de configuração quando a conta multi está em "todos".
+// Aviso mostrado nas abas de configuraÃ§Ã£o quando a conta multi estÃ¡ em "todos".
 $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" aria-hidden="true"></span><div class="glow-body"><div class="pc-dst">'
     . '<h2 class="pc-anuncio-title">Selecione um MikroTik</h2>'
-    . '<p class="pc-anuncio-desc">Esta configuração é feita por roteador. Escolha um MikroTik no seletor do topo da página para editar.</p>'
+    . '<p class="pc-anuncio-desc">Esta configuraÃ§Ã£o Ã© feita por roteador. Escolha um MikroTik no seletor do topo da pÃ¡gina para editar.</p>'
     . '</div></div></section>';
 ?>
 <!doctype html>
@@ -99,7 +99,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <script>(function(){try{var t=localStorage.getItem('cd-tema');document.documentElement.setAttribute('data-tema',t==='escuro'?'escuro':'claro');}catch(e){document.documentElement.setAttribute('data-tema','claro');}})();</script>
     <meta name="format-detection" content="telephone=no">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leads — <?= h($cliente['nome'] ?: $cliente['email']) ?></title>
+    <title>Leads â€” <?= h($cliente['nome'] ?: $cliente['email']) ?></title>
     <link rel="stylesheet" href="assets/style.css?v=97">
 </head>
 <body class="painel-cliente">
@@ -115,7 +115,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                 <img src="assets/logo.png?v=3" alt="">
                 <span>Captive Data</span>
             </div>
-            <nav class="pc-side-nav" aria-label="Seções do painel">
+            <nav class="pc-side-nav" aria-label="SeÃ§Ãµes do painel">
                 <button type="button" class="pc-side-item" data-aba="painel">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                     Painel
@@ -126,11 +126,11 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                 </button>
                 <button type="button" class="pc-side-item" data-aba="informacoes">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
-                    Informações
+                    InformaÃ§Ãµes
                 </button>
                 <button type="button" class="pc-side-item" data-aba="relatorios">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M7 16v-5"/><path d="M12 16V8"/><path d="M17 16v-8"/></svg>
-                    Relatórios
+                    RelatÃ³rios
                 </button>
                 <button type="button" class="pc-side-item" data-aba="anuncio">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18.37 2.63 14 7l-1.59-1.59a2 2 0 0 0-2.82 0L8 7l9 9 1.59-1.59a2 2 0 0 0 0-2.82L17 10l4.37-4.37a2.12 2.12 0 1 0-3-3Z"/><path d="M9 8c-2 3-4 3.5-7 4l8 10c2-1 6-5 6-7"/><path d="M14.5 17.5 4.5 15"/></svg>
@@ -150,7 +150,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                 </button>
                 <button type="button" class="pc-side-item" data-aba="estatisticas">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="m19 9-5 5-4-4-3 3"/></svg>
-                    Estatísticas
+                    EstatÃ­sticas
                 </button>
                 <button type="button" class="pc-side-item" data-aba="log">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
@@ -181,7 +181,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                     <div>
                         <h1 class="pc-brand">Leads do cliente</h1>
                         <p class="pc-sub"><?= h($cliente['nome'] ?: $cliente['email']) ?>
-                            — <?= $multi ? '<strong>' . count($rotLista) . ' MikroTiks</strong>' : 'roteador <strong>' . h((string) ($rotLista[0] ?? '—')) . '</strong>' ?></p>
+                            â€” <?= $multi ? '<strong>' . count($rotLista) . ' MikroTiks</strong>' : 'roteador <strong>' . h((string) ($rotLista[0] ?? 'â€”')) . '</strong>' ?></p>
                     </div>
                 </div>
                 <div class="pc-topbar-right">
@@ -210,7 +210,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                 </div>
             </header>
 
-            <!-- ============ ABA: PAINEL (métricas + leads) ============ -->
+            <!-- ============ ABA: PAINEL (mÃ©tricas + leads) ============ -->
             <section class="pc-tela" data-tela="painel">
                 <?php $fBase = '?id=' . (int) $id . '&amp;r=' . urlencode((string) $rotAtivo) . '&amp;f='; ?>
                 <div class="pc-summary">
@@ -262,10 +262,10 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                             <table>
                                 <thead>
                                     <tr>
-                                        <th>Número</th>
+                                        <th>NÃºmero</th>
                                         <th>IP</th>
                                         <th>Aparelho</th>
-                                        <th>Data da conexão</th>
+                                        <th>Data da conexÃ£o</th>
                                         <th>Tempo conectado</th>
                                         <th>Consumo</th>
                                         <th>Banda <span class="pc-th-hint">(clique p/ editar)</span></th>
@@ -285,16 +285,16 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                                         $total   = (int) $l['total_conexoes'];
                                         if ($online === 1)      { $tempoTxt = fmt_tempo($elapsed); }
                                         elseif ($segF !== null) { $tempoTxt = fmt_tempo($segF); }
-                                        else                    { $tempoTxt = '—'; }
+                                        else                    { $tempoTxt = 'â€”'; }
                                     ?>
                                     <tr data-id="<?= (int) $l['id'] ?>" data-online="<?= $online ?>" data-elapsed="<?= $elapsed ?>" data-limite="<?= $lim === null ? '' : (int) $lim ?>" data-banda="<?= $banda === null ? '' : (int) $banda ?>" data-total="<?= $total ?>" data-tel="<?= h($l['telefone']) ?>" data-nome="<?= h((string) ($l['nome'] ?? '')) ?>">
                                         <td><?= h(($l['nome'] !== null && $l['nome'] !== '') ? $l['nome'] : $l['telefone']) ?></td>
-                                        <td class="pc-ip-cel"><button type="button" class="pc-acesso-btn" data-lead="<?= (int) $l['id'] ?>" aria-label="Ver acessos" title="Ver acessos (admin)">!</button><?= h($l['ip'] ?? '—') ?></td>
-                                        <td class="pc-aparelho"><?= h($l['dispositivo'] ?? '—') ?></td>
+                                        <td class="pc-ip-cel"><button type="button" class="pc-acesso-btn" data-lead="<?= (int) $l['id'] ?>" aria-label="Ver acessos" title="Ver acessos (admin)">!</button><?= h($l['ip'] ?? 'â€”') ?></td>
+                                        <td class="pc-aparelho"><?= h($l['dispositivo'] ?? 'â€”') ?></td>
                                         <td>
                                             <?php $dh = explode(' - ', fmt_data($l['conectado_em'])); ?>
                                             <div class="pc-conex-cel">
-                                                <button type="button" class="pc-ver-conexoes" data-lead="<?= (int) $l['id'] ?>" aria-label="Ver conexões">
+                                                <button type="button" class="pc-ver-conexoes" data-lead="<?= (int) $l['id'] ?>" aria-label="Ver conexÃµes">
                                                     <svg class="pc-conex-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
                                                     <span class="pc-total"><?= $total ?></span>
                                                 </button>
@@ -311,9 +311,9 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                             </table>
                         </div>
                         <?php if ($totalPaginas > 1): ?>
-                        <nav class="pc-pag" aria-label="Páginas de leads">
+                        <nav class="pc-pag" aria-label="PÃ¡ginas de leads">
                             <?php foreach (paginacao_paginas($pagina, $totalPaginas) as $p): ?>
-                                <?php if ($p === '...'): ?><span class="pc-pag-gap">…</span>
+                                <?php if ($p === '...'): ?><span class="pc-pag-gap">â€¦</span>
                                 <?php elseif ($p === $pagina): ?><span class="pc-pag-btn atual" aria-current="page"><?= $p ?></span>
                                 <?php else: ?><a class="pc-pag-btn" href="?id=<?= (int) $id ?>&amp;r=<?= urlencode((string) $rotAtivo) ?>&amp;f=<?= urlencode($filtro) ?>&amp;pagina=<?= $p ?>"><?= $p ?></a>
                                 <?php endif; ?>
@@ -324,30 +324,30 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                 </div>
             </section>
 
-            <!-- ============ ABA: DASHBOARD (visão geral da semana) ============ -->
+            <!-- ============ ABA: DASHBOARD (visÃ£o geral da semana) ============ -->
             <section class="pc-tela" data-tela="dashboard">
                 <div class="glow-card pc-dst-card">
                     <span class="glow-fx" aria-hidden="true"></span>
                     <div class="glow-body">
                         <div class="pc-dst" id="dashgeral-box" data-endpoint="api/dashboard_geral.php?<?= $rotAtivo !== null ? 'roteador=' . urlencode($rotAtivo) : 'cliente_id=' . (int) $id ?>">
-                            <h2 class="pc-anuncio-title">Recorrência da semana</h2>
-                            <p class="pc-anuncio-desc">Todos os leads: quem revisitou o estabelecimento nesta semana, quem ainda não voltou e quem apareceu pela primeira vez.</p>
+                            <h2 class="pc-anuncio-title">RecorrÃªncia da semana</h2>
+                            <p class="pc-anuncio-desc">Todos os leads: quem revisitou o estabelecimento nesta semana, quem ainda nÃ£o voltou e quem apareceu pela primeira vez.</p>
                             <div id="dg-conteudo"></div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- ============ ABA: INFORMAÇÕES (hábitos de um lead) ============ -->
+            <!-- ============ ABA: INFORMAÃ‡Ã•ES (hÃ¡bitos de um lead) ============ -->
             <section class="pc-tela" data-tela="informacoes">
                 <div class="glow-card pc-dst-card">
                     <span class="glow-fx" aria-hidden="true"></span>
                     <div class="glow-body">
                         <div class="pc-dst" id="dashboard-box" data-endpoint="api/dashboard.php?<?= $rotAtivo !== null ? 'roteador=' . urlencode($rotAtivo) : 'cliente_id=' . (int) $id ?>">
-                            <h2 class="pc-anuncio-title">Informações do lead</h2>
-                            <p class="pc-anuncio-desc">Digite o número de um lead para ver os hábitos de visita dele — ou clique com o botão direito num lead na aba Painel e escolha "Informações".</p>
+                            <h2 class="pc-anuncio-title">InformaÃ§Ãµes do lead</h2>
+                            <p class="pc-anuncio-desc">Digite o nÃºmero de um lead para ver os hÃ¡bitos de visita dele â€” ou clique com o botÃ£o direito num lead na aba Painel e escolha "InformaÃ§Ãµes".</p>
                             <div class="pc-dst-form">
-                                <input type="tel" id="dash-tel" class="pc-dst-input" inputmode="numeric" placeholder="48999999999" aria-label="Número do lead">
+                                <input type="tel" id="dash-tel" class="pc-dst-input" inputmode="numeric" placeholder="48999999999" aria-label="NÃºmero do lead">
                                 <button type="button" class="pc-btn-primary" id="dash-consultar">Consultar</button>
                             </div>
                             <p class="pc-anuncio-msg err" id="dash-erro" style="display:none"></p>
@@ -357,48 +357,48 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                 </div>
             </section>
 
-            <!-- ============ ABA: RELATÓRIOS ============ -->
+            <!-- ============ ABA: RELATÃ“RIOS ============ -->
             <section class="pc-tela" data-tela="relatorios">
                 <div class="glow-card pc-dst-card">
                     <span class="glow-fx" aria-hidden="true"></span>
                     <div class="glow-body">
                         <div class="pc-dst" id="relatorio-box" data-endpoint="api/relatorio.php?<?= $rotAtivo !== null ? 'roteador=' . urlencode($rotAtivo) : 'cliente_id=' . (int) $id ?>">
-                            <h2 class="pc-anuncio-title">Relatórios</h2>
-                            <p class="pc-anuncio-desc">Escolha o modelo do relatório, o período (data inicial e final) e clique em gerar. Os acessos contados são as conexões dos clientes no Wi-Fi.</p>
+                            <h2 class="pc-anuncio-title">RelatÃ³rios</h2>
+                            <p class="pc-anuncio-desc">Escolha o modelo do relatÃ³rio, o perÃ­odo (data inicial e final) e clique em gerar. Os acessos contados sÃ£o as conexÃµes dos clientes no Wi-Fi.</p>
                             <div class="rel-controles">
                                 <details class="rt-sel" id="rel-sel">
                                     <summary>
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M7 16v-5"/><path d="M12 16V8"/><path d="M17 16v-8"/></svg>
-                                        <span id="rel-sel-label">Escolher modelo…</span>
+                                        <span id="rel-sel-label">Escolher modeloâ€¦</span>
                                         <svg class="rt-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
                                     </summary>
                                     <div class="rt-menu">
-                                        <div class="rt-menu-title">Modelo do relatório</div>
+                                        <div class="rt-menu-title">Modelo do relatÃ³rio</div>
                                         <button type="button" class="rt-item rel-item" data-tipo="semana"><span>Acessos por dia da semana</span></button>
-                                        <button type="button" class="rt-item rel-item" data-tipo="hora"><span>Acessos por horário</span></button>
-                                        <button type="button" class="rt-item rel-item" data-tipo="clientes_dias"><span>Clientes - Dias</span></button>
-                                        <button type="button" class="rt-item rel-item" data-tipo="clientes_tempo"><span>Clientes - Tempo</span></button>
-                                        <button type="button" class="rt-item rel-item" data-tipo="sumidos"><span>Clientes sumidos</span></button>
-                                        <button type="button" class="rt-item rel-item" data-tipo="ranking"><span>Ranking de fidelidade</span></button>
-                                        <button type="button" class="rt-item rel-item" data-tipo="mapa"><span>Mapa semana &times; hora</span></button>
-                                        <button type="button" class="rt-item rel-item" data-tipo="aniversario"><span>Aniversários de cliente</span></button>
-                                        <button type="button" class="rt-item rel-item" data-tipo="intervalo"><span>Intervalo de retorno</span></button>
+                                        <button type="button" class="rt-item rel-item" data-tipo="hora"><span>Acessos por horÃ¡rio</span></button>
+                                        <button type="button" class="rt-item rel-item" data-tipo="clientes_dias"><span>Dias de visita por cliente</span></button>
+                                        <button type="button" class="rt-item rel-item" data-tipo="clientes_tempo"><span>Tempo de conexÃ£o por cliente</span></button>
+                                        <button type="button" class="rt-item rel-item" data-tipo="sumidos"><span>Clientes sem retorno</span></button>
+                                        <button type="button" class="rt-item rel-item" data-tipo="ranking"><span>Clientes mais frequentes</span></button>
+                                        <button type="button" class="rt-item rel-item" data-tipo="mapa"><span>Movimento por dia e hora</span></button>
+                                        <button type="button" class="rt-item rel-item" data-tipo="aniversario"><span>Marcos de relacionamento</span></button>
+                                        <button type="button" class="rt-item rel-item" data-tipo="intervalo"><span>Intervalo entre visitas</span></button>
                                     </div>
                                 </details>
                                 <input type="text" id="rel-inicio" class="pc-dst-input rel-data" readonly inputmode="none" placeholder="dd/mm/aaaa"
                                        value="<?= date('d/m/Y', strtotime('-6 days')) ?>" data-iso="<?= date('Y-m-d', strtotime('-6 days')) ?>" aria-label="Data inicial">
                                 <input type="text" id="rel-fim" class="pc-dst-input rel-data" readonly inputmode="none" placeholder="dd/mm/aaaa"
                                        value="<?= date('d/m/Y') ?>" data-iso="<?= date('Y-m-d') ?>" aria-label="Data final">
-                                <label class="rel-extra" data-campo="dias" style="display:none">sumido há (dias)
+                                <label class="rel-extra" data-campo="dias" style="display:none">sem vir hÃ¡ (dias)
                                     <input type="number" id="rel-dias" class="pc-dst-input rel-num" min="1" value="7">
                                 </label>
-                                <label class="rel-extra" data-campo="visitas" style="display:none">mínimo de visitas
+                                <label class="rel-extra" data-campo="visitas" style="display:none">mÃ­nimo de visitas
                                     <input type="number" id="rel-visitas" class="pc-dst-input rel-num" min="1" value="3">
                                 </label>
-                                <label class="rel-extra" data-campo="proximos" style="display:none">nos próximos (dias)
+                                <label class="rel-extra" data-campo="proximos" style="display:none">nos prÃ³ximos (dias)
                                     <input type="number" id="rel-proximos" class="pc-dst-input rel-num" min="1" value="30">
                                 </label>
-                                <button type="button" class="pc-btn-primary" id="rel-gerar">Gerar relatório</button>
+                                <button type="button" class="pc-btn-primary" id="rel-gerar">Gerar relatÃ³rio</button>
                             </div>
                             <p class="pc-anuncio-msg err" id="rel-erro" style="display:none"></p>
                             <div class="rel-grafico" id="rel-grafico"></div>
@@ -407,7 +407,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                 </div>
             </section>
 
-            <!-- ============ ABA: ANÚNCIO ============ -->
+            <!-- ============ ABA: ANÃšNCIO ============ -->
             <section class="pc-tela" data-tela="anuncio">
                 <?php if ($rotAtivo !== null): ?>
                 <div class="glow-card pc-anuncio-card">
@@ -415,15 +415,15 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                     <div class="glow-body">
                         <div class="pc-anuncio">
                             <div class="pc-anuncio-preview">
-                                <img src="ad.php?r=<?= urlencode($rotAtivo) ?>&t=<?= time() ?>" alt="Anúncio atual"
+                                <img src="ad.php?r=<?= urlencode($rotAtivo) ?>&t=<?= time() ?>" alt="AnÃºncio atual"
                                      <?= $temAnuncio ? '' : 'style="display:none"' ?>
                                      onerror="this.style.display='none';var v=this.nextElementSibling;if(v)v.style.display='flex';">
-                                <div class="pc-anuncio-vazio" <?= $temAnuncio ? 'style="display:none"' : '' ?>>Sem anúncio<br>enviado</div>
+                                <div class="pc-anuncio-vazio" <?= $temAnuncio ? 'style="display:none"' : '' ?>>Sem anÃºncio<br>enviado</div>
                             </div>
                             <div class="pc-anuncio-form">
-                                <h2 class="pc-anuncio-title">Anúncio do captive portal</h2>
-                                <div class="pc-anuncio-target">Enviando para: <strong><?= h($cliente['nome'] ?: $cliente['email']) ?></strong> — roteador <strong><?= h((string) $rotAtivo) ?></strong></div>
-                                <p class="pc-anuncio-desc">Imagem mostrada nos 10 segundos antes de liberar o Wi-Fi. Envie JPG, JPEG ou PNG (até 3 MB). Substitui apenas o anúncio deste cliente.</p>
+                                <h2 class="pc-anuncio-title">AnÃºncio do captive portal</h2>
+                                <div class="pc-anuncio-target">Enviando para: <strong><?= h($cliente['nome'] ?: $cliente['email']) ?></strong> â€” roteador <strong><?= h((string) $rotAtivo) ?></strong></div>
+                                <p class="pc-anuncio-desc">Imagem mostrada nos 10 segundos antes de liberar o Wi-Fi. Envie JPG, JPEG ou PNG (atÃ© 3 MB). Substitui apenas o anÃºncio deste cliente.</p>
                                 <?php if ($anuncioOk): ?><p class="pc-anuncio-msg ok"><?= h($anuncioOk) ?></p><?php endif; ?>
                                 <?php if ($anuncioErro): ?><p class="pc-anuncio-msg err"><?= h($anuncioErro) ?></p><?php endif; ?>
                                 <form class="pc-anuncio-envio" method="post" action="api/upload_anuncio.php" enctype="multipart/form-data">
@@ -432,9 +432,9 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                                     <input type="hidden" name="roteador" value="<?= h((string) $rotAtivo) ?>">
                                     <label class="pc-file">
                                         <input type="file" name="anuncio" accept=".jpg,.jpeg,.png,image/jpeg,image/png" required>
-                                        <span class="pc-file-label">Escolher imagem…</span>
+                                        <span class="pc-file-label">Escolher imagemâ€¦</span>
                                     </label>
-                                    <button type="submit" class="pc-btn-primary">Enviar anúncio</button>
+                                    <button type="submit" class="pc-btn-primary">Enviar anÃºncio</button>
                                 </form>
                             </div>
                         </div>
@@ -452,8 +452,8 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                             </div>
                             <div class="pc-anuncio-form">
                                 <h2 class="pc-anuncio-title">Logo da tela de login</h2>
-                                <div class="pc-anuncio-target">Enviando para: <strong><?= h($cliente['nome'] ?: $cliente['email']) ?></strong> — roteador <strong><?= h((string) $rotAtivo) ?></strong></div>
-                                <p class="pc-anuncio-desc">Aparece no topo da tela onde o cliente digita o número. Envie PNG (com fundo transparente, recomendado), JPG ou JPEG (até 2 MB). Troca na hora.</p>
+                                <div class="pc-anuncio-target">Enviando para: <strong><?= h($cliente['nome'] ?: $cliente['email']) ?></strong> â€” roteador <strong><?= h((string) $rotAtivo) ?></strong></div>
+                                <p class="pc-anuncio-desc">Aparece no topo da tela onde o cliente digita o nÃºmero. Envie PNG (com fundo transparente, recomendado), JPG ou JPEG (atÃ© 2 MB). Troca na hora.</p>
                                 <?php if ($logoOk): ?><p class="pc-anuncio-msg ok"><?= h($logoOk) ?></p><?php endif; ?>
                                 <?php if ($logoErro): ?><p class="pc-anuncio-msg err"><?= h($logoErro) ?></p><?php endif; ?>
                                 <form class="pc-anuncio-envio" method="post" action="api/upload_logo.php" enctype="multipart/form-data">
@@ -464,7 +464,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                                     <div class="pc-logo-row">
                                         <label class="pc-file">
                                             <input type="file" name="logo" accept=".png,.jpg,.jpeg,image/png,image/jpeg">
-                                            <span class="pc-file-label">Escolher imagem…</span>
+                                            <span class="pc-file-label">Escolher imagemâ€¦</span>
                                         </label>
                                         <details class="rt-sel pc-forma-sel" id="logo-forma-sel">
                                             <summary>
@@ -491,15 +491,15 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                     <div class="glow-body">
                         <div class="pc-anuncio-form" style="flex:1">
                             <h2 class="pc-anuncio-title">Cores da tela de login</h2>
-                            <div class="pc-anuncio-target">Enviando para: <strong><?= h($cliente['nome'] ?: $cliente['email']) ?></strong> — roteador <strong><?= h((string) $rotAtivo) ?></strong></div>
-                            <p class="pc-anuncio-desc">Clique na cor pra abrir o seletor (roda de cor + código #), ou digite o código. Vale na tela onde o cliente digita o número.</p>
+                            <div class="pc-anuncio-target">Enviando para: <strong><?= h($cliente['nome'] ?: $cliente['email']) ?></strong> â€” roteador <strong><?= h((string) $rotAtivo) ?></strong></div>
+                            <p class="pc-anuncio-desc">Clique na cor pra abrir o seletor (roda de cor + cÃ³digo #), ou digite o cÃ³digo. Vale na tela onde o cliente digita o nÃºmero.</p>
                             <?php if ($coresOk): ?><p class="pc-anuncio-msg ok"><?= h($coresOk) ?></p><?php endif; ?>
                             <?php if ($coresErro): ?><p class="pc-anuncio-msg err"><?= h($coresErro) ?></p><?php endif; ?>
                             <form method="post" action="api/set_cores.php" class="pc-cores-form">
                                 <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
                                     <input type="hidden" name="cliente_id" value="<?= (int) $id ?>">
                                     <input type="hidden" name="roteador" value="<?= h((string) $rotAtivo) ?>">
-                                    <?php foreach ([['primary','Cor principal (botões e links)'],['accent','Cor de destaque (degradê)'],['bg','Fundo da tela'],['fg','Cor do texto']] as [$ck,$cl]): ?>
+                                    <?php foreach ([['primary','Cor principal (botÃµes e links)'],['accent','Cor de destaque (degradÃª)'],['bg','Fundo da tela'],['fg','Cor do texto']] as [$ck,$cl]): ?>
                                     <label class="pc-cor-row">
                                         <span class="pc-cor-nome"><?= $cl ?></span>
                                         <span class="pc-cor-ctrls">
@@ -510,7 +510,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                                     <?php endforeach; ?>
                                 <div class="pc-cores-acoes">
                                     <button type="submit" class="pc-btn-primary">Salvar cores</button>
-                                    <button type="button" class="pc-cor-avancado" id="cores-avancado-abrir">avançado</button>
+                                    <button type="button" class="pc-cor-avancado" id="cores-avancado-abrir">avanÃ§ado</button>
                                 </div>
                             </form>
                         </div>
@@ -527,10 +527,10 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                     <span class="glow-fx" aria-hidden="true"></span>
                     <div class="glow-body">
                         <div class="pc-dst">
-                            <h2 class="pc-anuncio-title">Site de destino após o anúncio</h2>
-                            <div class="pc-anuncio-target">Configurando: <strong><?= h($cliente['nome'] ?: $cliente['email']) ?></strong> — roteador <strong><?= h((string) $rotAtivo) ?></strong></div>
-                            <p class="pc-anuncio-desc">Ao terminar o anúncio, o cliente deste roteador é redirecionado para este site. Padrão: Google. Pode colar o link do perfil do Instagram — convertemos automaticamente para o formato que abre a página do perfil sem erro no iPhone.</p>
-                            <p class="pc-dst-atual">Atual: <strong><?= $dstAtual ? h($dstAtual) : 'https://www.google.com (padrão)' ?></strong></p>
+                            <h2 class="pc-anuncio-title">Site de destino apÃ³s o anÃºncio</h2>
+                            <div class="pc-anuncio-target">Configurando: <strong><?= h($cliente['nome'] ?: $cliente['email']) ?></strong> â€” roteador <strong><?= h((string) $rotAtivo) ?></strong></div>
+                            <p class="pc-anuncio-desc">Ao terminar o anÃºncio, o cliente deste roteador Ã© redirecionado para este site. PadrÃ£o: Google. Pode colar o link do perfil do Instagram â€” convertemos automaticamente para o formato que abre a pÃ¡gina do perfil sem erro no iPhone.</p>
+                            <p class="pc-dst-atual">Atual: <strong><?= $dstAtual ? h($dstAtual) : 'https://www.google.com (padrÃ£o)' ?></strong></p>
                             <?php if ($dstOk): ?><p class="pc-anuncio-msg ok"><?= h($dstOk) ?></p><?php endif; ?>
                             <?php if ($dstErro): ?><p class="pc-anuncio-msg err"><?= h($dstErro) ?></p><?php endif; ?>
                             <form class="pc-dst-form" method="post" action="api/set_dst.php">
@@ -554,9 +554,9 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                     <span class="glow-fx" aria-hidden="true"></span>
                     <div class="glow-body">
                         <div class="pc-dst">
-                            <h2 class="pc-anuncio-title">Aplicar limites a todos os usuários</h2>
+                            <h2 class="pc-anuncio-title">Aplicar limites a todos os usuÃ¡rios</h2>
                             <div class="pc-anuncio-target">Roteador <strong><?= h((string) $rotAtivo) ?></strong></div>
-                            <p class="pc-anuncio-desc">Define o limite para quem já está na tabela e para os próximos que conectarem. Deixe vazio para "sem limite". Para mudar um usuário específico, use a própria tabela na aba Painel (clique no valor).</p>
+                            <p class="pc-anuncio-desc">Define o limite para quem jÃ¡ estÃ¡ na tabela e para os prÃ³ximos que conectarem. Deixe vazio para "sem limite". Para mudar um usuÃ¡rio especÃ­fico, use a prÃ³pria tabela na aba Painel (clique no valor).</p>
                             <?php if ($tlimOk): ?><p class="pc-anuncio-msg ok"><?= h($tlimOk) ?></p><?php endif; ?>
                             <?php if ($tlimErro): ?><p class="pc-anuncio-msg err"><?= h($tlimErro) ?></p><?php endif; ?>
                             <form class="pc-dst-form" method="post" action="api/set_padrao.php">
@@ -564,7 +564,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                                 <input type="hidden" name="cliente_id" value="<?= (int) $id ?>">
                                 <input type="hidden" name="roteador" value="<?= h((string) $rotAtivo) ?>">
                                 <input type="number" min="0" inputmode="numeric" name="tlimite" class="pc-dst-input"
-                                       placeholder="Tempo limite (min) — vazio = sem limite" value="<?= $tlPadrao === null ? '' : (int) $tlPadrao ?>">
+                                       placeholder="Tempo limite (min) â€” vazio = sem limite" value="<?= $tlPadrao === null ? '' : (int) $tlPadrao ?>">
                                 <button type="submit" class="pc-btn-primary">Aplicar tempo</button>
                             </form>
                             <?php if ($bandaOk): ?><p class="pc-anuncio-msg ok"><?= h($bandaOk) ?></p><?php endif; ?>
@@ -574,7 +574,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                                 <input type="hidden" name="cliente_id" value="<?= (int) $id ?>">
                                 <input type="hidden" name="roteador" value="<?= h((string) $rotAtivo) ?>">
                                 <input type="number" min="0" inputmode="numeric" name="banda" class="pc-dst-input"
-                                       placeholder="Banda máx. (Mbps) — vazio = ilimitado" value="<?= $bandaPadrao === null ? '' : (int) $bandaPadrao ?>">
+                                       placeholder="Banda mÃ¡x. (Mbps) â€” vazio = ilimitado" value="<?= $bandaPadrao === null ? '' : (int) $bandaPadrao ?>">
                                 <button type="submit" class="pc-btn-primary">Aplicar banda</button>
                             </form>
                         </div>
@@ -583,19 +583,19 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                 <?php else: echo $avisoRoteador; endif; ?>
             </section>
 
-            <!-- ============ ABA: HTML MIKROTIK (admin sempre vê) ============ -->
+            <!-- ============ ABA: HTML MIKROTIK (admin sempre vÃª) ============ -->
             <section class="pc-tela" data-tela="html">
                 <?php if ($rotAtivo !== null): ?>
                 <div class="glow-card pc-dst-card">
                     <span class="glow-fx" aria-hidden="true"></span>
                     <div class="glow-body">
                         <div class="pc-dst">
-                            <h2 class="pc-anuncio-title">Página de login do hotspot (MikroTik)</h2>
+                            <h2 class="pc-anuncio-title">PÃ¡gina de login do hotspot (MikroTik)</h2>
                             <div class="pc-anuncio-target">Roteador <strong><?= h((string) $rotAtivo) ?></strong></div>
-                            <p class="pc-anuncio-desc">Envie um <strong>.zip</strong> do template (com <code>login.html</code>, <code>css/</code>, <code>img/</code>, <code>xml/</code>…): extraímos e o MikroTik substitui os de <code>flash/hostsv7</code> em até ~1 min (as subpastas são criadas sozinhas). Ou envie um arquivo avulso para trocar só ele. Até 2 MB por arquivo.</p>
+                            <p class="pc-anuncio-desc">Envie um <strong>.zip</strong> do template (com <code>login.html</code>, <code>css/</code>, <code>img/</code>, <code>xml/</code>â€¦): extraÃ­mos e o MikroTik substitui os de <code>flash/hostsv7</code> em atÃ© ~1 min (as subpastas sÃ£o criadas sozinhas). Ou envie um arquivo avulso para trocar sÃ³ ele. AtÃ© 2 MB por arquivo.</p>
                             <?php if ($portalFiles): ?>
                                 <p class="pc-dst-atual">No servidor (<?= count($portalFiles) ?>): <strong><?= h(implode(', ', $portalFiles)) ?></strong></p>
-                                <p class="pc-dst-atual"><a class="pc-btn" href="api/download_portal.php?cliente_id=<?= (int) $id ?>&amp;roteador=<?= urlencode((string) $rotAtivo) ?>">Baixar cópia atual (.zip)</a> — os mesmos arquivos aplicados em <code>flash/hostsv7</code>; nada é apagado.</p>
+                                <p class="pc-dst-atual"><a class="pc-btn" href="api/download_portal.php?cliente_id=<?= (int) $id ?>&amp;roteador=<?= urlencode((string) $rotAtivo) ?>">Baixar cÃ³pia atual (.zip)</a> â€” os mesmos arquivos aplicados em <code>flash/hostsv7</code>; nada Ã© apagado.</p>
                             <?php else: ?>
                                 <p class="pc-dst-atual">Nenhum arquivo enviado ainda.</p>
                             <?php endif; ?>
@@ -607,7 +607,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                                 <input type="hidden" name="roteador" value="<?= h((string) $rotAtivo) ?>">
                                 <label class="pc-file">
                                     <input type="file" name="arquivo" accept=".zip,.html,.htm,.css,.js,.svg,.png,.jpg,.jpeg,.gif,.ico,.json,.txt,.xml,.xsd" required>
-                                    <span class="pc-file-label">Escolher .zip ou arquivo…</span>
+                                    <span class="pc-file-label">Escolher .zip ou arquivoâ€¦</span>
                                 </label>
                                 <button type="submit" class="pc-btn-primary">Enviar ao MikroTik</button>
                             </form>
@@ -617,18 +617,18 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                 <?php else: echo $avisoRoteador; endif; ?>
             </section>
 
-            <!-- ============ ABA: ESTATÍSTICAS ============ -->
+            <!-- ============ ABA: ESTATÃSTICAS ============ -->
             <section class="pc-tela" data-tela="estatisticas">
                 <div class="glow-card pc-dst-card">
                     <span class="glow-fx" aria-hidden="true"></span>
                     <div class="glow-body">
                         <div class="pc-dst" id="estatisticas-box" data-endpoint="api/estatisticas.php?<?= $rotAtivo !== null ? 'roteador=' . urlencode($rotAtivo) : 'cliente_id=' . (int) $id ?>">
-                            <h2 class="pc-anuncio-title">Estatísticas</h2>
-                            <p class="pc-anuncio-desc">Pessoas conectadas no Wi-Fi (cada número conta uma vez por ponto do gráfico) e novos clientes ao longo do tempo. Passe o mouse sobre o gráfico para ver os valores de cada ponto.</p>
+                            <h2 class="pc-anuncio-title">EstatÃ­sticas</h2>
+                            <p class="pc-anuncio-desc">Pessoas conectadas no Wi-Fi (cada nÃºmero conta uma vez por ponto do grÃ¡fico) e novos clientes ao longo do tempo. Passe o mouse sobre o grÃ¡fico para ver os valores de cada ponto.</p>
                             <div class="est-filtros">
                                 <button type="button" class="est-filtro atual" data-filtro="hoje">Hoje</button>
                                 <button type="button" class="est-filtro" data-filtro="semana">Semana</button>
-                                <button type="button" class="est-filtro" data-filtro="mes">Mês</button>
+                                <button type="button" class="est-filtro" data-filtro="mes">MÃªs</button>
                                 <button type="button" class="est-filtro" data-filtro="ano">Ano</button>
                             </div>
                             <div class="est-wrap" id="est-wrap"></div>
@@ -639,14 +639,14 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                 </div>
             </section>
 
-            <!-- ============ ABA: LOG DE ACESSOS (só admin) ============ -->
+            <!-- ============ ABA: LOG DE ACESSOS (sÃ³ admin) ============ -->
             <section class="pc-tela" data-tela="log">
                 <div class="glow-card pc-dst-card">
                     <span class="glow-fx" aria-hidden="true"></span>
                     <div class="glow-body">
                         <div class="pc-dst" id="acessolog-box" data-endpoint="api/acessos_log.php?<?= $rotAtivo !== null ? 'roteador=' . urlencode($rotAtivo) : '' ?>" data-resolver="api/resolver.php">
                             <h2 class="pc-anuncio-title">Log de acessos</h2>
-                            <p class="pc-anuncio-desc">Destinos (IP) acessados por cada aparelho, do mais recente para o mais antigo. Uso interno / forense — o comprador não vê isto. Domínio por reverse-DNS quando disponível.</p>
+                            <p class="pc-anuncio-desc">Destinos (IP) acessados por cada aparelho, do mais recente para o mais antigo. Uso interno / forense â€” o comprador nÃ£o vÃª isto. DomÃ­nio por reverse-DNS quando disponÃ­vel.</p>
                             <div class="pc-acesso-list" id="acessolog-lista"></div>
                             <div id="acessolog-nav"></div>
                         </div>
@@ -656,7 +656,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
         </div>
     </div>
 
-    <!-- Pop-up: acessos de um número (botão "!") — só admin -->
+    <!-- Pop-up: acessos de um nÃºmero (botÃ£o "!") â€” sÃ³ admin -->
     <div class="pc-modal" id="acessos-modal" aria-hidden="true">
         <div class="pc-modal-backdrop" data-close></div>
         <div class="pc-modal-card glow-card">
@@ -672,7 +672,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
         </div>
     </div>
 
-    <!-- Pop-up: editar lead (nome de identificação + número) -->
+    <!-- Pop-up: editar lead (nome de identificaÃ§Ã£o + nÃºmero) -->
     <div class="pc-modal" id="editar-modal" aria-hidden="true">
         <div class="pc-modal-backdrop" data-close></div>
         <div class="pc-modal-card glow-card">
@@ -683,10 +683,10 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                     <button type="button" class="pc-modal-x" data-close aria-label="Fechar">&times;</button>
                 </div>
                 <div class="pc-modal-body pc-editar-body">
-                    <label class="pc-ed-label">Nome (identificação — opcional)
-                        <input type="text" id="ed-nome" class="pc-dst-input" maxlength="60" placeholder="ex.: João da padaria">
+                    <label class="pc-ed-label">Nome (identificaÃ§Ã£o â€” opcional)
+                        <input type="text" id="ed-nome" class="pc-dst-input" maxlength="60" placeholder="ex.: JoÃ£o da padaria">
                     </label>
-                    <label class="pc-ed-label">Número
+                    <label class="pc-ed-label">NÃºmero
                         <input type="tel" id="ed-tel" class="pc-dst-input" inputmode="numeric" placeholder="48999999999">
                     </label>
                     <div class="pc-ed-row">
@@ -704,14 +704,14 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
         </div>
     </div>
 
-    <!-- Pop-up: histórico de conexões de um número -->
+    <!-- Pop-up: histÃ³rico de conexÃµes de um nÃºmero -->
     <div class="pc-modal" id="conexoes-modal" aria-hidden="true">
         <div class="pc-modal-backdrop" data-close></div>
         <div class="pc-modal-card glow-card">
             <span class="glow-fx" aria-hidden="true"></span>
             <div class="glow-body">
                 <div class="pc-modal-head">
-                    <h3 class="pc-modal-title">Conexões de <span id="conexoes-tel"></span></h3>
+                    <h3 class="pc-modal-title">ConexÃµes de <span id="conexoes-tel"></span></h3>
                     <button type="button" class="pc-modal-x" data-close aria-label="Fechar">&times;</button>
                 </div>
                 <div class="pc-modal-body" id="conexoes-lista"></div>
@@ -722,7 +722,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
 
     <script src="assets/abas.js?v=4"></script>
     <script src="assets/cores.js?v=7"></script>
-    <script src="assets/relatorio.js?v=12"></script>
+    <script src="assets/relatorio.js?v=13"></script>
     <script src="assets/dashboard.js?v=10"></script>
     <script src="assets/dashgeral.js?v=14"></script>
     <script src="assets/acessolog.js?v=3"></script>
