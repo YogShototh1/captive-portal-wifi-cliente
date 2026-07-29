@@ -221,15 +221,13 @@ body.login-screen * { font-family: inherit; }
 
 /* --- Cabecalho --- */
 .login-screen .lp-header { text-align: center; margin-bottom: 26px; }
+/* A logo ja traz o proprio fundo, entao o quadro nao tem borda nem
+   preenchimento — so recorta a arte no cantinho arredondado. */
 .login-screen .lp-logo {
     width: 46px; height: 46px; margin: 0 auto 16px;
-    display: flex; align-items: center; justify-content: center;
-    border-radius: 14px;
-    border: 1px solid rgba(255,255,255,0.12);
-    background: rgba(255,255,255,0.07);
-    color: #fff;
+    border-radius: 14px; overflow: hidden;
 }
-.login-screen .lp-logo svg { width: 22px; height: 22px; }
+.login-screen .lp-logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .login-screen .lp-title {
     font-size: 26px; font-weight: 600; color: #fff;
     letter-spacing: -0.028em; line-height: 1.1;
@@ -660,7 +658,6 @@ a.pc-pag-btn:hover { background: rgba(34,211,238, 0.2); border-color: #22d3ee; c
     .login-screen .af-wide .lp-card-inner { padding: 16px 22px; }
     .login-screen .af-wide .lp-header { margin-bottom: 10px; }
     .login-screen .af-wide .lp-logo { width: 34px; height: 34px; margin-bottom: 6px; }
-    .login-screen .af-wide .lp-logo svg { width: 16px; height: 16px; }
     .login-screen .af-wide .lp-title { font-size: 17px; }
     .login-screen .af-wide .lp-subtitle { display: none; }
     .login-screen .af-wide .af-form { gap: 8px; }
@@ -1297,9 +1294,6 @@ html[data-tema="claro"] .login-screen .lp-card-inner {
     background: #fff;
     border-color: #d0d1d2;
     box-shadow: 0 26px 62px -34px rgba(23,26,32,0.42);
-}
-html[data-tema="claro"] .login-screen .lp-logo {
-    background: #f4f4f4; border-color: #d0d1d2; color: #171a20;
 }
 html[data-tema="claro"] .login-screen .lp-title { color: #171a20; }
 html[data-tema="claro"] .login-screen .lp-subtitle { color: #5c5e62; }

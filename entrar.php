@@ -39,8 +39,9 @@ $csrf = csrf_token();
     <title>Painel — Acesso</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="icon" href="assets/logo.png?v=4" type="image/png">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-    <link rel="stylesheet" href="assets/style.css?v=98">
+    <link rel="stylesheet" href="assets/style.css?v=99">
 </head>
 <body class="login-screen">
     <!-- Camadas de fundo (decorativas) -->
@@ -55,7 +56,7 @@ $csrf = csrf_token();
             <div class="lp-card-inner">
                 <div class="lp-header">
                     <div class="lp-logo" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.859a10 10 0 0 1 14 0"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/></svg>
+                        <img src="assets/logo.png?v=4" alt="">
                     </div>
                     <h1 class="lp-title">Painel de Leads</h1>
                     <p class="lp-subtitle">Entre para acessar seus leads</p>

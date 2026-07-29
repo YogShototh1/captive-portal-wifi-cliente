@@ -10,7 +10,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
     <meta name="robots" content="noindex, nofollow">
-    <link rel="icon" href="assets/logo.png?v=3" type="image/png">
+    <link rel="icon" href="assets/logo.png?v=4" type="image/png">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <title>Captive Data</title>
     <style>
