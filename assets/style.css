@@ -2099,29 +2099,45 @@ html[data-tema="claro"] .adm-tesla .adm-st.meio { color: #b45309; }
 }
 .painel-cliente .pc-cor-avancado:hover { text-decoration-color: var(--t-fg); }
 
-/* Modal mais largo p/ esboco + lista lado a lado. */
-#cores-modal .pc-modal-card.cm-card-wrap { max-width: 880px; }
+/* Modal: altura travada. Sem isso a coluna da direita cresce com o conteudo,
+   o rodape sai da moldura e o scroll vira do modal inteiro. */
+#cores-modal .pc-modal-card.cm-card-wrap { max-width: 920px; width: 100%; }
+#cores-modal .pc-modal-card .glow-body { max-height: none; }
 #cores-modal .cm-form {
-    display: grid; grid-template-columns: 1fr minmax(280px, 340px);
+    display: grid; grid-template-columns: 1fr minmax(300px, 350px);
     gap: 0; padding: 0; align-items: stretch;
+    height: min(78vh, 760px); min-height: 0; overflow: hidden;
 }
-#cores-modal .cm-list { padding: 18px 22px; display: flex; flex-direction: column; gap: 10px; border-left: 1px solid var(--t-line); }
 #cores-modal .cm-row { margin: 0; transition: background .15s; border-radius: var(--t-r); }
 #cores-modal .cm-row.realce, #cores-modal .cm-row.alvo { background: var(--t-hover); }
 #cores-modal .cm-row.alvo { outline: 1px solid var(--t-fg); outline-offset: -1px; }
-#cores-modal .cm-salvar { margin-top: 6px; align-self: flex-start; }
-@media (max-width: 720px) {
-    #cores-modal .cm-form { grid-template-columns: 1fr; }
-    #cores-modal .cm-list { border-left: 0; border-top: 1px solid var(--t-line); }
+
+/* --- Previa: a pagina real do hotspot, em 9:16 (tela de celular) --- */
+#cores-modal .cm-previa {
+    grid-column: 1; min-height: 0; overflow: hidden; padding: 16px;
+    display: grid; place-items: center;
+    background: var(--t-surface-2);
+}
+/* Fallback: sem container queries vale a altura cheia (a coluna e larga o
+   bastante p/ o 9:16 caber nas alturas que o modal assume). */
+#cores-modal .cm-previa iframe {
+    aspect-ratio: 9 / 16; height: 100%; width: auto; max-width: 100%;
+    border: 0; display: block; border-radius: 16px;
+    box-shadow: 0 14px 40px -18px rgba(0,0,0,.45);
+}
+@supports (height: 1cqh) {
+    #cores-modal .cm-previa { container-type: size; }
+    /* Encolhe pela altura OU pela largura, o que apertar primeiro — mantendo
+       o 9:16 exato em vez de distorcer. */
+    #cores-modal .cm-previa iframe { height: min(100cqh, calc(100cqw * 16 / 9)); }
 }
 
-/* --- Previa: a pagina real do hotspot num iframe --- */
-#cores-modal .cm-previa { grid-column: 1; background: var(--t-surface-2); min-height: 460px; position: relative; }
-#cores-modal .cm-previa iframe { width: 100%; height: 100%; min-height: 460px; border: 0; display: block; }
-
-/* Abas Cores / Efeitos */
-#cores-modal .cm-lado { display: flex; flex-direction: column; min-height: 0; }
-#cores-modal .cm-abas { display: flex; gap: 2px; padding: 12px 18px 0; }
+/* --- Coluna da direita: abas fixas, lista rolando, rodape fixo --- */
+#cores-modal .cm-lado {
+    display: grid; grid-template-rows: auto minmax(0, 1fr) auto;
+    min-height: 0; border-left: 1px solid var(--t-line);
+}
+#cores-modal .cm-abas { display: flex; gap: 2px; padding: 14px 18px 6px; }
 #cores-modal .cm-aba {
     flex: 1; padding: 9px 10px; border: 0; background: none; cursor: pointer;
     border-radius: var(--t-r); color: var(--t-fg3);
@@ -2129,9 +2145,27 @@ html[data-tema="claro"] .adm-tesla .adm-st.meio { color: #b45309; }
 }
 #cores-modal .cm-aba:hover { background: var(--t-hover); color: var(--t-fg); }
 #cores-modal .cm-aba.atual { background: var(--t-sel); color: var(--t-fg); }
-#cores-modal .cm-painel { display: none; padding: 14px 18px 4px; overflow-y: auto; flex: 1; gap: 10px; }
+/* A area que rola. O padding de baixo garante que a ultima opcao suba inteira
+   acima do rodape, sem ficar escondida atras dele. */
+#cores-modal .cm-painel {
+    display: none; min-height: 0; overflow-y: auto;
+    padding: 8px 18px 18px; gap: 10px;
+    overscroll-behavior: contain;
+}
 #cores-modal .cm-painel.atual { display: flex; flex-direction: column; }
-#cores-modal .cm-salvar { margin: 10px 18px 16px; align-self: flex-start; }
+/* Rodape fixo: fora da area de scroll, sempre visivel. */
+#cores-modal .cm-salvar {
+    margin: 0; width: calc(100% - 36px); justify-self: center;
+    margin-block: 12px 16px;
+}
+#cores-modal .cm-lado::after {
+    content: ""; grid-row: 3; grid-column: 1;
+    border-top: 1px solid var(--t-line); align-self: start; width: 100%;
+}
+@media (max-width: 760px) {
+    #cores-modal .cm-form { grid-template-columns: 1fr; grid-template-rows: minmax(200px, 42%) minmax(0, 1fr); height: min(88vh, 780px); }
+    #cores-modal .cm-lado { border-left: 0; border-top: 1px solid var(--t-line); }
+}
 
 /* Linha de flag (checkbox + nome + explicacao) */
 #cores-modal .cm-flag {

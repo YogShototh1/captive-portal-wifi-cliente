@@ -7,8 +7,11 @@
 <!-- MESMO css do hotspot: o que aparece aqui e o que o cliente ve no Wi-Fi. -->
 <link rel="stylesheet" href="portal.css">
 <style>
-  /* Só o necessário p/ caber na moldura do modal (não vai pro roteador). */
-  body{padding:26px 16px;min-height:100%;zoom:.82}
+  /* Só o necessário p/ caber na moldura do modal (não vai pro roteador).
+     A moldura é 9:16 (tela de celular), então o layout já é o do mobile —
+     sem zoom, é a proporção real que o cliente vê. */
+  html,body{height:100%}
+  body{padding:18px 14px;min-height:100%}
   .cd-zona{cursor:pointer;position:relative}
   .cd-zona.cd-hi{outline:2px dashed #2563eb;outline-offset:3px;border-radius:8px}
   .cd-dica{

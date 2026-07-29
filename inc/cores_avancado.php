@@ -49,7 +49,7 @@ $cid = isset($coresClienteId) ? (int) $coresClienteId : null;
 
                 <!-- PREVIA: a pagina real do hotspot, isolada num iframe -->
                 <div class="cm-previa">
-                    <iframe id="cm-frame" src="assets/portal_preview.html?v=1" title="Prévia da tela de login" loading="lazy"></iframe>
+                    <iframe id="cm-frame" src="assets/portal_preview.html?v=2" title="Prévia da tela de login" loading="lazy"></iframe>
                 </div>
 
                 <div class="cm-lado">
