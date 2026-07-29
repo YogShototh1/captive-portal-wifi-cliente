@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // Admin vÃª os leads de um cliente especÃ­fico.
 require_once __DIR__ . '/inc/auth.php';
 require_once __DIR__ . '/inc/util.php';
