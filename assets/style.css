@@ -1097,6 +1097,15 @@ html[data-tema="claro"] .leg-pct small { color: var(--g-fg3); }
 /* Anúncio: o dropdown de formato da logo precisa escapar do card (senão corta). */
 .pc-tela[data-tela="anuncio"] .glow-body { overflow: visible; }
 .rel-controles { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; position: relative; }
+/* Seletor de modelo: nenhum nome pode sair cortado. O menu acompanha o maior
+   item (max-content) em vez de uma largura fixa, so parando na borda da tela;
+   se a tela for estreita demais para o nome, ele quebra em duas linhas em vez
+   de ser truncado. O botao nao encolhe junto com os campos de data. */
+#rel-sel { flex: 0 0 auto; max-width: 100%; }
+#rel-sel > summary { max-width: 100%; }
+#rel-sel-label { white-space: normal; }
+#rel-sel .rt-menu { width: max-content; min-width: 250px; max-width: calc(100vw - 32px); }
+#rel-sel .rt-item { white-space: normal; }
 .rel-controles .pc-dst-input.rel-data { flex: 0 1 auto; min-width: 130px; width: 150px; cursor: pointer; }
 /* Calendário próprio (pt-BR) dos campos de data */
 .cal-pop {
