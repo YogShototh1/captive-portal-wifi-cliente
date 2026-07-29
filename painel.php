@@ -60,6 +60,7 @@ $logoForma = $rotAtivo !== null ? logo_forma($rotAtivo) : 'quadrado';
 $coresOk   = isset($_GET['cores_ok'])   ? (string) $_GET['cores_ok']   : '';
 $coresErro = isset($_GET['cores_erro']) ? (string) $_GET['cores_erro'] : '';
 $cores     = $rotAtivo !== null ? cores_get($rotAtivo) : cores_padrao();
+$estilo    = $rotAtivo !== null ? estilo_get($rotAtivo) : estilo_padrao();
 
 // Site de destino pós-anúncio.
 $dstOk    = isset($_GET['dst_ok'])   ? (string) $_GET['dst_ok']   : '';
@@ -100,7 +101,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <meta name="format-detection" content="telephone=no">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Leads</title>
-    <link rel="stylesheet" href="assets/style.css?v=93">
+    <link rel="stylesheet" href="assets/style.css?v=94">
 </head>
 <body class="painel-cliente">
     <div class="pc-bg-gradient"></div>
@@ -676,7 +677,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     </div>
 
     <script src="assets/abas.js?v=4"></script>
-    <script src="assets/cores.js?v=1"></script>
+    <script src="assets/cores.js?v=2"></script>
     <script src="assets/relatorio.js?v=12"></script>
     <script src="assets/dashboard.js?v=10"></script>
     <script src="assets/dashgeral.js?v=14"></script>

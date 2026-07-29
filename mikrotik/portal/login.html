@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="pragma" content="no-cache" />
+    <meta http-equiv="expires" content="-1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Acesso Wi‑Fi</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700&family=Rubik:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    $(if chap-id)
+    <form name="sendin" action="$(link-login-only)" method="post" style="display:none">
+        <input type="hidden" name="username" />
+        <input type="hidden" name="password" />
+        <!-- Destino pós-login: redireciona para o Google após a autenticação do Hotspot -->
+        <input type="hidden" name="dst" value="https://www.google.com" />
+        <input type="hidden" name="popup" value="true" />
+    </form>
+
+    <script src="/md5.js"></script>
+    <!-- Lista LOCAL (flash) dos aparelhos já cadastrados, baixada pelo leadsync.
+         Sem o arquivo (404) nada muda: fluxo padrão pede o número. -->
+    <script src="macs.js"></script>
+    <!-- Decide JÁ (síncrono, antes do 1º paint): aparelho conhecido nunca vê a
+         tela de número. Uma capa monocromática cobre enquanto decide/carrega. -->
+    <script>
+        (function () {
+            var d = document.documentElement, L = window.PORTAL_MACS, k = false;
+            try {
+                if (L && L.length && typeof hexMD5 === 'function') {
+                    var h = hexMD5("$(mac)".toUpperCase()).slice(0, 12);
+                    k = L.indexOf(h) >= 0;
+                }
+            } catch (e) {}
+            d.className += k ? ' cd-known' : ' cd-unknown';
+        })();
+    </script>
+    <style>
+        #cd-cover { position: fixed; inset: 0; background: #e6ecf5; z-index: 99999; }
+        html.cd-unknown #cd-cover { display: none; }
+        html.cd-known .main { visibility: hidden; }
+    </style>
+    <div id="cd-cover"></div>
+    <script>
+        function doLogin() {
+            document.sendin.username.value = "";
+            document.sendin.password.value = "";
+            document.sendin.submit();
+            return false;
+        }
+    </script>
+    $(endif)
+    
+    <div class="ie-fixMinHeight">
+        <div class="main">
+            <div class="wrap animated fadeIn">
+
+                <!-- Logo do estabelecimento: enviada pelo painel (aba Anúncio) e servida
+                     pela VPS por roteador. Sem logo -> onerror mostra o ícone Wi-Fi. -->
+                <div class="brand-mark">
+                    <img class="brand-logo" src="https://captivedata.com.br/logo.php?r=$(identity)" alt="Logo"
+                         onerror="this.remove();var f=document.getElementById('brand-fallback');if(f)f.style.display='flex';">
+                    <span class="brand-fallback" id="brand-fallback" style="display:none" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.86a10 10 0 0 1 14 0"/><path d="M8.5 16.43a5 5 0 0 1 7 0"/></svg>
+                    </span>
+                </div>
+
+                <h1 class="title-primix">Bem-vindo</h1>
+                <p class="subtitle">Conecte-se ao Wi‑Fi grátis</p>
+
+                <form name="login" id="loginForm" action="$(link-login-only)" method="post"
+                $(if chap-id) onSubmit="return handleLoginSubmit(event)" $(endif)>
+                    <!-- Destino pós-login: redireciona para o Google após a autenticação do Hotspot -->
+                    <input type="hidden" name="dst" value="https://www.google.com" />
+                    <input type="hidden" name="popup" value="true" />
+
+                    <!-- MikroTik error message handling -->
+                    <p class="info$(if error) alert$(endif)" id="error-message">
+                        $(if error == "")Por favor, informe seu celular para acessar.$(endif)$(if error)$(error)$(endif)
+                    </p>
+
+                    <div class="input-group">
+                        <input name="celular" id="celular" type="tel" placeholder="Número de Celular" required />
+                    </div>
+
+                    <!-- MikroTik trial button handling -->
+                    $(if trial == 'yes')
+                        <a id="wifi-link" href="$(link-login-only)?dst=https%3A%2F%2Fwww.google.com&amp;username=T-$(mac-esc)" class="btn-glass disabled">Liberar WiFi</a>
+                    $(endif)
+                    $(if trial != 'yes')
+                        <button id="wifi-btn" type="submit" class="btn-glass" disabled>Liberar WiFi</button>
+                    $(endif)
+                </form>
+                
+                <p class="footer-text">Ao prosseguir, você aceita os <button type="button" class="btn-link" onclick="openModal('terms')">Termos de Uso</button> e a <button type="button" class="btn-link" onclick="openModal('privacy')">Política de Privacidade</button>, e consente que seu número seja registrado como contato do estabelecimento e usado para contato comercial, inclusive por WhatsApp.</p>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Página intermediária de anúncio (exibida após o clique em "Liberar WiFi" e antes da autenticação do MikroTik) -->
+    <div class="ad-page" id="ad-page" aria-hidden="true">
+        <!-- Banner/imagem ocupando a tela inteira. Aceita anuncio.jpg, anuncio.jpeg ou anuncio.png
+             (o arquivo deve ficar na mesma pasta do login.html no roteador). -->
+        <div class="ad-banner" id="ad-banner">
+            <img id="ad-banner-img" class="ad-banner-img" alt="Anúncio" style="display:none">
+            <span class="ad-banner-placeholder" id="ad-banner-placeholder">Seu anúncio aqui</span>
+        </div>
+        <!-- Contador regressivo (pequeno, centralizado na parte inferior da tela) -->
+        <div class="ad-countdown" id="ad-countdown" role="status" aria-live="polite">
+            Liberando Wi-Fi em <span id="ad-count">10</span>s
+        </div>
+    </div>
+
+    <!-- Tela de limite diário atingido (mesmo tema da tela do número) -->
+    <div class="limit-page" id="limit-page" aria-hidden="true">
+        <div class="main">
+            <div class="wrap">
+                <div class="brand-mark" aria-hidden="true">
+                    <span class="brand-fallback">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.86a10 10 0 0 1 14 0"/><path d="M8.5 16.43a5 5 0 0 1 7 0"/></svg>
+                    </span>
+                </div>
+                <h1 class="title-primix">Limite de uso diário atingido</h1>
+                <p class="subtitle">Você já usou todo o tempo de Wi-Fi de hoje. Volte amanhã!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Termos de Uso -->
+    <div class="modal-overlay" id="terms-modal" aria-hidden="true" role="dialog">
+        <div class="modal-card">
+            <header class="modal-header">
+                <h2>Termos de Uso</h2>
+                <button type="button" class="modal-close-btn" onclick="closeModal('terms')" aria-label="Fechar modal">&times;</button>
+            </header>
+            <div class="modal-body">
+                <h3>1. O serviço</h3>
+                <p>Este estabelecimento oferece acesso gratuito à internet via Wi-Fi. Em contrapartida, o acesso é liberado mediante o fornecimento do seu número de celular e a exibição de um anúncio antes da conexão.</p>
+
+                <h3>2. Aceite e consentimento</h3>
+                <p>Ao informar seu número e tocar em "Liberar WiFi", você declara que leu e aceitou estes Termos de Uso e a Política de Privacidade, e <strong>consente</strong> com a coleta e o uso do seu número de celular para as finalidades descritas na Política — incluindo o recebimento de contatos comerciais do estabelecimento, inclusive por WhatsApp.</p>
+
+                <h3>3. Veracidade dos dados</h3>
+                <p>Você se compromete a informar um número de celular verdadeiro e de sua titularidade. Números inválidos ou de terceiros podem ter o acesso recusado ou encerrado.</p>
+
+                <h3>4. Uso responsável da rede</h3>
+                <p>O usuário se compromete a utilizar a rede de forma ética e responsável, respeitando as leis vigentes e os direitos de terceiros. É proibido usar a rede para atividades ilegais, difamatórias, invasivas, distribuição de malware ou violação de direitos autorais.</p>
+
+                <h3>5. Limites de uso e suspensão</h3>
+                <p>O estabelecimento pode aplicar limites de tempo de uso diário e de velocidade por aparelho, e pode suspender ou bloquear o acesso de qualquer dispositivo que faça uso indevido da rede ou viole estes termos.</p>
+
+                <h3>6. Disponibilidade</h3>
+                <p>O serviço é fornecido no estado em que se encontra, sem garantia de velocidade mínima, estabilidade ou disponibilidade ininterrupta da conexão.</p>
+            </div>
+            <footer class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('terms')">Fechar</button>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Modal para Política de Privacidade -->
+    <div class="modal-overlay" id="privacy-modal" aria-hidden="true" role="dialog">
+        <div class="modal-card">
+            <header class="modal-header">
+                <h2>Política de Privacidade</h2>
+                <button type="button" class="modal-close-btn" onclick="closeModal('privacy')" aria-label="Fechar modal">&times;</button>
+            </header>
+            <div class="modal-body">
+                <h3>1. Quais dados coletamos</h3>
+                <p>Ao usar este Wi-Fi, coletamos: o <strong>número de celular</strong> que você informa, o endereço MAC e o tipo/sistema do seu aparelho, o endereço IP atribuído e as datas, horários e duração das suas conexões.</p>
+
+                <h3>2. Para que usamos (finalidades)</h3>
+                <p>(a) liberar e administrar o seu acesso ao Wi-Fi, inclusive aplicar limites de uso; (b) registrar sua visita como <strong>contato comercial (lead) do estabelecimento</strong>; (c) permitir que o estabelecimento entre em contato com você para fins comerciais e promocionais, <strong>inclusive por WhatsApp</strong>, telefone ou SMS; (d) segurança da rede e cumprimento de obrigações legais.</p>
+
+                <h3>3. Base legal e consentimento (LGPD)</h3>
+                <p>O tratamento é feito com fundamento no seu <strong>consentimento</strong> (art. 7º, I, da Lei nº 13.709/2018 — LGPD), manifestado ao informar seu número e tocar em "Liberar WiFi". Registros de conexão também podem ser mantidos para cumprimento de obrigação legal.</p>
+
+                <h3>4. Quem trata os dados</h3>
+                <p>O <strong>controlador</strong> dos dados é o estabelecimento que oferece este Wi-Fi. A plataforma Captive Data atua como <strong>operadora</strong>, armazenando os dados de forma segura por conta e ordem do estabelecimento. Seus dados não são vendidos nem compartilhados com terceiros estranhos a esta operação, salvo obrigação legal ou ordem de autoridade competente.</p>
+
+                <h3>5. Por quanto tempo guardamos</h3>
+                <p>Os dados de contato e de conexão são mantidos por até <strong>6 (seis) meses</strong> a contar da sua última conexão e depois são excluídos, salvo prazo maior exigido por lei.</p>
+
+                <h3>6. Seus direitos</h3>
+                <p>Nos termos do art. 18 da LGPD, você pode, a qualquer momento: confirmar a existência de tratamento, acessar e corrigir seus dados, solicitar a exclusão, e <strong>revogar o consentimento</strong> — inclusive pedir para não receber mais contatos (opt-out). Para exercer esses direitos, fale diretamente com o estabelecimento onde você usou o Wi-Fi.</p>
+
+                <h3>7. Segurança</h3>
+                <p>Adotamos medidas técnicas e administrativas para proteger seus dados contra acessos não autorizados, perda ou alteração, em conformidade com a LGPD e demais legislações brasileiras aplicáveis.</p>
+            </div>
+            <footer class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('privacy')">Fechar</button>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        // DDDs que existem no Brasil (Anatel). Espelho da validação do servidor
+        // (inc/validacao.php) — o servidor é quem manda; aqui é só UX imediata.
+        var DDDS_VALIDOS = [11,12,13,14,15,16,17,18,19,21,22,24,27,28,31,32,33,34,35,37,38,41,42,43,44,45,46,47,48,49,51,53,54,55,61,62,63,64,65,66,67,68,69,71,73,74,75,77,79,81,82,83,84,85,86,87,88,89,91,92,93,94,95,96,97,98,99];
+
+        function validatePhone(phone) {
+            // 1. Exatamente 11 dígitos numéricos
+            var d = phone.replace(/\D/g, "");
+            if (d.length !== 11) return false;
+
+            // 2. DDD tem que existir
+            if (DDDS_VALIDOS.indexOf(parseInt(d.slice(0, 2), 10)) === -1) return false;
+
+            var sub = d.slice(2); // 9 dígitos do assinante
+
+            // 3. Celular sempre começa com 9 (nono dígito)
+            if (sub.charAt(0) !== '9') return false;
+
+            // 4. Assinante inteiro com o mesmo dígito (ex.: 48 99999-9999)
+            if (/^(\d)\1+$/.test(sub)) return false;
+
+            // 5. Menos de 3 dígitos distintos no assinante = chute (ex.: 48 98989-8989)
+            var uniq = {};
+            for (var i = 0; i < sub.length; i++) uniq[sub.charAt(i)] = 1;
+            if (Object.keys(uniq).length < 3) return false;
+
+            // 6. Sequência perfeita nos 8 dígitos finais (12345678 / 87654321)
+            var t = d.slice(-8), asc = true, desc = true;
+            for (var j = 1; j < t.length; j++) {
+                var df = t.charCodeAt(j) - t.charCodeAt(j - 1);
+                if (df !== 1) asc = false;
+                if (df !== -1) desc = false;
+            }
+            if (asc || desc) return false;
+
+            return true;
+        }
+
+        function updateButtonState() {
+            const phoneInput = document.getElementById('celular');
+            const btnSubmit = document.getElementById('wifi-btn');
+            const btnLink = document.getElementById('wifi-link');
+            const phone = phoneInput.value.trim();
+            const isValid = validatePhone(phone);
+
+            if (btnSubmit) {
+                btnSubmit.disabled = !isValid;
+            }
+            if (btnLink) {
+                if (isValid) {
+                    btnLink.classList.remove('disabled');
+                    btnLink.setAttribute('aria-disabled', 'false');
+                } else {
+                    btnLink.classList.add('disabled');
+                    btnLink.setAttribute('aria-disabled', 'true');
+                }
+            }
+        }
+
+        // Autentica no MikroTik via TRIAL (username=T-<mac>) — o ÚNICO método
+        // deste portal que envia credencial de verdade. Os formulários da página
+        // não têm campos username/password preenchidos: submetê-los fazia o
+        // MikroTik devolver a própria tela de login e o cliente ficava em loop
+        // (número -> anúncio -> número). Agora TODOS os gatilhos (botão, Enter
+        // do teclado e link) passam por aqui.
+        // Requisito no roteador: "trial" no login-by do perfil do hotspot.
+        function runAuthentication() {
+            window.location.href = "$(link-login-only)?dst=" +
+                encodeURIComponent(portalDst()) + "&username=T-$(mac-esc)";
+        }
+
+        // === Integração com a API central (hospedagem) ===
+        // Domínio que recebe os leads. Precisa estar liberado no Walled Garden do MikroTik:
+        //   /ip hotspot walled-garden  ->  add dst-host=captivedata.com.br action=allow
+        var API_LEAD_URL = "https://captivedata.com.br/api/lead";
+
+        // === Destino pós-anúncio configurável pelo painel (por roteador) ===
+        // Carrega window.PORTAL_DST via <script> (não fetch: o navegador do captive
+        // portal — inclusive iPhone/CNA — bloqueia fetch/XHR, mas permite carregar
+        // recursos do domínio liberado). Há 10s de anúncio antes da autenticação,
+        // tempo de sobra para o script chegar. Se falhar, cai no padrão (Google).
+        var PORTAL_DST_PADRAO = "https://www.google.com";
+        // Aplica o formato da logo (window.LOGO_FORMA vem do dst.php): quadrado
+        // (padrão), arredondado ou redondo. Só troca o border-radius — instantâneo.
+        function aplicarLogoForma() {
+            var img = document.querySelector('.brand-logo');
+            if (img) {
+                var f = window.LOGO_FORMA;
+                img.classList.remove('forma-arredondado', 'forma-redondo');
+                if (f === 'arredondado' || f === 'redondo') img.classList.add('forma-' + f);
+            }
+            // Cores personalizadas (window.CORES do dst.php) nas CSS vars.
+            var C = window.CORES;
+            if (C && typeof C === 'object') {
+                var r = document.documentElement.style;
+                var HEX = /^#[0-9a-fA-F]{6}$/;
+                function cor(v, val) { if (HEX.test(val || '')) r.setProperty(v, val); }
+                cor('--bg', C.bg);
+                cor('--surface', C.surface);
+                cor('--primary', C.primary); cor('--primary-600', C.primary);
+                cor('--secondary', C.primary); cor('--ring', C.primary);
+                cor('--accent', C.accent);   cor('--accent-600', C.accent);
+                cor('--fg', C.fg);
+                cor('--fg-2', C.fg2);        cor('--fg-3', C.fg2);
+                cor('--muted', C.field);
+                cor('--border', C.border);
+                cor('--btn-fg', C.btnfg);
+            }
+            // Efeitos ligados/desligados no painel (window.ESTILO do dst.php):
+            // cada flag em 0 vira a classe cd-no-<nome> no <html>, e o
+            // css/style.css desliga aquele efeito.
+            var E = window.ESTILO;
+            if (E && typeof E === 'object') {
+                var cl = document.documentElement.classList;
+                ['vidro', 'brilho', 'manchas', 'grade', 'sombra', 'anim', 'grad'].forEach(function (k) {
+                    if (E[k] === 0 || E[k] === '0' || E[k] === false) cl.add('cd-no-' + k);
+                    else cl.remove('cd-no-' + k);
+                });
+            }
+        }
+        (function () {
+            try {
+                var s = document.createElement('script');
+                s.src = "https://captivedata.com.br/dst.php?r=" + encodeURIComponent("$(identity)") + "&t=" + Date.now();
+                s.async = true;
+                s.onload = aplicarLogoForma;
+                (document.head || document.documentElement).appendChild(s);
+            } catch (e) { /* mantém o padrão */ }
+        })();
+
+        // === Limite diário de uso (definido no painel) ===
+        // Mostra a tela de "limite atingido" por cima de tudo.
+        function showLimitScreen() {
+            var p = document.getElementById('limit-page');
+            if (p) { p.classList.add('active'); p.setAttribute('aria-hidden', 'false'); }
+            document.body.style.overflow = 'hidden';
+        }
+        // Pergunta ao servidor se este aparelho já gastou o tempo de hoje. Mesmo
+        // esquema do dst.php (tag <script>, funciona no iPhone/CNA). Se o script
+        // não carregar, não bloqueia — nunca travar o portal por falha da API.
+        (function () {
+            try {
+                var s = document.createElement('script');
+                s.src = "https://captivedata.com.br/limite.php?r=" + encodeURIComponent("$(identity)") + "&mac=" + encodeURIComponent("$(mac)") + "&t=" + Date.now();
+                s.async = true;
+                s.onload = function () { if (window.PORTAL_BLOQUEADO) showLimitScreen(); };
+                (document.head || document.documentElement).appendChild(s);
+            } catch (e) { /* mantém liberado */ }
+        })();
+
+        // Retorna o destino configurado (ou o padrão).
+        function portalDst() {
+            return (typeof window.PORTAL_DST === 'string' && window.PORTAL_DST) ? window.PORTAL_DST : PORTAL_DST_PADRAO;
+        }
+
+
+        // Envia o lead (telefone + $(mac)/$(ip)/$(identity)) para a API ANTES de liberar
+        // o WiFi. Roda durante o anúncio; keepalive garante o envio mesmo quando a
+        // autenticação navega a página. Se a API falhar, o WiFi é liberado mesmo assim.
+        var leadSent = false;
+        function sendLead() {
+            if (leadSent) return;
+            leadSent = true;
+            const phoneInput = document.getElementById('celular');
+            const telefone = phoneInput ? phoneInput.value.trim() : "";
+            // Envio via <img> (GET): é o método que funciona no navegador restrito do
+            // captive portal — inclusive no iPhone (CNA), onde fetch/sendBeacon são
+            // bloqueados. Carregar imagem é permitido. O PHP grava o lead pelos parâmetros.
+            try {
+                var params =
+                    "telefone=" + encodeURIComponent(telefone) +
+                    "&mac=" + encodeURIComponent("$(mac)") +
+                    "&ip=" + encodeURIComponent("$(ip)") +
+                    "&roteador=" + encodeURIComponent("$(identity)") +
+                    "&consentimento=1" +
+                    "&t=" + Date.now();
+                var img = new Image();
+                img.src = API_LEAD_URL + "?" + params;
+            } catch (e) {
+                /* nunca bloquear a liberação do WiFi */
+            }
+        }
+
+        // Exibe a página intermediária de anúncio e inicia a contagem regressiva.
+        // Somente ao término dos 10 segundos a autenticação (authAction) é executada.
+        var adCountdownStarted = false;
+        function startAdCountdown(authAction) {
+            if (adCountdownStarted) return;
+            adCountdownStarted = true;
+
+            const adPage = document.getElementById('ad-page');
+            const countEl = document.getElementById('ad-count');
+            let seconds = 10;
+
+            if (adPage) {
+                adPage.classList.add('active');
+                adPage.setAttribute('aria-hidden', 'false');
+            }
+            if (countEl) countEl.textContent = seconds;
+            document.body.style.overflow = 'hidden';
+
+            // Envia o lead para a API assim que o anúncio aparece (antes de autenticar).
+            sendLead();
+
+            const timer = setInterval(function () {
+                seconds -= 1;
+                if (countEl) countEl.textContent = seconds > 0 ? seconds : 0;
+                if (seconds <= 0) {
+                    clearInterval(timer);
+                    // Fim da contagem: agora sim a autenticação do MikroTik é executada.
+                    if (typeof authAction === 'function') authAction();
+                }
+            }, 1000);
+        }
+
+        function handleLoginSubmit(event) {
+            const phoneInput = document.getElementById('celular');
+            const errorMsg = document.getElementById('error-message');
+            const phone = phoneInput.value.trim();
+
+            // O botão NÃO autentica mais diretamente: sempre impedimos o envio imediato.
+            if (event) event.preventDefault();
+
+            if (!validatePhone(phone)) {
+                errorMsg.textContent = "É necessário informar um número celular válido com 11 dígitos.";
+                errorMsg.classList.add('alert');
+                phoneInput.classList.add('input-error');
+                return false;
+            }
+
+            // Aparelho já gastou o tempo de hoje? Tela de limite, sem anúncio/login.
+            if (window.PORTAL_BLOQUEADO) {
+                showLimitScreen();
+                return false;
+            }
+
+            // Dados válidos: inicia a página de anúncio. A autenticação original
+            // (runAuthentication) só será chamada ao fim dos 10 segundos.
+            phoneInput.classList.remove('input-error');
+            startAdCountdown(runAuthentication);
+            return false;
+        }
+
+        // Carrega o banner do anúncio a partir da VPS (servido por ad.php, isolado por
+        // roteador via $(identity)). A troca é feita pelo comprador no painel, sem
+        // reenviar este arquivo ao MikroTik. O domínio já está liberado no Walled
+        // Garden (mesmo do /api/lead). Se não houver anúncio para este roteador — ou a
+        // VPS não responder — mantém o espaço reservado ("Seu anúncio aqui") sem exibir
+        // ícone de imagem quebrada.
+        (function () {
+            var img = document.getElementById('ad-banner-img');
+            var placeholder = document.getElementById('ad-banner-placeholder');
+            if (!img) return;
+            img.onload = function () {
+                img.style.display = 'block';
+                if (placeholder) placeholder.style.display = 'none';
+            };
+            img.onerror = function () {
+                img.style.display = 'none';
+                if (placeholder) placeholder.style.display = 'block';
+            };
+            var AD_URL = "https://captivedata.com.br/ad.php?r=" + encodeURIComponent("$(identity)");
+            img.src = AD_URL + "&t=" + Date.now();
+        })();
+
+        // Modal Controls
+        function openModal(type) {
+            const modal = document.getElementById(`${type}-modal`);
+            if (modal) {
+                modal.classList.add('active');
+                modal.setAttribute('aria-hidden', 'false');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeModal(type) {
+            const modal = document.getElementById(`${type}-modal`);
+            if (modal) {
+                modal.classList.remove('active');
+                modal.setAttribute('aria-hidden', 'true');
+                document.body.style.overflow = '';
+            }
+        }
+
+        // Override the onSubmit for the non-chap-id case as well to ensure validation always runs
+        window.onload = function() {
+            const form = document.getElementById('loginForm');
+            // Check if onSubmit is not already set by MikroTik (i.e., when chap-id is present) or if it's an empty string
+            if (form && (!form.getAttribute('onSubmit') || form.getAttribute('onSubmit') === '')) {
+                form.onsubmit = handleLoginSubmit;
+            }
+
+            const celularInput = document.getElementById('celular');
+            if (celularInput) {
+                celularInput.addEventListener('input', function(e) {
+                    // Keep only numeric characters
+                    let value = e.target.value.replace(/\D/g, "");
+                    
+                    // Limit to 11 characters
+                    if (value.length > 11) {
+                        value = value.slice(0, 11);
+                    }
+                    
+                    e.target.value = value;
+                    updateButtonState();
+                });
+                
+                // Trigger initially in case of auto-fill
+                updateButtonState();
+            }
+
+            // Click interceptor for the trial link button
+            document.addEventListener('click', function(e) {
+                if (e.target && e.target.id === 'wifi-link') {
+                    // Nunca navegar imediatamente: o link também passa pela página de anúncio.
+                    e.preventDefault();
+                    if (e.target.classList.contains('disabled')) {
+                        return;
+                    }
+                    // Mesmo fluxo do botão/Enter: valida o número, checa o limite
+                    // diário e inicia o anúncio -> runAuthentication no fim.
+                    handleLoginSubmit(null);
+                }
+            });
+
+            // Close modal on ESC and clicking outside card
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeModal('terms');
+                    closeModal('privacy');
+                }
+            });
+
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('modal-overlay')) {
+                    closeModal('terms');
+                    closeModal('privacy');
+                }
+            });
+        };
+
+        // ===== Aparelho já cadastrado (decidido no head via classe cd-known) =====
+        // Nunca mostra a tela de número: a capa monocromática (#cd-cover) fica por
+        // cima enquanto espera o limite.php (bloqueio diário) e então vai direto
+        // pro anúncio. A API registra a revisita pelo MAC (telefone vazio).
+        if (document.documentElement.classList.contains('cd-known')) {
+            (function () {
+                var cover = document.getElementById('cd-cover');
+                function esconde() { if (cover) cover.style.display = 'none'; }
+                function seguir() {
+                    if (adCountdownStarted) return; // já iniciou por outro caminho
+                    if (window.PORTAL_BLOQUEADO) { esconde(); showLimitScreen(); return; }
+                    esconde();
+                    startAdCountdown(runAuthentication);
+                }
+                // Espera curta pro limite.php (injetado async) chegar; se atrasar,
+                // segue pro anúncio (se vier bloqueado depois, o onload dele corrige).
+                window.addEventListener('load', function () { setTimeout(seguir, 500); });
+            })();
+        }
+    </script>
+</body>
+
+</html>

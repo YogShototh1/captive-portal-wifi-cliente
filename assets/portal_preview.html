@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prévia do login</title>
+<!-- MESMO css do hotspot: o que aparece aqui e o que o cliente ve no Wi-Fi. -->
+<link rel="stylesheet" href="portal.css">
+<style>
+  /* Só o necessário p/ caber na moldura do modal (não vai pro roteador). */
+  body{padding:26px 16px;min-height:100%;zoom:.82}
+  .cd-zona{cursor:pointer;position:relative}
+  .cd-zona.cd-hi{outline:2px dashed #2563eb;outline-offset:3px;border-radius:8px}
+  .cd-dica{
+    position:fixed;top:8px;left:0;right:0;text-align:center;z-index:9;
+    font:600 11px/1 'Nunito Sans',system-ui,sans-serif;letter-spacing:.04em;
+    color:var(--fg-3);opacity:.75;pointer-events:none;
+  }
+</style>
+</head>
+<body>
+<p class="cd-dica">Clique num elemento para mudar a cor</p>
+
+<!-- Markup REAL do login.html (parte visível do cartão). data-cor marca a
+     variável que cada elemento usa. -->
+<div class="ie-fixMinHeight">
+  <div class="main">
+    <div class="wrap cd-zona" data-cor="surface">
+
+      <div class="brand-mark">
+        <div class="brand-fallback cd-zona" data-cor="primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.86a10 10 0 0 1 14 0"/><path d="M8.5 16.43a5 5 0 0 1 7 0"/></svg>
+        </div>
+      </div>
+
+      <h1 class="title-primix cd-zona" data-cor="fg">Bem-vindo</h1>
+      <p class="subtitle cd-zona" data-cor="fg2">Conecte-se ao Wi‑Fi grátis</p>
+
+      <form onsubmit="return false">
+        <p class="info cd-zona" data-cor="fg2">Por favor, informe seu celular para acessar.</p>
+        <div class="input-group">
+          <input type="tel" class="cd-zona" data-cor="field" value="" placeholder="Número de Celular" readonly>
+        </div>
+        <button type="button" class="btn-glass cd-zona" data-cor="accent">
+          <span class="cd-zona" data-cor="btnfg">Liberar WiFi</span>
+        </button>
+      </form>
+
+      <p class="footer-text cd-zona" data-cor="fg2">Ao prosseguir, você aceita os
+        <button type="button" class="btn-link cd-zona" data-cor="primary">Termos de Uso</button> e a
+        <button type="button" class="btn-link cd-zona" data-cor="primary">Política de Privacidade</button>.
+      </p>
+
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var HEX = /^#[0-9a-fA-F]{6}$/;
+  var raiz = document.documentElement;
+
+  // Mesmo mapa do login.html real: chave do painel -> variáveis CSS.
+  function aplicaCores(c) {
+    if (!c) return;
+    var s = raiz.style;
+    function set(v, val) { if (HEX.test(val)) s.setProperty(v, val); }
+    set('--bg', c.bg);
+    set('--surface', c.surface);
+    set('--primary', c.primary);   set('--primary-600', c.primary);
+    set('--secondary', c.primary); set('--ring', c.primary);
+    set('--accent', c.accent);     set('--accent-600', c.accent);
+    set('--fg', c.fg);
+    set('--fg-2', c.fg2);          set('--fg-3', c.fg2);
+    set('--muted', c.field);
+    set('--border', c.border);
+    set('--btn-fg', c.btnfg);
+  }
+  // Flag desligada -> classe cd-no-<nome> no <html>.
+  function aplicaFlags(f) {
+    if (!f) return;
+    ['vidro','brilho','manchas','grade','sombra','anim','grad'].forEach(function (k) {
+      raiz.classList.toggle('cd-no-' + k, f[k] === 0 || f[k] === false || f[k] === '0');
+    });
+  }
+
+  addEventListener('message', function (e) {
+    var d = e.data;
+    if (!d || d.tipo !== 'cd-preview') return;
+    aplicaCores(d.cores);
+    aplicaFlags(d.flags);
+    if (d.destaque !== undefined) {
+      document.querySelectorAll('.cd-zona').forEach(function (z) {
+        z.classList.toggle('cd-hi', d.destaque !== null && z.getAttribute('data-cor') === d.destaque);
+      });
+    }
+  });
+
+  // Clique numa zona -> avisa o painel qual cor abrir. O alvo mais interno
+  // vence (texto do botão sobre o botão), sem stopPropagation.
+  document.addEventListener('click', function (e) {
+    var z = e.target.closest ? e.target.closest('.cd-zona') : null;
+    if (!z) return;
+    e.preventDefault();
+    parent.postMessage({ tipo: 'cd-clique', cor: z.getAttribute('data-cor') }, '*');
+  });
+  document.addEventListener('mouseover', function (e) {
+    var z = e.target.closest ? e.target.closest('.cd-zona') : null;
+    if (z) parent.postMessage({ tipo: 'cd-hover', cor: z.getAttribute('data-cor') }, '*');
+  });
+  document.addEventListener('mouseout', function () {
+    parent.postMessage({ tipo: 'cd-hover', cor: null }, '*');
+  });
+
+  parent.postMessage({ tipo: 'cd-pronto' }, '*');
+})();
+</script>
+</body>
+</html>

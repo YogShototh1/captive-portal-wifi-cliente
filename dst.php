@@ -24,3 +24,5 @@ echo 'window.PORTAL_DST=' . json_encode($url, JSON_UNESCAPED_SLASHES | JSON_UNES
 echo 'window.LOGO_FORMA=' . json_encode($roteador !== '' ? logo_forma($roteador) : 'quadrado') . ';';
 // Cores da tela de login (por roteador) — o login.html aplica nas CSS vars.
 echo 'window.CORES=' . json_encode($roteador !== '' ? cores_get($roteador) : cores_padrao()) . ';';
+// Efeitos ligados/desligados no painel — o login.html vira classes no <html>.
+echo 'window.ESTILO=' . json_encode($roteador !== '' ? estilo_get($roteador) : estilo_padrao()) . ';';

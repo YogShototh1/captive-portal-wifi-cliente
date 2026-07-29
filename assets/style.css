@@ -2115,39 +2115,32 @@ html[data-tema="claro"] .adm-tesla .adm-st.meio { color: #b45309; }
     #cores-modal .cm-list { border-left: 0; border-top: 1px solid var(--t-line); }
 }
 
-/* --- Esboco da tela de login (mini) --- */
-#cores-modal .cm-scene {
-    position: relative; grid-column: 1; padding: 30px 22px 34px;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    background: var(--m-bg); min-height: 340px; overflow: hidden;
-}
-#cores-modal .cm-hint {
-    position: absolute; top: 10px; left: 0; right: 0; text-align: center;
-    font-size: 11px; letter-spacing: .04em; color: var(--m-fg2); opacity: .7; pointer-events: none;
-}
-#cores-modal .cm-card {
-    width: min(260px, 100%); background: var(--m-surface);
-    border-radius: 16px; padding: 26px 22px; text-align: center;
-    box-shadow: 0 18px 44px -22px rgba(0,0,0,.4);
-    display: flex; flex-direction: column; align-items: center; gap: 10px;
-}
-#cores-modal .cm-logo {
-    width: 46px; height: 46px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center; color: #fff;
-    background: linear-gradient(135deg, var(--m-primary), var(--m-accent));
-}
-#cores-modal .cm-logo svg { width: 22px; height: 22px; }
-#cores-modal .cm-title { font-size: 18px; font-weight: 700; color: var(--m-fg); }
-#cores-modal .cm-sub { font-size: 12.5px; color: var(--m-fg2); margin-top: -4px; }
-#cores-modal .cm-fieldwrap { width: 100%; border: 2px solid var(--m-border); border-radius: 12px; padding: 3px; margin-top: 4px; }
-#cores-modal .cm-field { border-radius: 9px; background: var(--m-field); color: var(--m-fg2); font-size: 13px; padding: 11px 12px; }
-#cores-modal .cm-btn {
-    width: 100%; border-radius: 12px; padding: 12px; margin-top: 4px;
-    background: linear-gradient(135deg, var(--m-primary), var(--m-accent));
-    font-size: 14px; font-weight: 600;
-}
-#cores-modal .cm-btn-tx { color: var(--m-btnfg); }
+/* --- Previa: a pagina real do hotspot num iframe --- */
+#cores-modal .cm-previa { grid-column: 1; background: var(--t-surface-2); min-height: 460px; position: relative; }
+#cores-modal .cm-previa iframe { width: 100%; height: 100%; min-height: 460px; border: 0; display: block; }
 
-/* Zonas clicaveis: cursor + realce (borda tracejada por cima, sem mexer no layout). */
-#cores-modal .cm-scene [data-cor] { cursor: pointer; }
-#cores-modal .cm-scene [data-cor].realce { outline: 2px dashed rgba(37,99,235,.9); outline-offset: 2px; border-radius: 6px; }
+/* Abas Cores / Efeitos */
+#cores-modal .cm-lado { display: flex; flex-direction: column; min-height: 0; }
+#cores-modal .cm-abas { display: flex; gap: 2px; padding: 12px 18px 0; }
+#cores-modal .cm-aba {
+    flex: 1; padding: 9px 10px; border: 0; background: none; cursor: pointer;
+    border-radius: var(--t-r); color: var(--t-fg3);
+    font-size: 13px; font-weight: 500; transition: background .2s, color .2s;
+}
+#cores-modal .cm-aba:hover { background: var(--t-hover); color: var(--t-fg); }
+#cores-modal .cm-aba.atual { background: var(--t-sel); color: var(--t-fg); }
+#cores-modal .cm-painel { display: none; padding: 14px 18px 4px; overflow-y: auto; flex: 1; gap: 10px; }
+#cores-modal .cm-painel.atual { display: flex; flex-direction: column; }
+#cores-modal .cm-salvar { margin: 10px 18px 16px; align-self: flex-start; }
+
+/* Linha de flag (checkbox + nome + explicacao) */
+#cores-modal .cm-flag {
+    display: flex; align-items: flex-start; gap: 11px; cursor: pointer;
+    padding: 10px 12px; border: 1px solid var(--t-line); border-radius: var(--t-r);
+    transition: background .15s, border-color .15s;
+}
+#cores-modal .cm-flag:hover { background: var(--t-hover); border-color: var(--t-fg3); }
+#cores-modal .cm-check { width: 17px; height: 17px; margin-top: 1px; flex: none; accent-color: var(--t-fg); cursor: pointer; }
+#cores-modal .cm-flag-tx { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+#cores-modal .cm-flag-nome { font-size: 13.5px; font-weight: 500; color: var(--t-fg); }
+#cores-modal .cm-flag-desc { font-size: 12px; color: var(--t-fg3); line-height: 1.4; }

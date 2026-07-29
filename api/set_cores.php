@@ -40,4 +40,11 @@ foreach (array_keys(cores_padrao()) as $k) {
 }
 cores_set($roteador, $cores);
 
+// So o form AVANCADO manda flags (sentinela). Sem ele, nao mexe nos efeitos —
+// checkbox desmarcado nao e enviado, entao sem sentinela nao da p/ distinguir
+// "desmarcou tudo" de "form simples".
+if (!empty($_POST['tem_flags'])) {
+    estilo_set($roteador, $_POST);
+}
+
 voltar_msg($voltar, 'cores_ok', 'Cores atualizadas! Já valem na tela de login.');

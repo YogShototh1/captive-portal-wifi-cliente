@@ -232,6 +232,55 @@ function cores_set(string $roteador, array $cores): void
     @file_put_contents($dir . '/cores_' . sha1(trim($roteador)) . '.json', json_encode($out));
 }
 
+// --- Efeitos (flags) da tela de login, por roteador ---
+// 1 = efeito ligado (visual padrao). Cada flag desligada vira a classe
+// cd-no-<chave> no <html> do login (e da previa do painel).
+function estilo_padrao(): array
+{
+    return [
+        'vidro'   => 1,  // desfoque de vidro no cartao
+        'brilho'  => 1,  // brilho colorido atras do cartao
+        'manchas' => 1,  // manchas de luz no fundo
+        'grade'   => 1,  // grade quadriculada no fundo
+        'sombra'  => 1,  // sombra sob o cartao
+        'anim'    => 1,  // animacao de entrada do cartao
+        'grad'    => 1,  // degrade no botao/logo (0 = cor principal chapada)
+    ];
+}
+function estilo_get(string $roteador): array
+{
+    $def = estilo_padrao();
+    $p = ads_dir() . '/estilo_' . sha1(trim($roteador)) . '.json';
+    if (!is_file($p)) {
+        return $def;
+    }
+    $j = json_decode((string) @file_get_contents($p), true);
+    if (!is_array($j)) {
+        return $def;
+    }
+    $out = $def;
+    foreach ($def as $k => $v) {
+        if (array_key_exists($k, $j)) {
+            $out[$k] = empty($j[$k]) ? 0 : 1;
+        }
+    }
+    return $out;
+}
+// $flags = so as chaves marcadas (checkbox nao marcado nao e enviado), por isso
+// o form manda tambem um campo-sentinela indicando que as flags vieram.
+function estilo_set(string $roteador, array $marcadas): void
+{
+    $out = [];
+    foreach (estilo_padrao() as $k => $v) {
+        $out[$k] = !empty($marcadas[$k]) ? 1 : 0;
+    }
+    $dir = ads_dir();
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0755, true);
+    }
+    @file_put_contents($dir . '/estilo_' . sha1(trim($roteador)) . '.json', json_encode($out));
+}
+
 // --- Site de destino pós-anúncio (dst do hotspot), por roteador ---
 
 // Destino padrão quando o comprador ainda não configurou um.
