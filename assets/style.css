@@ -2072,3 +2072,14 @@ html[data-tema="claro"] .adm-tesla .adm-st.meio { color: #b45309; }
     .adm-tesla tbody td:nth-child(3)::before { content: "mikrotik: "; color: var(--t-fg3); }
     .adm-tesla tbody td:nth-child(5)::before { content: "leads: ";    color: var(--t-fg3); }
 }
+
+/* Paleta das pizzas do Dashboard (dashgeral.js emite so as classes).
+   Uma regra por categoria serve os dois usos: "fill" pinta a fatia do SVG e
+   "background" pinta o quadradinho da legenda — cada elemento ignora a
+   propriedade que nao lhe cabe.
+   "Novos" usa a cor de texto do tema: preto no claro, branco no escuro. Um
+   preto fixo sumiria no fundo do cartao escuro. */
+.painel-cliente .dg-c-rev { fill: #06b6d4; background: #06b6d4; }
+.painel-cliente .dg-c-rea { fill: #8b5cf6; background: #8b5cf6; }
+.painel-cliente .dg-c-nov { fill: var(--t-fg); background: var(--t-fg); }
+.painel-cliente .dg-c-nao { fill: #6b7280; background: #6b7280; }

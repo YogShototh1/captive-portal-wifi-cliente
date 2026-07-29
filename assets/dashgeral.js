@@ -40,11 +40,14 @@
     // "Não revisitaram" (esteve na janela anterior e não voltou) fica sempre do
     // lado ESQUERDO e fora dessa soma.
     function donutPeriodo(titulo, d, rotuloVar) {
+        // As cores vivem no CSS (.dg-c-*), nao aqui: "Novos" usa a cor de texto
+        // do tema, entao fica preto no claro e branco no escuro — se fosse um
+        // preto fixo, sumiria no fundo escuro do cartao.
         var itens = [
-            { k: 'rev', nome: 'Revisitaram',      n: d.revisitaram || 0,     cor: '#06b6d4' },
-            { k: 'rea', nome: 'Reativados',       n: d.reativados || 0,      cor: '#8b5cf6' },
-            { k: 'nov', nome: 'Novos',            n: d.novos || 0,           cor: '#3b82f6' },
-            { k: 'nao', nome: 'Não revisitaram', n: d.nao_revisitaram || 0, cor: '#6b7280' }
+            { k: 'rev', nome: 'Revisitaram',      n: d.revisitaram || 0,     cls: 'dg-c-rev' },
+            { k: 'rea', nome: 'Reativados',       n: d.reativados || 0,      cls: 'dg-c-rea' },
+            { k: 'nov', nome: 'Novos',            n: d.novos || 0,           cls: 'dg-c-nov' },
+            { k: 'nao', nome: 'Não revisitaram', n: d.nao_revisitaram || 0, cls: 'dg-c-nao' }
         ];
         var comDado = itens.filter(function (f) { return f.n > 0; });
         var corpo;
@@ -64,7 +67,7 @@
             var P = total ? soma / total * TAU : 0;
             var s = '<svg class="dash-pie" viewBox="0 0 265 150">';
             if (comDado.length === 1) {
-                s += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="' + comDado[0].cor + '"/>';
+                s += '<circle class="' + comDado[0].cls + '" cx="' + cx + '" cy="' + cy + '" r="' + r + '"/>';
             } else {
                 var ang = -P / 2, i, a0, a1, laf;
                 var ordem = presentes.filter(function (f) { return f.n > 0; });
@@ -72,7 +75,7 @@
                 for (i = 0; i < ordem.length; i++) {
                     a0 = ang; a1 = ang + ordem[i].n / total * TAU;
                     laf = (a1 - a0) > Math.PI ? 1 : 0;
-                    s += '<path d="M' + cx + ' ' + cy + ' L' + pt(r, a0) + ' A' + r + ' ' + r + ' 0 ' + laf + ' 1 ' + pt(r, a1) + ' Z" fill="' + ordem[i].cor + '"/>';
+                    s += '<path class="' + ordem[i].cls + '" d="M' + cx + ' ' + cy + ' L' + pt(r, a0) + ' A' + r + ' ' + r + ' 0 ' + laf + ' 1 ' + pt(r, a1) + ' Z"/>';
                     ang = a1;
                 }
             }
@@ -96,7 +99,7 @@
             for (var j = 0; j < itens.length; j++) {
                 // Quantidade real ao lado da % — zerado mostra só "0%".
                 var qtd = itens[j].n > 0 ? ' <small>(' + itens[j].n + ')</small>' : '';
-                leg += '<li><span class="leg-cor" style="background:' + itens[j].cor + '"></span>' +
+                leg += '<li><span class="leg-cor ' + itens[j].cls + '"></span>' +
                     '<span class="leg-nome">' + itens[j].nome + '</span>' +
                     '<span class="leg-pct">' + ps[j] + '%' + qtd + '</span></li>';
             }
