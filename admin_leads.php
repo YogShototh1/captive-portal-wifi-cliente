@@ -99,7 +99,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <meta name="format-detection" content="telephone=no">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Leads — <?= h($cliente['nome'] ?: $cliente['email']) ?></title>
-    <link rel="stylesheet" href="assets/style.css?v=92">
+    <link rel="stylesheet" href="assets/style.css?v=93">
 </head>
 <body class="painel-cliente">
     <!-- Camadas de fundo (decorativas) -->
@@ -507,11 +507,15 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                                         </span>
                                     </label>
                                     <?php endforeach; ?>
-                                <button type="submit" class="pc-btn-primary">Salvar cores</button>
+                                <div class="pc-cores-acoes">
+                                    <button type="submit" class="pc-btn-primary">Salvar cores</button>
+                                    <button type="button" class="pc-cor-avancado" id="cores-avancado-abrir">avançado</button>
+                                </div>
                             </form>
                         </div>
                     </div>
                 </div>
+                <?php $coresClienteId = (int) $id; require __DIR__ . '/inc/cores_avancado.php'; ?>
                 <?php else: echo $avisoRoteador; endif; ?>
             </section>
 
@@ -716,6 +720,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     </div>
 
     <script src="assets/abas.js?v=4"></script>
+    <script src="assets/cores.js?v=1"></script>
     <script src="assets/relatorio.js?v=12"></script>
     <script src="assets/dashboard.js?v=10"></script>
     <script src="assets/dashgeral.js?v=14"></script>

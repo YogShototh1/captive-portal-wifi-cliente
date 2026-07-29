@@ -2083,3 +2083,71 @@ html[data-tema="claro"] .adm-tesla .adm-st.meio { color: #b45309; }
 .painel-cliente .dg-c-rea { fill: #8b5cf6; background: #8b5cf6; }
 .painel-cliente .dg-c-nov { fill: var(--t-fg); background: var(--t-fg); }
 .painel-cliente .dg-c-nao { fill: #6b7280; background: #6b7280; }
+
+/* ============================================================
+   Cores da tela de login — botao "avancado" + modal com esboco
+   clicavel. Escopo em .painel-cliente (herda os tokens --t-*).
+   ============================================================ */
+.painel-cliente .pc-cores-acoes { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 4px; }
+/* Botao discreto, estilo "sem limite": texto com sublinhado fino. */
+.painel-cliente .pc-cor-avancado {
+    background: none; border: 0; cursor: pointer; padding: 4px 0;
+    color: var(--t-fg); font-size: 13.5px; font-weight: 500;
+    text-decoration: underline; text-decoration-thickness: 1px;
+    text-underline-offset: 4px; text-decoration-color: var(--t-line);
+    transition: text-decoration-color .2s;
+}
+.painel-cliente .pc-cor-avancado:hover { text-decoration-color: var(--t-fg); }
+
+/* Modal mais largo p/ esboco + lista lado a lado. */
+#cores-modal .pc-modal-card.cm-card-wrap { max-width: 880px; }
+#cores-modal .cm-form {
+    display: grid; grid-template-columns: 1fr minmax(280px, 340px);
+    gap: 0; padding: 0; align-items: stretch;
+}
+#cores-modal .cm-list { padding: 18px 22px; display: flex; flex-direction: column; gap: 10px; border-left: 1px solid var(--t-line); }
+#cores-modal .cm-row { margin: 0; transition: background .15s; border-radius: var(--t-r); }
+#cores-modal .cm-row.realce, #cores-modal .cm-row.alvo { background: var(--t-hover); }
+#cores-modal .cm-row.alvo { outline: 1px solid var(--t-fg); outline-offset: -1px; }
+#cores-modal .cm-salvar { margin-top: 6px; align-self: flex-start; }
+@media (max-width: 720px) {
+    #cores-modal .cm-form { grid-template-columns: 1fr; }
+    #cores-modal .cm-list { border-left: 0; border-top: 1px solid var(--t-line); }
+}
+
+/* --- Esboco da tela de login (mini) --- */
+#cores-modal .cm-scene {
+    position: relative; grid-column: 1; padding: 30px 22px 34px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: var(--m-bg); min-height: 340px; overflow: hidden;
+}
+#cores-modal .cm-hint {
+    position: absolute; top: 10px; left: 0; right: 0; text-align: center;
+    font-size: 11px; letter-spacing: .04em; color: var(--m-fg2); opacity: .7; pointer-events: none;
+}
+#cores-modal .cm-card {
+    width: min(260px, 100%); background: var(--m-surface);
+    border-radius: 16px; padding: 26px 22px; text-align: center;
+    box-shadow: 0 18px 44px -22px rgba(0,0,0,.4);
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+}
+#cores-modal .cm-logo {
+    width: 46px; height: 46px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; color: #fff;
+    background: linear-gradient(135deg, var(--m-primary), var(--m-accent));
+}
+#cores-modal .cm-logo svg { width: 22px; height: 22px; }
+#cores-modal .cm-title { font-size: 18px; font-weight: 700; color: var(--m-fg); }
+#cores-modal .cm-sub { font-size: 12.5px; color: var(--m-fg2); margin-top: -4px; }
+#cores-modal .cm-fieldwrap { width: 100%; border: 2px solid var(--m-border); border-radius: 12px; padding: 3px; margin-top: 4px; }
+#cores-modal .cm-field { border-radius: 9px; background: var(--m-field); color: var(--m-fg2); font-size: 13px; padding: 11px 12px; }
+#cores-modal .cm-btn {
+    width: 100%; border-radius: 12px; padding: 12px; margin-top: 4px;
+    background: linear-gradient(135deg, var(--m-primary), var(--m-accent));
+    font-size: 14px; font-weight: 600;
+}
+#cores-modal .cm-btn-tx { color: var(--m-btnfg); }
+
+/* Zonas clicaveis: cursor + realce (borda tracejada por cima, sem mexer no layout). */
+#cores-modal .cm-scene [data-cor] { cursor: pointer; }
+#cores-modal .cm-scene [data-cor].realce { outline: 2px dashed rgba(37,99,235,.9); outline-offset: 2px; border-radius: 6px; }

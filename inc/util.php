@@ -178,10 +178,23 @@ function logo_forma_set(string $roteador, string $forma): void
     @file_put_contents($dir . '/logoforma_' . sha1(trim($roteador)) . '.txt', $forma);
 }
 
-// Cores da tela de login, por roteador. Chaves = variaveis CSS do login.html.
+// Cores da tela de login, por roteador. Cada chave casa com uma variavel CSS
+// que o login.html do hotspot aplica (via window.CORES do dst.php).
+// As 4 primeiras sao as antigas (compatibilidade); as demais entraram com o
+// modo "avancado" — o form simples so mexe nas 4 e cores_set preserva o resto.
 function cores_padrao(): array
 {
-    return ['primary' => '#0891b2', 'accent' => '#22d3ee', 'bg' => '#e6ecf5', 'fg' => '#1e293b'];
+    return [
+        'bg'      => '#e6ecf5',  // fundo da tela
+        'surface' => '#ffffff',  // cartao central
+        'primary' => '#0891b2',  // cor principal (degrade 1, links, foco)
+        'accent'  => '#22d3ee',  // cor de destaque (degrade 2)
+        'fg'      => '#1e293b',  // titulo / texto principal
+        'fg2'     => '#475569',  // texto secundario (subtitulo, avisos)
+        'field'   => '#eef2f8',  // fundo do campo do numero
+        'border'  => '#d9e0ec',  // borda dos campos
+        'btnfg'   => '#ffffff',  // cor da letra do botao
+    ];
 }
 function cores_get(string $roteador): array
 {
@@ -204,11 +217,13 @@ function cores_get(string $roteador): array
 }
 function cores_set(string $roteador, array $cores): void
 {
-    $def = cores_padrao();
+    // Base = o que ja esta salvo (nao o default): assim salvar so parte das
+    // chaves — o form simples manda 4 — nao zera as outras.
+    $atual = cores_get($roteador);
     $out = [];
-    foreach ($def as $k => $v) {
-        $c = isset($cores[$k]) ? (string) $cores[$k] : $v;
-        $out[$k] = preg_match('/^#[0-9a-fA-F]{6}$/', $c) ? strtolower($c) : $v;
+    foreach (cores_padrao() as $k => $v) {
+        $c = isset($cores[$k]) ? (string) $cores[$k] : $atual[$k];
+        $out[$k] = preg_match('/^#[0-9a-fA-F]{6}$/', $c) ? strtolower($c) : $atual[$k];
     }
     $dir = ads_dir();
     if (!is_dir($dir)) {
