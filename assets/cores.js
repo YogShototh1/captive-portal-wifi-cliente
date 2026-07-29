@@ -16,12 +16,13 @@
 
     var frame = document.getElementById('cm-frame');
     var palco = document.getElementById('cm-palco');
+    var fone  = document.getElementById('cm-fone');
     var pronto = false;
 
-    // O palco tem medidas fixas de celular (390x693 = 9:16). Aqui so achamos o
-    // fator p/ ele caber na moldura, sem nunca passar de 1: ampliar deixaria a
-    // previa maior que o aparelho real.
-    var LARG = 390, ALT = 693.33;   // 390 x 16/9 = 9:16 exato
+    // Corpo do iPhone: 414x868 (tela de 390x844 + 12px de moldura). A tela usa
+    // a viewport CSS real do aparelho; aqui so achamos o fator p/ o conjunto
+    // caber, sem passar de 1 — ampliar deixaria a previa maior que o real.
+    var LARG = 414, ALT = 868;
     function ajustarEscala() {
         if (!palco) return;
         var pai = palco.parentNode, cs = getComputedStyle(pai);
@@ -33,17 +34,25 @@
         if (livreL <= 0 || livreA <= 0) return;
         var e = Math.min(livreL / LARG, livreA / ALT, 1);
         // O PALCO fica com o tamanho ja reduzido (participa do layout e
-        // centraliza sozinho); quem encolhe e o iframe, ancorado no canto.
-        // Escalar o palco em si o deixava maior que a moldura, e o grid o
-        // alinhava ao topo em vez de centralizar.
+        // centraliza sozinho); quem encolhe e o APARELHO INTEIRO — moldura,
+        // tela e iframe juntos — ancorado no canto. Escalar o palco em si o
+        // deixava maior que a moldura e o grid o alinhava ao topo.
         palco.style.width  = (LARG * e).toFixed(2) + 'px';
         palco.style.height = (ALT  * e).toFixed(2) + 'px';
-        frame.style.transform = 'scale(' + e.toFixed(4) + ')';
+        if (fone) fone.style.transform = 'scale(' + e.toFixed(4) + ')';
     }
     addEventListener('resize', ajustarEscala);
     // ResizeObserver em vez de depender so do rAF ao abrir: dispara assim que a
     // moldura ganha tamanho, inclusive quando o modal passa de oculto p/ visivel.
     if (window.ResizeObserver && palco) new ResizeObserver(ajustarEscala).observe(palco.parentNode);
+
+    // O 'cd-pronto' do iframe pode chegar ANTES deste script rodar (iframe em
+    // cache) e se perder — a previa nunca pintaria. O load cobre esse caso; se
+    // ja carregou, o load nao dispara mais e o readyState resolve.
+    frame.addEventListener('load', function () { pronto = true; enviar(null); });
+    try {
+        if (frame.contentDocument && frame.contentDocument.readyState === 'complete') pronto = true;
+    } catch (err) { /* iframe ainda carregando */ }
 
     function estado(destaque) {
         var cores = {}, flags = {};

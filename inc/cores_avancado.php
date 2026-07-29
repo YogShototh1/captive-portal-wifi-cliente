@@ -55,7 +55,20 @@ $cid = isset($coresClienteId) ? (int) $coresClienteId : null;
                      estreita demais e as fontes/quebras ficariam erradas. -->
                 <div class="cm-previa">
                     <div class="cm-palco" id="cm-palco">
-                        <iframe id="cm-frame" src="assets/portal_preview.html?v=3" title="Prévia da tela de login"></iframe>
+                        <!-- Molde de iPhone: corpo 414x868 com a tela 390x844
+                             (a viewport CSS real do aparelho). O JS escala o
+                             conjunto para caber na moldura. -->
+                        <div class="cm-fone" id="cm-fone">
+                            <div class="cm-btn-lat cm-btn-sil" aria-hidden="true"></div>
+                            <div class="cm-btn-lat cm-btn-vol1" aria-hidden="true"></div>
+                            <div class="cm-btn-lat cm-btn-vol2" aria-hidden="true"></div>
+                            <div class="cm-btn-lat cm-btn-pwr" aria-hidden="true"></div>
+                            <div class="cm-tela">
+                                <iframe id="cm-frame" src="assets/portal_preview.html?v=4" title="Prévia da tela de login"></iframe>
+                                <div class="cm-ilha" aria-hidden="true"></div>
+                                <div class="cm-home" aria-hidden="true"></div>
+                            </div>
+                        </div>
                     </div>
                     <p class="cm-dica">Clique num elemento para mudar a cor</p>
                 </div>

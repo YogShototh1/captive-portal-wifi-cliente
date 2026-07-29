@@ -2112,32 +2112,53 @@ html[data-tema="claro"] .adm-tesla .adm-st.meio { color: #b45309; }
 #cores-modal .cm-row.realce, #cores-modal .cm-row.alvo { background: var(--t-hover); }
 #cores-modal .cm-row.alvo { outline: 1px solid var(--t-fg); outline-offset: -1px; }
 
-/* --- Previa: a pagina real do hotspot num "celular" 9:16 ---
-   O palco tem medidas FIXAS de celular real (390x693). O JS aplica um
-   transform:scale p/ caber na moldura. Escalar o render (e nao encolher o
-   iframe) e o que mantem o layout identico ao do aparelho do cliente: um
-   iframe estreito faria o site renderizar numa viewport que nao existe. */
+/* --- Previa: a pagina real do hotspot dentro de um molde de iPhone ---
+   Tela 390x844 = a viewport CSS de um iPhone 12/13/14/15. O login e desenhado
+   NESSAS medidas (nao nas da moldura) e so entao o conjunto e reduzido por
+   transform: e isso que faz o layout sair igual ao do aparelho do cliente. */
 #cores-modal .cm-previa {
     grid-column: 1; min-height: 0; overflow: hidden;
     padding: 16px 16px 34px;   /* faixa de baixo reservada p/ a dica */
     display: grid; place-items: center; position: relative;
     background: var(--t-surface-2);
 }
-#cores-modal .cm-palco {
-    /* Tamanho definido pelo JS (390x693.33 vezes a escala). Nasce com a medida
-       cheia p/ o caso de o JS nao rodar. */
-    width: 390px; height: 693.33px; flex: none;
-    border-radius: 26px; overflow: hidden;
-    box-shadow: 0 16px 44px -18px rgba(0,0,0,.5);
-    background: #fff;
-}
-/* O iframe mantem SEMPRE 390x693.33 (viewport de celular real) e so e
-   reduzido por transform — e isso que faz o login ser desenhado na largura
-   verdadeira do aparelho do cliente. */
-#cores-modal .cm-palco iframe {
-    width: 390px; height: 693.33px; border: 0; display: block;
+/* Palco: recebe do JS o tamanho JA reduzido, entra no layout normalmente e
+   centraliza sozinho (escalar o palco em si o fazia transbordar). */
+#cores-modal .cm-palco { width: 414px; height: 868px; flex: none; }
+
+/* Corpo do aparelho (414x868): 12px de moldura em volta da tela. */
+#cores-modal .cm-fone {
+    width: 414px; height: 868px; position: relative;
     transform-origin: top left;
+    background: linear-gradient(160deg, #3a3d42, #17181b 42%, #26282c);
+    border-radius: 58px; padding: 12px;
+    box-shadow: 0 22px 50px -20px rgba(0,0,0,.6), inset 0 0 0 1.5px rgba(255,255,255,.14);
 }
+#cores-modal .cm-tela {
+    position: relative; width: 390px; height: 844px;
+    border-radius: 46px; overflow: hidden; background: #fff;
+}
+#cores-modal .cm-tela iframe {
+    width: 390px; height: 844px; border: 0; display: block;
+}
+/* Dynamic Island e barra de gestos: so aparencia, sem interferir no clique. */
+#cores-modal .cm-ilha {
+    position: absolute; top: 11px; left: 50%; transform: translateX(-50%);
+    width: 112px; height: 32px; border-radius: 100px; background: #000;
+    pointer-events: none;
+}
+#cores-modal .cm-home {
+    position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+    width: 134px; height: 5px; border-radius: 100px;
+    background: rgba(0,0,0,.32); pointer-events: none;
+}
+/* Botoes laterais */
+#cores-modal .cm-btn-lat { position: absolute; background: #2c2f34; border-radius: 2px; }
+#cores-modal .cm-btn-sil  { left: -2px; top: 118px; width: 3px; height: 30px; }
+#cores-modal .cm-btn-vol1 { left: -2px; top: 172px; width: 3px; height: 58px; }
+#cores-modal .cm-btn-vol2 { left: -2px; top: 244px; width: 3px; height: 58px; }
+#cores-modal .cm-btn-pwr  { right: -2px; top: 200px; width: 3px; height: 92px; }
+
 #cores-modal .cm-dica {
     position: absolute; left: 0; right: 0; bottom: 10px; text-align: center;
     font-size: 11px; letter-spacing: .04em; color: var(--t-fg3);
