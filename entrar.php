@@ -39,7 +39,7 @@ $csrf = csrf_token();
     <title>Painel — Acesso</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="icon" href="assets/logo.png?v=4" type="image/png">
+    <link rel="icon" href="assets/logo-icone.png?v=1" type="image/png">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="assets/style.css?v=99">
 </head>
@@ -56,7 +56,7 @@ $csrf = csrf_token();
             <div class="lp-card-inner">
                 <div class="lp-header">
                     <div class="lp-logo" aria-hidden="true">
-                        <img src="assets/logo.png?v=4" alt="">
+                        <img src="assets/logo-icone.png?v=1" alt="">
                     </div>
                     <h1 class="lp-title">Painel de Leads</h1>
                     <p class="lp-subtitle">Entre para acessar seus leads</p>
