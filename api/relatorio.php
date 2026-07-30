@@ -33,7 +33,8 @@ if ($isAdmin) {
 
 $tipo = (string) ($_GET['tipo'] ?? 'semana');
 if (!in_array($tipo, ['semana', 'hora', 'clientes_dias', 'clientes_tempo',
-                      'sumidos', 'ranking', 'mapa', 'aniversario', 'intervalo'], true)) {
+                      'sumidos', 'ranking', 'mapa', 'aniversario', 'intervalo',
+                      'grade_semana'], true)) {
     $tipo = 'semana';
 }
 
@@ -92,6 +93,76 @@ $ph  = $lista ? implode(',', array_fill(0, count($lista), '?')) : '';
 $sai = function (array $extra) use ($tipo, $inicio, $fim) {
     exit(json_encode(['ok' => true, 'tipo' => $tipo, 'inicio' => $inicio, 'fim' => $fim] + $extra));
 };
+
+// --- Tempo por cliente na semana: grade cliente x dia da semana com o tempo
+//     conectado. Nao usa o par de datas — anda de semana em semana pelo
+//     parametro `semana` (0 = semana atual, 1 = a anterior, ...). A semana vai
+//     de domingo a sabado, igual ao DAYOFWEEK do MySQL e ao mapa de calor. ---
+if ($tipo === 'grade_semana') {
+    $off = max(0, (int) ($_GET['semana'] ?? 0));
+    $dom = date('Y-m-d', strtotime($hoje . ' -' . ((int) date('w') + 7 * $off) . ' day'));
+    $sab = date('Y-m-d', strtotime($dom . ' +6 day'));
+
+    $itens = [];
+    $primeira = null;
+    if ($lista) {
+        try {
+            $q = db()->prepare(
+                "SELECT c.lead_id, l.telefone, l.nome,
+                        DAYOFWEEK(c.conectado_em) AS d,
+                        COALESCE(SUM(c.segundos), 0) AS s
+                   FROM conexoes c JOIN leads l ON l.id = c.lead_id
+                  WHERE l.roteador IN ($ph)
+                    AND c.conectado_em >= ? AND c.conectado_em < DATE_ADD(?, INTERVAL 1 DAY)
+                  GROUP BY c.lead_id, l.telefone, l.nome, d"
+            );
+            $q->execute(array_merge($lista, [$dom, $sab]));
+            $porLead = [];
+            foreach ($q->fetchAll() as $r) {
+                $id = (int) $r['lead_id'];
+                if (!isset($porLead[$id])) {
+                    $porLead[$id] = [
+                        'telefone' => (string) $r['telefone'],
+                        'nome'     => ($r['nome'] !== null && $r['nome'] !== '') ? (string) $r['nome'] : null,
+                        'dias'     => [0, 0, 0, 0, 0, 0, 0],   // indice 0 = domingo
+                        'total'    => 0,
+                    ];
+                }
+                $seg = (int) $r['s'];
+                $porLead[$id]['dias'][(int) $r['d'] - 1] = $seg;
+                $porLead[$id]['total'] += $seg;
+            }
+            // Quem passou mais tempo conectado primeiro.
+            usort($porLead, function ($a, $b) { return $b['total'] <=> $a['total']; });
+            $itens = array_slice($porLead, 0, 500);
+
+            // Ate onde a seta de voltar pode ir.
+            $q2 = db()->prepare(
+                "SELECT MIN(c.conectado_em) AS p FROM conexoes c JOIN leads l ON l.id = c.lead_id
+                  WHERE l.roteador IN ($ph)"
+            );
+            $q2->execute($lista);
+            $p = $q2->fetchColumn();
+            if ($p) { $primeira = substr((string) $p, 0, 10); }
+        } catch (Throwable $e) {
+            http_response_code(500);
+            exit(json_encode(['ok' => false, 'erro' => 'falha ao gerar o relatorio']));
+        }
+    }
+    $tot = 0;
+    foreach ($itens as $it) { $tot += $it['total']; }
+    exit(json_encode([
+        'ok'       => true,
+        'tipo'     => $tipo,
+        'inicio'   => $dom,
+        'fim'      => $sab,
+        'semana'   => $off,
+        'total'    => $tot,          // segundos somados na semana
+        'clientes' => count($itens),
+        'lista'    => array_values($itens),
+        'primeira' => $primeira,     // 1a conexao do roteador (null = sem dados)
+    ]));
+}
 
 // --- Clientes sem retorno: sem datas — "sem vir há N+ dias" e "mínimo de M visitas".
 //     valor = dias sem vir (até hoje). ---

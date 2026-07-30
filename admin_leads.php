@@ -101,7 +101,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Leads — <?= h($cliente['nome'] ?: $cliente['email']) ?></title>
     <link rel="icon" href="assets/logo-icone.png?v=1" type="image/png">
-    <link rel="stylesheet" href="assets/style.css?v=99">
+    <link rel="stylesheet" href="assets/style.css?v=102">
 </head>
 <body class="painel-cliente">
     <!-- Camadas de fundo (decorativas) -->
@@ -379,6 +379,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                                         <button type="button" class="rt-item rel-item" data-tipo="hora"><span>Acessos por horário</span></button>
                                         <button type="button" class="rt-item rel-item" data-tipo="clientes_dias"><span>Dias de visita por cliente</span></button>
                                         <button type="button" class="rt-item rel-item" data-tipo="clientes_tempo"><span>Tempo de conexão por cliente</span></button>
+                                        <button type="button" class="rt-item rel-item" data-tipo="grade_semana"><span>Tempo por cliente na semana</span></button>
                                         <button type="button" class="rt-item rel-item" data-tipo="sumidos"><span>Clientes sem retorno</span></button>
                                         <button type="button" class="rt-item rel-item" data-tipo="ranking"><span>Clientes mais frequentes</span></button>
                                         <button type="button" class="rt-item rel-item" data-tipo="mapa"><span>Movimento por dia e hora</span></button>
@@ -723,7 +724,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
 
     <script src="assets/abas.js?v=4"></script>
     <script src="assets/cores.js?v=7"></script>
-    <script src="assets/relatorio.js?v=13"></script>
+    <script src="assets/relatorio.js?v=14"></script>
     <script src="assets/dashboard.js?v=10"></script>
     <script src="assets/dashgeral.js?v=14"></script>
     <script src="assets/acessolog.js?v=3"></script>

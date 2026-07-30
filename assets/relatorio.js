@@ -24,13 +24,14 @@
         ranking: 'Clientes mais frequentes',
         mapa: 'Movimento por dia e hora',
         aniversario: 'Marcos de relacionamento',
-        intervalo: 'Intervalo entre visitas'
+        intervalo: 'Intervalo entre visitas',
+        grade_semana: 'Tempo por cliente na semana'
     };
     var DIAS  = { 1: 'Dom', 2: 'Seg', 3: 'Ter', 4: 'Qua', 5: 'Qui', 6: 'Sex', 7: 'Sáb' }; // DAYOFWEEK do MySQL
     var tipo  = null;
 
     // Campos que cada relatório usa. Ausente do mapa = usa o par de datas.
-    var CAMPOS = { sumidos: ['dias', 'visitas'], aniversario: ['proximos'], intervalo: [] };
+    var CAMPOS = { sumidos: ['dias', 'visitas'], aniversario: ['proximos'], intervalo: [], grade_semana: [] };
     function usaDatas(t) { return !(t in CAMPOS); }
     function mostrarCampos() {
         var comDatas = tipo === null || usaDatas(tipo);
@@ -260,7 +261,75 @@
         grafico.innerHTML = html + '</div></div>';
     }
 
+    // ===== Tempo por cliente na semana =====
+    // Grade cliente x dia (Dom..Sab) com o tempo conectado; as setas andam de
+    // semana em semana. semanaOff: 0 = semana atual, 1 = a anterior, ...
+    var semanaOff = 0;
+
+    // Tempo curto o bastante p/ caber em 7 colunas: "2h05", "45min", "40s".
+    function fmtCurto(seg) {
+        if (!seg) return '';
+        if (seg < 60) return seg + 's';
+        var h = Math.floor(seg / 3600), m = Math.round((seg % 3600) / 60);
+        if (h) { if (m === 60) { h++; m = 0; } return h + 'h' + (m < 10 ? '0' : '') + m; }
+        return m + 'min';
+    }
+    function ddmm(iso) { var p = String(iso || '').split('-'); return p[2] + '/' + p[1]; }
+
+    function renderGradeSemana(d) {
+        var DS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+        // Voltar so ate a semana da 1a conexao; avancar so ate a semana atual.
+        var temAntes = !!d.primeira && d.primeira < d.inicio;
+        var html = '<div class="rel-sem-nav">' +
+            '<button type="button" class="rel-sem-seta" data-passo="1"' + (temAntes ? '' : ' disabled') +
+                ' aria-label="Semana anterior">&lsaquo;</button>' +
+            '<span class="rel-sem-per">' + ddmm(d.inicio) + ' a ' + ddmm(d.fim) + '</span>' +
+            '<button type="button" class="rel-sem-seta" data-passo="-1"' + (d.semana > 0 ? '' : ' disabled') +
+                ' aria-label="Semana seguinte">&rsaquo;</button>' +
+            '</div>';
+
+        if (!d.lista || !d.lista.length) {
+            grafico.innerHTML = html + '<p class="pc-anuncio-desc">Ninguém conectou nesta semana.</p>';
+            return;
+        }
+        html += resumo2(d, d.clientes + ' cliente(s) — ' + fmtTempo(d.total) + ' no total');
+
+        // Intensidade do fundo = tempo da celula sobre o maior da grade.
+        var max = 0, i, j;
+        for (i = 0; i < d.lista.length; i++)
+            for (j = 0; j < 7; j++) if (d.lista[i].dias[j] > max) max = d.lista[i].dias[j];
+
+        html += '<div class="rel-sem-wrap"><table class="rel-sem"><thead><tr><th class="rs-cli">Cliente</th>';
+        for (j = 0; j < 7; j++) html += '<th>' + DS[j] + '</th>';
+        html += '<th class="rs-tot">Total</th></tr></thead><tbody>';
+        for (i = 0; i < d.lista.length; i++) {
+            var it = d.lista[i];
+            html += '<tr><td class="rs-cli">' + waLink(it.telefone, it.nome) + '</td>';
+            for (j = 0; j < 7; j++) {
+                var v = it.dias[j];
+                var a = v && max ? (0.12 + 0.78 * v / max) : 0;
+                html += '<td' + (v ? ' style="background:rgba(34,211,238,' + a.toFixed(2) + ')"' +
+                        ' title="' + DS[j] + ' — ' + fmtTempo(v) + '"' : ' class="rs-zero"') +
+                    '>' + (v ? fmtCurto(v) : '–') + '</td>';
+            }
+            html += '<td class="rs-tot">' + fmtCurto(it.total) + '</td></tr>';
+        }
+        grafico.innerHTML = html + '</tbody></table></div>';
+    }
+
+    // As setas ficam dentro do resultado, entao o clique e ouvido no container.
+    grafico.addEventListener('click', function (e) {
+        var b = e.target.closest ? e.target.closest('.rel-sem-seta') : null;
+        if (!b || b.disabled) return;
+        var alvo = semanaOff + parseInt(b.getAttribute('data-passo'), 10);
+        if (alvo < 0) return;
+        semanaOff = alvo;
+        buscar('&semana=' + semanaOff);
+    });
+
     function render(d) {
+        if (d.tipo === 'grade_semana') return renderGradeSemana(d);
+
         if (d.tipo === 'sumidos')     return renderSumidos(d);
         if (d.tipo === 'ranking')     return renderRanking(d);
         if (d.tipo === 'aniversario') return renderAniversario(d);
@@ -377,6 +446,24 @@
         calFechar();
     });
 
+    // Uma so porta de saida p/ a API: o botao Gerar e as setas de semana passam
+    // por aqui, cada um com o seu pedaco de query.
+    function buscar(extra) {
+        erro(null);
+        btn.disabled = true;
+        var txt = btn.textContent;
+        btn.textContent = 'Gerando…';
+        fetch(EP + (EP.indexOf('?') >= 0 ? '&' : '?') + 'tipo=' + encodeURIComponent(tipo) + extra,
+              { credentials: 'same-origin', cache: 'no-store' })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                if (!d || !d.ok) { erro((d && d.erro) || 'Erro ao gerar o relatório.'); return; }
+                render(d);
+            })
+            .catch(function () { erro('Erro ao gerar o relatório. Tente de novo.'); })
+            .then(function () { btn.disabled = false; btn.textContent = txt; });
+    }
+
     btn.addEventListener('click', function () {
         if (!tipo) { erro('Escolha o modelo do relatório.'); return; }
         var extra = '';
@@ -396,19 +483,9 @@
                 extra += '&' + campo + '=' + v;
             }
         }
-        erro(null);
-        btn.disabled = true;
-        var txt = btn.textContent;
-        btn.textContent = 'Gerando…';
         grafico.innerHTML = '';
-        fetch(EP + (EP.indexOf('?') >= 0 ? '&' : '?') + 'tipo=' + encodeURIComponent(tipo) + extra,
-              { credentials: 'same-origin', cache: 'no-store' })
-            .then(function (r) { return r.json(); })
-            .then(function (d) {
-                if (!d || !d.ok) { erro((d && d.erro) || 'Erro ao gerar o relatório.'); return; }
-                render(d);
-            })
-            .catch(function () { erro('Erro ao gerar o relatório. Tente de novo.'); })
-            .then(function () { btn.disabled = false; btn.textContent = txt; });
+        // Gerar sempre volta p/ a semana mais recente.
+        if (tipo === 'grade_semana') { semanaOff = 0; extra += '&semana=0'; }
+        buscar(extra);
     });
 })();

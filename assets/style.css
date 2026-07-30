@@ -1103,6 +1103,52 @@ html[data-tema="claro"] .leg-pct small { color: var(--g-fg3); }
 #rel-sel-label { white-space: normal; }
 #rel-sel .rt-menu { width: max-content; min-width: 250px; max-width: calc(100vw - 32px); }
 #rel-sel .rt-item { white-space: normal; }
+
+/* --- Tempo por cliente na semana: setas + grade cliente x dia --- */
+.rel-sem-nav { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 2px 0 16px; }
+.rel-sem-seta {
+    width: 30px; height: 30px; flex: none; cursor: pointer;
+    display: grid; place-items: center; font-size: 17px; line-height: 1;
+    background: none; border: 1px solid var(--t-line); color: var(--t-fg);
+    border-radius: var(--t-r); transition: background .18s, border-color .18s;
+}
+.rel-sem-seta:hover:not(:disabled) { background: var(--t-hover); border-color: var(--t-fg3); }
+.rel-sem-seta:disabled { opacity: .32; cursor: default; }
+.rel-sem-per { font-size: 13px; font-weight: 600; letter-spacing: .02em; color: var(--t-fg); min-width: 116px; text-align: center; }
+/* A grade nao cabe no celular: rola dentro da propria caixa, e a coluna do
+   cliente fica presa p/ nao se perder de quem e a linha. */
+.rel-sem-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 4px; }
+/* width:100% sozinho espremia as colunas umas sobre as outras quando o conteudo
+   nao cabia (e o wrap nunca rolava). Com min-width:max-content a tabela cresce
+   ate o que precisa e quem rola e a caixa. */
+.painel-cliente table.rel-sem { border-collapse: collapse; width: 100%; min-width: max-content; font-size: 12.5px; }
+.rel-sem th, .rel-sem td { padding: 7px 8px; text-align: center; white-space: nowrap; border: 1px solid var(--t-line); }
+.rel-sem thead th { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--t-fg3); }
+.rel-sem td { font-variant-numeric: tabular-nums; color: var(--t-fg); }
+/* Sem max-width: nome nenhum pode sair cortado — a coluna cresce e a caixa rola. */
+.rel-sem .rs-cli { text-align: left; position: sticky; left: 0; z-index: 1; background: var(--t-surface); }
+.rel-sem .rs-tot { font-weight: 700; }
+.rel-sem .rs-zero { color: var(--t-fg3); }
+.rel-sem tbody tr:hover .rs-cli { background: var(--t-hover); }
+
+@media (max-width: 600px) {
+    /* No celular o painel vira as tabelas em cards (thead some, cada linha
+       vira uma grade de 3 colunas). Isso serve a lista de leads; aqui as
+       colunas SAO os dias da semana, entao a grade continua tabela e quem
+       rola e a caixa em volta. */
+    .painel-cliente table.rel-sem { display: table; width: 100%; min-width: max-content; }
+    .painel-cliente table.rel-sem thead { display: table-header-group; }
+    .painel-cliente table.rel-sem tbody { display: table-row-group; }
+    .painel-cliente table.rel-sem tbody tr { display: table-row; gap: 0; padding: 0; border: 0; background: none; }
+    .painel-cliente table.rel-sem thead th,
+    .painel-cliente table.rel-sem tbody td {
+        display: table-cell; padding: 7px 8px; border: 1px solid var(--t-line);
+        text-align: center; white-space: nowrap; font-size: 12px;
+    }
+    .painel-cliente table.rel-sem tbody td.rs-cli,
+    .painel-cliente table.rel-sem thead th.rs-cli { text-align: left; }
+    .painel-cliente table.rel-sem tbody td::before { content: none; }
+}
 .rel-controles .pc-dst-input.rel-data { flex: 0 1 auto; min-width: 130px; width: 150px; cursor: pointer; }
 /* Calendário próprio (pt-BR) dos campos de data */
 .cal-pop {
