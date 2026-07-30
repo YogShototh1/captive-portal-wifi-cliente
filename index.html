@@ -75,6 +75,7 @@ button{font:inherit}
 .nav-in{width:var(--shell);margin-inline:auto;display:flex;align-items:center;gap:12px}
 .brand{display:flex;align-items:center;gap:9px;font-weight:600;letter-spacing:-.02em;font-size:1.02rem}
 .brand img{width:26px;height:26px;border-radius:7px}
+.brand .brand-word{width:auto;height:15px;border-radius:0;display:block}
 .nav-links{display:flex;gap:2px;margin-inline:auto}
 .nav-links a{padding:7px 14px;border-radius:100px;font-size:.875rem;font-weight:500;transition:background .2s var(--ease)}
 .nav-links a:hover{background:rgba(23,26,32,.07)}
@@ -343,6 +344,7 @@ button{font:inherit}
    ===================================================================== */
 .contato{justify-content:center;text-align:center}
 .contato h2{font-size:clamp(2.1rem,5.4vw,3.5rem);max-width:15ch;margin-inline:auto}
+.contato-banner{display:block;width:min(360px,72%);height:auto;margin:44px auto 0;border-radius:14px}
 .ways{display:flex;gap:32px;flex-wrap:wrap;justify-content:center;margin-top:40px;font-size:.9375rem}
 .ways a{display:flex;align-items:center;gap:9px;color:rgba(255,255,255,.75);transition:color .2s var(--ease)}
 .ways a:hover{color:#fff}
@@ -366,7 +368,7 @@ footer{background:var(--ink);color:rgba(255,255,255,.5);padding:24px 0 34px;font
 <!-- ===================== NAV ===================== -->
 <nav class="nav" id="nav">
   <div class="nav-in">
-    <a href="#topo" class="brand"><img src="assets/logo-icone.png?v=1" alt=""><span>Captive Data</span></a>
+    <a href="#topo" class="brand" aria-label="Captive Data"><img src="assets/logo-icone.png?v=1" alt=""><img class="brand-word" src="assets/wordmark.png?v=1" alt="Captive Data"></a>
     <div class="nav-links">
       <a href="#recursos">Recursos</a>
       <a href="#demonstracao">Demonstração</a>
@@ -625,6 +627,7 @@ footer{background:var(--ink);color:rgba(255,255,255,.5);padding:24px 0 34px;font
       Acesso ao painel
     </a>
   </div>
+  <img class="contato-banner rv rv-3" src="assets/banner-compacto.png?v=1" alt="Captive Data" width="1200" height="343">
 </section>
 
 <footer>
