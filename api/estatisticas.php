@@ -1,5 +1,5 @@
 <?php
-// Estatísticas (JSON) para o gráfico de linhas: série "conectados" (conexões)
+// Estatísticas (JSON) para o gráfico de velas: série "conectados" (conexões)
 // e "novos" (primeira conexão do número) por período:
 //   filtro=hoje   -> por hora (00..23) do dia atual
 //   filtro=semana -> por dia da semana ATUAL (segunda a domingo)
@@ -51,6 +51,7 @@ switch ($filtro) {
         }
         $expr = 'DATE({t})';
         $cond = 'YEARWEEK({t}, 1) = YEARWEEK(CURDATE(), 1)';
+        $sub  = 'HOUR({t})';
         break;
     case 'mes':
         $dias = (int) date('t');
@@ -60,6 +61,7 @@ switch ($filtro) {
         }
         $expr = 'DAY({t})';
         $cond = 'YEAR({t}) = YEAR(CURDATE()) AND MONTH({t}) = MONTH(CURDATE())';
+        $sub  = 'HOUR({t})';
         break;
     case 'ano':
         $nomes = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
@@ -69,6 +71,7 @@ switch ($filtro) {
         }
         $expr = 'MONTH({t})';
         $cond = 'YEAR({t}) = YEAR(CURDATE())';
+        $sub  = 'DAY({t})';
         break;
     default: // hoje
         for ($h = 0; $h < 24; $h++) {
@@ -77,6 +80,7 @@ switch ($filtro) {
         }
         $expr = 'HOUR({t})';
         $cond = 'DATE({t}) = CURDATE()';
+        $sub  = 'FLOOR(MINUTE({t}) / 10)';   // 6 fatias de 10 min dentro da hora
 }
 
 // Consulta agrupada -> array alinhado com $chaves (balde ausente = 0).
@@ -97,6 +101,35 @@ function est_serie(array $lista, string $sql, array $chaves): array
     return $out;
 }
 
+// Velas (OHLC) de cada balde do eixo. O "preco" e a intensidade dentro do
+// periodo: quantas pessoas por fatia (10 min dentro da hora, hora dentro do
+// dia, dia dentro do mes). Abertura = primeira fatia com movimento, fechamento
+// = ultima, maxima e minima = pico e vale entre elas. Balde parado vira vela
+// zerada. Nada e inventado: tudo sai da mesma contagem da linha antiga.
+function est_velas(array $lista, string $sql, array $chaves): array
+{
+    $porBalde = [];
+    if ($lista) {
+        $q = db()->prepare($sql);
+        $q->execute($lista);
+        foreach ($q->fetchAll() as $r) {
+            $porBalde[(string) $r['b']][] = [(int) $r['s'], (int) $r['n']];
+        }
+    }
+    $out = [];
+    foreach ($chaves as $k) {
+        $fatias = $porBalde[(string) $k] ?? [];
+        if (!$fatias) {
+            $out[] = [0, 0, 0, 0];
+            continue;
+        }
+        usort($fatias, function ($a, $b) { return $a[0] <=> $b[0]; });   // ordem cronologica
+        $vals = array_column($fatias, 1);
+        $out[] = [$vals[0], max($vals), min($vals), $vals[count($vals) - 1]];
+    }
+    return $out;
+}
+
 try {
     $ph = $lista ? implode(',', array_fill(0, count($lista), '?')) : '';
 
@@ -113,6 +146,21 @@ try {
                   AND " . str_replace('{t}', 'l.primeira_conexao', $cond) . '
                 GROUP BY b';
 
+    // Mesmas contagens, agora quebradas por fatia dentro do balde.
+    $sqlConV = "SELECT " . str_replace('{t}', 'c.conectado_em', $expr) . " AS b,
+                       " . str_replace('{t}', 'c.conectado_em', $sub) . " AS s,
+                       COUNT(DISTINCT c.lead_id) AS n
+                  FROM conexoes c JOIN leads l ON l.id = c.lead_id
+                 WHERE l.roteador IN ($ph) AND " . str_replace('{t}', 'c.conectado_em', $cond) . '
+                 GROUP BY b, s';
+    $sqlNovV = "SELECT " . str_replace('{t}', 'l.primeira_conexao', $expr) . " AS b,
+                       " . str_replace('{t}', 'l.primeira_conexao', $sub) . " AS s,
+                       COUNT(*) AS n
+                  FROM leads l
+                 WHERE l.roteador IN ($ph) AND l.primeira_conexao IS NOT NULL
+                   AND " . str_replace('{t}', 'l.primeira_conexao', $cond) . '
+                 GROUP BY b, s';
+
     $conectados = est_serie($lista, $sqlCon, $chaves);
     $novos      = est_serie($lista, $sqlNov, $chaves);
 
@@ -122,6 +170,8 @@ try {
         'labels'     => $labels,
         'conectados' => $conectados,
         'novos'      => $novos,
+        'velas_conectados' => est_velas($lista, $sqlConV, $chaves),
+        'velas_novos'      => est_velas($lista, $sqlNovV, $chaves),
         'total_conectados' => array_sum($conectados),
         'total_novos'      => array_sum($novos),
     ]);

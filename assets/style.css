@@ -1240,40 +1240,54 @@ html[data-tema="claro"] .rel-extra { color: var(--g-fg2); }
 html[data-tema="claro"] .painel-cliente input[type="date"].rel-data::-webkit-calendar-picker-indicator { filter: none; }
 
 /* --- Estatísticas: filtros + gráfico de linhas (SVG puro) --- */
-.est-filtros { display: flex; gap: 8px; flex-wrap: wrap; }
-.est-filtro {
+/* --- Aba Estatisticas: grafico de VELAS, no estilo de home broker --- */
+.est-barra { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+.est-filtros, .est-series { display: flex; gap: 8px; flex-wrap: wrap; }
+.est-filtro, .est-serie {
     padding: 8px 18px; border-radius: 999px; cursor: pointer;
     background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12);
     color: rgba(255, 255, 255, 0.75); font-family: inherit; font-size: 13px; font-weight: 700;
     transition: background .2s, color .2s, border-color .2s;
 }
-.est-filtro:hover { border-color: #22d3ee; color: #fff; }
-.est-filtro.atual { background: #0891b2; border-color: #0891b2; color: #fff; }
-.est-wrap { position: relative; margin-top: 14px; }
+.est-filtro:hover, .est-serie:hover { border-color: #22d3ee; color: #fff; }
+.est-filtro.atual, .est-serie.atual { background: #0891b2; border-color: #0891b2; color: #fff; }
+
+/* O grafico ganha painel proprio, escuro nos dois temas: vela verde/vermelha
+   so tem contraste sobre fundo escuro. */
+.est-wrap {
+    position: relative; margin-top: 14px; padding: 6px 4px 0;
+    background: #0b0f16; border: 1px solid rgba(255,255,255,.08); border-radius: 4px;
+}
 .est-svg { display: block; width: 100%; height: auto; }
-.est-grid { stroke: rgba(255, 255, 255, 0.09); stroke-width: 1; }
-.est-txt { fill: rgba(255, 255, 255, 0.5); font-size: 9.5px; font-family: inherit; }
-.est-linha-con { fill: none; stroke: #06b6d4; stroke-width: 2.4; stroke-linecap: round; }
-.est-linha-nov { fill: none; stroke: #fff; stroke-width: 2.4; stroke-linecap: round; }
-.est-area-con { fill: rgba(6,182,212, 0.13); stroke: none; }
-.est-area-nov { fill: rgba(255, 255, 255, 0.10); stroke: none; }
-.est-cursor { stroke: rgba(255, 255, 255, 0.25); stroke-width: 1; stroke-dasharray: 3 3; }
-.est-dot-con { fill: #06b6d4; stroke: #fff; stroke-width: 1.5; }
-.est-dot-nov { fill: #fff; stroke: #0d1420; stroke-width: 1.5; }
+.est-grid { stroke: rgba(255, 255, 255, 0.07); stroke-width: 1; }
+.est-txt { fill: rgba(255, 255, 255, 0.45); font-size: 9.5px; font-family: inherit; }
+.est-txt-x { fill: rgba(255, 255, 255, 0.38); }
+
+/* Velas: corpo entre abertura e fechamento, pavio da minima a maxima. */
+.est-corpo.est-alta  { fill: #16c784; }
+.est-corpo.est-baixa { fill: #ea3943; }
+.est-pavio { stroke-width: 1.4; }
+.est-pavio.est-alta  { stroke: #16c784; }
+.est-pavio.est-baixa { stroke: #ea3943; }
+
+.est-cursor { stroke: rgba(255, 255, 255, 0.35); stroke-width: 1; stroke-dasharray: 3 3; }
+.est-realce { fill: rgba(255, 255, 255, 0.05); }
+
 .est-tooltip {
     position: absolute; display: none; pointer-events: none; z-index: 5;
-    background: #0d1420; border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 10px;
+    background: rgba(13, 20, 32, .96); border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 4px;
     padding: 8px 12px; font-size: 12px; color: #fff; white-space: nowrap;
     box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.7);
 }
-.est-tooltip b { display: block; margin-bottom: 3px; font-size: 12.5px; }
-.est-tooltip span { display: block; }
-.est-tt-con { color: #67e8f9; }
-.est-tt-nov { color: #fff; }
-.est-legenda { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 8px; font-size: 12.5px; color: rgba(255, 255, 255, 0.7); }
-.est-leg::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
-.est-leg-con::before { background: #06b6d4; }
-.est-leg-nov::before { background: #fff; }
+.est-tooltip b { display: block; margin-bottom: 5px; font-size: 12.5px; }
+.est-tooltip span { display: flex; justify-content: space-between; gap: 18px; color: rgba(255,255,255,.62); }
+.est-tooltip i { font-style: normal; font-weight: 600; color: #fff; font-variant-numeric: tabular-nums; }
+.est-tt-tot { margin-top: 5px; padding-top: 5px; border-top: 1px solid rgba(255,255,255,.12); }
+.est-tt-alta  { color: #16c784 !important; font-weight: 600; }
+.est-tt-baixa { color: #ea3943 !important; font-weight: 600; }
+
+.est-legenda { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 10px; font-size: 12.5px; color: rgba(255, 255, 255, 0.7); }
+.est-leg-dica { color: rgba(255, 255, 255, 0.45); }
 
 /* Celular: drawer sobreposto, fechado por padrão */
 @media (max-width: 900px) {
@@ -1500,16 +1514,12 @@ html[data-tema="claro"] .dash-cal-bar b { color: var(--g-fg); }
 html[data-tema="claro"] .dash-cal-dow { color: var(--g-fg3); }
 html[data-tema="claro"] .dash-dia { background: rgba(255,255,255,0.65); border-color: rgba(15,23,42,0.10); color: var(--g-fg2); }
 html[data-tema="claro"] .dash-dia.visitado { background: #06b6d4; border-color: #0891b2; color: #fff; }
-html[data-tema="claro"] .est-tt, html[data-tema="claro"] .dash-tt { background: rgba(255,255,255,0.92); border-color: rgba(15,23,42,0.12); color: var(--g-fg); }
-html[data-tema="claro"] .est-txt { fill: var(--g-fg3); }
+html[data-tema="claro"] .dash-tt { background: rgba(255,255,255,0.92); border-color: rgba(15,23,42,0.12); color: var(--g-fg); }
+
 /* Série "novos" = branca no escuro; no claro vira tinta escura (branco sumiria) */
-html[data-tema="claro"] .est-linha-nov { stroke: var(--g-fg); }
-html[data-tema="claro"] .est-area-nov { fill: rgba(15,23,42,0.10); }
-html[data-tema="claro"] .est-dot-nov { fill: var(--g-fg); stroke: #fff; }
-html[data-tema="claro"] .est-tt-nov { color: var(--g-fg); }
-html[data-tema="claro"] .est-leg-nov::before { background: var(--g-fg); }
-html[data-tema="claro"] .est-filtro { background: rgba(255,255,255,0.6); border-color: rgba(15,23,42,0.14); color: var(--g-fg2); }
-html[data-tema="claro"] .est-filtro.atual { background: var(--g-cyan); border-color: var(--g-cyan); color: #fff; }
+
+html[data-tema="claro"] .est-filtro, html[data-tema="claro"] .est-serie { background: rgba(255,255,255,0.6); border-color: rgba(15,23,42,0.14); color: var(--g-fg2); }
+html[data-tema="claro"] .est-filtro.atual, html[data-tema="claro"] .est-serie.atual { background: var(--g-cyan); border-color: var(--g-cyan); color: #fff; }
 html[data-tema="claro"] .rel-resumo { color: var(--g-fg2); }
 html[data-tema="claro"] .rel-rotulo, html[data-tema="claro"] .rel-valor { color: var(--g-fg); }
 html[data-tema="claro"] .rel-pct { color: var(--g-fg2); }
@@ -1552,10 +1562,10 @@ html[data-tema="claro"] .est-legenda { color: var(--g-fg2); }
 /* Hovers com fundo cyan claro: texto branco ficava ilegível */
 html[data-tema="claro"] .pc-conex-seta:hover,
 html[data-tema="claro"] a.pc-pag-btn:hover,
-html[data-tema="claro"] .est-filtro:hover { color: var(--g-fg); }
+html[data-tema="claro"] .est-filtro:hover, html[data-tema="claro"] .est-serie:hover { color: var(--g-fg); }
 /* Grade e cursor do gráfico de linhas (brancos sumiam no claro) */
-html[data-tema="claro"] .est-grid { stroke: rgba(15,23,42,0.10); }
-html[data-tema="claro"] .est-cursor { stroke: rgba(15,23,42,0.30); }
+
+
 /* Recorrência: verde (vindo) / vermelho (sumido) — meu override .dash-card b
    estava apagando a cor pra preto no claro. Tons mais escuros p/ legibilidade. */
 html[data-tema="claro"] .dash-card.dash-bom b { color: #059669; }
@@ -1915,9 +1925,9 @@ html[data-tema] .painel-cliente td.pc-limite { white-space: nowrap; }
    colorido de proposito — aqui e so a "casca"). */
 html[data-tema] .painel-cliente .rel-mais { background: transparent; border: 1px solid var(--t-line); color: var(--t-fg2); border-radius: var(--t-r); }
 html[data-tema] .painel-cliente .rel-mais:hover { background: var(--t-hover); border-color: var(--t-fg); color: var(--t-fg); }
-html[data-tema] .painel-cliente .est-filtro { background: transparent; border: 1px solid var(--t-line); color: var(--t-fg2); border-radius: 100px; font-weight: 500; }
-html[data-tema] .painel-cliente .est-filtro:hover { border-color: var(--t-fg); color: var(--t-fg); background: var(--t-hover); }
-html[data-tema] .painel-cliente .est-filtro.atual { background: var(--t-fg); border-color: var(--t-fg); color: var(--t-bg); }
+html[data-tema] .painel-cliente .est-filtro, html[data-tema] .painel-cliente .est-serie { background: transparent; border: 1px solid var(--t-line); color: var(--t-fg2); border-radius: 100px; font-weight: 500; }
+html[data-tema] .painel-cliente .est-filtro:hover, html[data-tema] .painel-cliente .est-serie:hover { border-color: var(--t-fg); color: var(--t-fg); background: var(--t-hover); }
+html[data-tema] .painel-cliente .est-filtro.atual, html[data-tema] .painel-cliente .est-serie.atual { background: var(--t-fg); border-color: var(--t-fg); color: var(--t-bg); }
 html[data-tema] .painel-cliente .pc-dst-atual strong { color: var(--t-fg); }
 html[data-tema] .painel-cliente .dash-dia { border-radius: var(--t-r); }
 html[data-tema] .painel-cliente .dash-dia.visitado { background: var(--t-fg); border-color: var(--t-fg); color: var(--t-bg); }

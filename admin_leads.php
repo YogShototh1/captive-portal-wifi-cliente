@@ -103,7 +103,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Leads — <?= h($cliente['nome'] ?: $cliente['email']) ?></title>
     <link rel="icon" href="assets/logo-icone.png?v=1" type="image/png">
-    <link rel="stylesheet" href="assets/style.css?v=107">
+    <link rel="stylesheet" href="assets/style.css?v=108">
 </head>
 <body class="painel-cliente">
     <!-- Camadas de fundo (decorativas) -->
@@ -636,12 +636,18 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                     <div class="glow-body">
                         <div class="pc-dst" id="estatisticas-box" data-endpoint="api/estatisticas.php?<?= $rotAtivo !== null ? 'roteador=' . urlencode($rotAtivo) : 'cliente_id=' . (int) $id ?>">
                             <h2 class="pc-anuncio-title">Estatísticas</h2>
-                            <p class="pc-anuncio-desc">Pessoas conectadas no Wi-Fi (cada número conta uma vez por ponto do gráfico) e novos clientes ao longo do tempo. Passe o mouse sobre o gráfico para ver os valores de cada ponto.</p>
-                            <div class="est-filtros">
-                                <button type="button" class="est-filtro atual" data-filtro="hoje">Hoje</button>
-                                <button type="button" class="est-filtro" data-filtro="semana">Semana</button>
-                                <button type="button" class="est-filtro" data-filtro="mes">Mês</button>
-                                <button type="button" class="est-filtro" data-filtro="ano">Ano</button>
+                            <p class="pc-anuncio-desc">Movimento do Wi-Fi em velas: cada uma abre, sobe, cai e fecha conforme as conexões dentro do período. Verde fechou acima da abertura, vermelho abaixo. Passe o mouse para ver os números da vela.</p>
+                            <div class="est-barra">
+                                <div class="est-filtros">
+                                    <button type="button" class="est-filtro atual" data-filtro="hoje">Hoje</button>
+                                    <button type="button" class="est-filtro" data-filtro="semana">Semana</button>
+                                    <button type="button" class="est-filtro" data-filtro="mes">Mês</button>
+                                    <button type="button" class="est-filtro" data-filtro="ano">Ano</button>
+                                </div>
+                                <div class="est-series">
+                                    <button type="button" class="est-serie atual" data-serie="conectados">Todas as conexões</button>
+                                    <button type="button" class="est-serie" data-serie="novos">Só as novas</button>
+                                </div>
                             </div>
                             <div class="est-wrap" id="est-wrap"></div>
                             <div class="est-tooltip" id="est-tooltip"></div>
@@ -739,7 +745,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <script src="assets/dashboard.js?v=10"></script>
     <script src="assets/dashgeral.js?v=14"></script>
     <script src="assets/acessolog.js?v=3"></script>
-    <script src="assets/estatisticas.js?v=3"></script>
+    <script src="assets/estatisticas.js?v=4"></script>
     <script src="assets/leads-live.js?v=30"></script>
     <?php require __DIR__ . '/inc/tema.php'; ?>
 </body>

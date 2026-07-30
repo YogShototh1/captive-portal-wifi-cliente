@@ -1,5 +1,8 @@
-/* Aba Estatísticas: gráfico de linhas (SVG puro) com filtros hoje/semana/mês/ano
-   e tooltip no hover mostrando o horário/data e os valores do ponto.
+/* Aba Estatísticas: gráfico de VELAS (candlestick, SVG puro) com filtros
+   hoje/semana/mês/ano e um botão para alternar entre todas as conexões e só
+   as novas. Cada vela é um balde do eixo; o "preço" é a intensidade dentro
+   dele (pessoas por fatia de 10 min / por hora / por dia), então abertura,
+   máxima, mínima e fechamento saem de contagem real, não de estimativa.
    Config vem do #estatisticas-box (data-endpoint). */
 (function () {
     var box = document.getElementById('estatisticas-box');
@@ -9,112 +12,125 @@
     var tooltip = document.getElementById('est-tooltip');
     var legenda = document.getElementById('est-legenda');
     var filtros = box.querySelectorAll('.est-filtro');
+    var series  = box.querySelectorAll('.est-serie');
     if (!wrap) return;
 
-    var W = 720, H = 260, PL = 38, PR = 12, PT = 12, PB = 26; // viewBox e margens
+    var W = 720, H = 300, PL = 10, PR = 46, PT = 14, PB = 26;  // escala Y na direita, como nos home brokers
     var dados = null;
+    var serie  = 'conectados';   // ou 'novos'
+    var filtro = 'hoje';
 
-    // Escala Y "bonita": teto múltiplo de 1/2/5 * 10^k, 5 faixas.
+    // Teto da escala: precisa ser MULTIPLO DE 4 do passo, senao as 4 linhas da
+    // grade caem em numero quebrado (0, 4, 8, 11, 15 em vez de 0, 4, 8, 12, 16).
     function tetoBonito(max) {
-        if (max <= 5) return 5;
-        var bruto = max / 5, pot = Math.pow(10, Math.floor(Math.log(bruto) / Math.LN10)), n = bruto / pot;
-        var passo = (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * pot;
-        return Math.ceil(max / passo) * passo;
+        if (max <= 4) { return 4; }
+        var pot = Math.pow(10, Math.floor(Math.log(max / 4) / Math.LN10));
+        var cands = [1, 2, 2.5, 5, 10];
+        for (var i = 0; i < cands.length; i++) {
+            var passo = cands[i] * pot;
+            // Passo quebrado (2,5 quando a potencia e 1) daria rotulo 2,5/7,5 —
+            // arredondados viravam 3 e 8, fora do lugar na grade.
+            if (passo % 1 !== 0) { continue; }
+            if (passo * 4 >= max) { return passo * 4; }
+        }
+        return Math.ceil(max / (10 * pot)) * 10 * pot;
     }
 
-    // Caminho suave (Catmull-Rom -> Bézier). Os pontos de controle são
-    // CLAMPADOS ao intervalo vertical do gráfico [yMin, yMax]: sem isso a curva
-    // "passa do zero" (overshoot) entre um pico e um vizinho zerado.
-    function caminho(pts, yMin, yMax) {
-        if (pts.length < 2) return '';
-        function cl(y) { return Math.min(yMax, Math.max(yMin, y)); }
-        var d = 'M' + pts[0][0].toFixed(1) + ' ' + pts[0][1].toFixed(1);
-        for (var i = 0; i < pts.length - 1; i++) {
-            var p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
-            var c1x = p1[0] + (p2[0] - p0[0]) / 6, c1y = cl(p1[1] + (p2[1] - p0[1]) / 6);
-            var c2x = p2[0] - (p3[0] - p1[0]) / 6, c2y = cl(p2[1] - (p3[1] - p1[1]) / 6);
-            d += 'C' + c1x.toFixed(1) + ' ' + c1y.toFixed(1) + ',' + c2x.toFixed(1) + ' ' + c2y.toFixed(1) + ',' + p2[0].toFixed(1) + ' ' + p2[1].toFixed(1);
-        }
-        return d;
-    }
-
-    function pontos(valores, teto) {
-        var n = valores.length, innerW = W - PL - PR, innerH = H - PT - PB, pts = [];
-        for (var i = 0; i < n; i++) {
-            pts.push([PL + (n > 1 ? i * innerW / (n - 1) : innerW / 2), PT + innerH - (valores[i] / teto) * innerH]);
-        }
-        return pts;
-    }
+    function velasDe(d)  { return serie === 'novos' ? d.velas_novos : d.velas_conectados; }
+    function totaisDe(d) { return serie === 'novos' ? d.novos : d.conectados; }
 
     function render(d) {
         dados = d;
-        var teto = tetoBonito(Math.max.apply(null, d.conectados.concat(d.novos, [1])));
+        var v = velasDe(d), n = v.length, i;
+        var pico = 1;
+        for (i = 0; i < n; i++) { if (v[i][1] > pico) pico = v[i][1]; }
+        var teto = tetoBonito(pico);
         var innerH = H - PT - PB, innerW = W - PL - PR;
+        var base = PT + innerH;
+        var passo = innerW / n;                     // uma faixa por vela
+        var larg  = Math.max(2, Math.min(16, passo * 0.62));
+        var y = function (val) { return PT + innerH - (val / teto) * innerH; };
+
         var s = '<svg class="est-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet">';
-        // grade + rótulos Y (5 faixas)
-        for (var g = 0; g <= 5; g++) {
-            var y = PT + innerH - g * innerH / 5;
-            s += '<line class="est-grid" x1="' + PL + '" y1="' + y + '" x2="' + (W - PR) + '" y2="' + y + '"/>';
-            s += '<text class="est-txt" x="' + (PL - 6) + '" y="' + (y + 3.5) + '" text-anchor="end">' + Math.round(teto * g / 5) + '</text>';
+        // grade + escala na direita
+        for (var g = 0; g <= 4; g++) {
+            var gy = PT + innerH - g * innerH / 4;
+            s += '<line class="est-grid" x1="' + PL + '" y1="' + gy + '" x2="' + (W - PR) + '" y2="' + gy + '"/>';
+            s += '<text class="est-txt" x="' + (W - PR + 6) + '" y="' + (gy + 3.5) + '">' + Math.round(teto * g / 4) + '</text>';
         }
         // rótulos X (pula alguns para não amontoar)
-        var n = d.labels.length, pulo = Math.ceil(n / 10);
-        for (var i = 0; i < n; i++) {
+        var pulo = Math.ceil(n / 12);
+        for (i = 0; i < n; i++) {
             if (i % pulo !== 0 && i !== n - 1) continue;
-            var x = PL + (n > 1 ? i * innerW / (n - 1) : innerW / 2);
-            s += '<text class="est-txt" x="' + x + '" y="' + (H - 8) + '" text-anchor="middle">' + d.labels[i] + '</text>';
+            s += '<text class="est-txt est-txt-x" x="' + (PL + i * passo + passo / 2) + '" y="' + (H - 8) + '" text-anchor="middle">' + d.labels[i] + '</text>';
         }
-        // séries: área + linha (conectados = azul, novos = branco)
-        var pc = pontos(d.conectados, teto), pn = pontos(d.novos, teto);
-        var base = PT + innerH;
-        s += '<path class="est-area-con" d="' + caminho(pc, PT, base) + ' L' + (W - PR) + ' ' + base + ' L' + PL + ' ' + base + ' Z"/>';
-        s += '<path class="est-area-nov" d="' + caminho(pn, PT, base) + ' L' + (W - PR) + ' ' + base + ' L' + PL + ' ' + base + ' Z"/>';
-        s += '<path class="est-linha-con" d="' + caminho(pc, PT, base) + '"/>';
-        s += '<path class="est-linha-nov" d="' + caminho(pn, PT, base) + '"/>';
-        // marcadores do hover (escondidos até passar o mouse)
+        // velas
+        for (i = 0; i < n; i++) {
+            var o = v[i][0], hi = v[i][1], lo = v[i][2], c = v[i][3];
+            if (!hi && !o && !c) { continue; }                    // balde sem movimento
+            var cx = PL + i * passo + passo / 2;
+            var cls = (c >= o) ? 'est-alta' : 'est-baixa';
+            // pavio: da mínima à máxima
+            s += '<line class="est-pavio ' + cls + '" x1="' + cx.toFixed(1) + '" y1="' + y(hi).toFixed(1) +
+                 '" x2="' + cx.toFixed(1) + '" y2="' + y(lo).toFixed(1) + '"/>';
+            // corpo: entre abertura e fechamento (mínimo de 1px p/ o doji aparecer)
+            var yo = y(o), yc = y(c);
+            s += '<rect class="est-corpo ' + cls + '" x="' + (cx - larg / 2).toFixed(1) + '" y="' + Math.min(yo, yc).toFixed(1) +
+                 '" width="' + larg.toFixed(1) + '" height="' + Math.max(1, Math.abs(yc - yo)).toFixed(1) + '"/>';
+        }
+        // crosshair (escondido até o hover)
+        s += '<rect id="est-realce" class="est-realce" y="' + PT + '" height="' + innerH + '" style="display:none"/>';
         s += '<line id="est-cursor" class="est-cursor" y1="' + PT + '" y2="' + base + '" style="display:none"/>';
-        s += '<circle id="est-dot-con" class="est-dot est-dot-con" r="4" style="display:none"/>';
-        s += '<circle id="est-dot-nov" class="est-dot est-dot-nov" r="4" style="display:none"/>';
         s += '</svg>';
         wrap.innerHTML = s;
         wrap.appendChild(tooltip);
+
         if (legenda) {
-            legenda.innerHTML = '<span class="est-leg est-leg-con">Conectados: <b>' + d.total_conectados + '</b></span>' +
-                                '<span class="est-leg est-leg-nov">Novos clientes: <b>' + d.total_novos + '</b></span>';
+            var tot = serie === 'novos' ? d.total_novos : d.total_conectados;
+            legenda.innerHTML = '<span class="est-leg">' +
+                (serie === 'novos' ? 'Novos clientes' : 'Pessoas conectadas') + ' no período: <b>' + tot + '</b></span>' +
+                '<span class="est-leg est-leg-dica">Cada vela mostra o movimento dentro d' +
+                (filtro === 'hoje' ? 'a hora, em fatias de 10 minutos' :
+                 filtro === 'ano'  ? 'o mês, dia a dia' : 'o dia, hora a hora') + '</span>';
         }
-        ligarHover(pc, pn, teto);
+        ligarHover(passo);
     }
 
-    function ligarHover(pc, pn) {
+    function ligarHover(passo) {
         var svg = wrap.querySelector('svg');
         var cursor = document.getElementById('est-cursor');
-        var dotC = document.getElementById('est-dot-con');
-        var dotN = document.getElementById('est-dot-nov');
+        var realce = document.getElementById('est-realce');
         function mover(e) {
             if (!dados) return;
+            var v = velasDe(dados), n = v.length;
             var r = svg.getBoundingClientRect();
-            var mx = (e.clientX - r.left) * (W / r.width); // px -> coordenada do viewBox
-            var n = dados.labels.length, innerW = W - PL - PR;
-            var idx = Math.round((mx - PL) / (n > 1 ? innerW / (n - 1) : innerW));
+            var mx = (e.clientX - r.left) * (W / r.width);     // px -> viewBox
+            var idx = Math.floor((mx - PL) / passo);
             if (idx < 0) idx = 0;
             if (idx > n - 1) idx = n - 1;
-            var x = pc[idx][0];
-            cursor.setAttribute('x1', x); cursor.setAttribute('x2', x); cursor.style.display = '';
-            dotC.setAttribute('cx', x); dotC.setAttribute('cy', pc[idx][1]); dotC.style.display = '';
-            dotN.setAttribute('cx', x); dotN.setAttribute('cy', pn[idx][1]); dotN.style.display = '';
+            var cx = PL + idx * passo + passo / 2;
+            cursor.setAttribute('x1', cx); cursor.setAttribute('x2', cx); cursor.style.display = '';
+            realce.setAttribute('x', PL + idx * passo); realce.setAttribute('width', passo); realce.style.display = '';
+            var o = v[idx][0], hi = v[idx][1], lo = v[idx][2], c = v[idx][3];
+            var dif = c - o;
             tooltip.innerHTML = '<b>' + dados.labels[idx] + '</b>' +
-                '<span class="est-tt-con">Conectados: ' + dados.conectados[idx] + '</span>' +
-                '<span class="est-tt-nov">Novos clientes: ' + dados.novos[idx] + '</span>';
+                '<span>Abertura <i>' + o + '</i></span>' +
+                '<span>Máxima <i>' + hi + '</i></span>' +
+                '<span>Mínima <i>' + lo + '</i></span>' +
+                '<span>Fechamento <i>' + c + '</i></span>' +
+                '<span class="est-tt-tot">Total no período <i>' + totaisDe(dados)[idx] + '</i></span>' +
+                '<span class="' + (dif >= 0 ? 'est-tt-alta' : 'est-tt-baixa') + '">' +
+                    (dif >= 0 ? '▲ +' : '▼ ') + dif + '</span>';
             tooltip.style.display = 'block';
-            // posiciona ao lado do ponto, sem sair do gráfico
-            var px = x * (r.width / W), py = pc[idx][1] * (r.height / H);
+            var px = cx * (r.width / W);
             var tw = tooltip.offsetWidth;
             tooltip.style.left = Math.min(Math.max(px + 12, 0), r.width - tw - 4) + 'px';
-            tooltip.style.top = Math.max(py - 10, 0) + 'px';
+            tooltip.style.top = '8px';
         }
         function sair() {
             tooltip.style.display = 'none';
-            cursor.style.display = 'none'; dotC.style.display = 'none'; dotN.style.display = 'none';
+            cursor.style.display = 'none';
+            realce.style.display = 'none';
         }
         svg.addEventListener('mousemove', mover);
         svg.addEventListener('mouseleave', sair);
@@ -122,12 +138,13 @@
         svg.addEventListener('touchend', sair);
     }
 
-    function carregar(filtro) {
+    function carregar(f) {
+        filtro = f;
         for (var i = 0; i < filtros.length; i++) {
-            filtros[i].classList.toggle('atual', filtros[i].getAttribute('data-filtro') === filtro);
+            filtros[i].classList.toggle('atual', filtros[i].getAttribute('data-filtro') === f);
         }
         wrap.innerHTML = '<p class="pc-anuncio-desc">Carregando…</p>';
-        fetch(EP + (EP.indexOf('?') >= 0 ? '&' : '?') + 'filtro=' + encodeURIComponent(filtro),
+        fetch(EP + (EP.indexOf('?') >= 0 ? '&' : '?') + 'filtro=' + encodeURIComponent(f),
               { credentials: 'same-origin', cache: 'no-store' })
             .then(function (r) { return r.json(); })
             .then(function (d) {
@@ -139,6 +156,16 @@
 
     for (var i = 0; i < filtros.length; i++) {
         filtros[i].addEventListener('click', function () { carregar(this.getAttribute('data-filtro')); });
+    }
+    // Trocar de série não refaz a consulta: os dois conjuntos já vieram juntos.
+    for (i = 0; i < series.length; i++) {
+        series[i].addEventListener('click', function () {
+            serie = this.getAttribute('data-serie');
+            for (var j = 0; j < series.length; j++) {
+                series[j].classList.toggle('atual', series[j] === this);
+            }
+            if (dados) { render(dados); }
+        });
     }
     carregar('hoje');
 })();
