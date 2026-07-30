@@ -118,9 +118,17 @@ if ($tipo === 'grade_semana') {
         try {
             // Sessoes que ENCOSTAM na semana (nao so as que comecam nela): uma
             // sessao de segunda a quarta precisa entrar na conta dos tres dias.
-            // Sessao ainda aberta (segundos NULL) vale ate o ultimo instante
-            // confirmado pelo roteador (visto_em), ou ate agora.
-            $sqlFim = "COALESCE(DATE_ADD(c.conectado_em, INTERVAL c.segundos SECOND), c.visto_em, NOW())";
+            //
+            // O fim e o instante gravado (conectado_em + segundos) ou, se a
+            // sessao segue aberta, o ultimo instante CONFIRMADO pelo roteador
+            // (visto_em). Nunca NOW(): o lead.php abre a conexao com segundos e
+            // visto_em nulos e o status.php so fecha as que ja foram vistas no
+            // polling, entao conexao que nunca apareceu em /ip/hotspot/active
+            // fica orfa para sempre — com NOW() cada orfa virava "conectado
+            // desde o login ate agora" e enchia a semana inteira de 24h.
+            // Sem os dois campos a duracao e desconhecida: o proprio WHERE a
+            // descarta, porque comparacao com NULL nao e verdadeira.
+            $sqlFim = "COALESCE(DATE_ADD(c.conectado_em, INTERVAL c.segundos SECOND), c.visto_em)";
             $sel = "SELECT c.lead_id, l.telefone, l.nome, c.conectado_em, $sqlFim AS fim
                       FROM conexoes c JOIN leads l ON l.id = c.lead_id
                      WHERE l.roteador IN ($ph)
@@ -130,19 +138,20 @@ if ($tipo === 'grade_semana') {
                 $q->execute(array_merge($lista, [date('Y-m-d H:i:s', $semFim), date('Y-m-d H:i:s', $semIni)]));
             } catch (Throwable $e) {
                 // Banco antigo, sem conexoes.visto_em (o status.php cria na 1a
-                // rodada): cai para "aberta conta ate agora".
-                $q = db()->prepare(str_replace('c.visto_em, ', '', $sel));
+                // rodada): so as sessoes ja fechadas entram.
+                $q = db()->prepare(str_replace(', c.visto_em', '', $sel));
                 $q->execute(array_merge($lista, [date('Y-m-d H:i:s', $semFim), date('Y-m-d H:i:s', $semIni)]));
             }
 
             // 1) Recorta cada sessao na semana e guarda os intervalos por cliente.
             $porLead = [];
             foreach ($q->fetchAll() as $r) {
-                $ini = strtotime((string) $r['conectado_em']);
-                $fim = $r['fim'] ? strtotime((string) $r['fim']) : $agora;
-                if ($fim > $agora) { $fim = $agora; }          // nada no futuro
-                $ini = max($ini, $semIni);
-                $fim = min($fim, $semFim);
+                // conexao_intervalo devolve null quando a duracao e desconhecida
+                // (conexao que o polling nunca viu) — ver inc/util.php.
+                $iv = conexao_intervalo($r['conectado_em'], $r['fim'], $agora);
+                if ($iv === null) { continue; }
+                $ini = max($iv[0], $semIni);
+                $fim = min($iv[1], $semFim);
                 if ($fim <= $ini) { continue; }
                 $id = (int) $r['lead_id'];
                 if (!isset($porLead[$id])) {

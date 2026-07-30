@@ -51,5 +51,32 @@ $d = semana_reparte([[$t('2026-07-27 10:00'), $t('2026-07-27 10:00')],
                      [$t('2026-07-27 15:00'), $t('2026-07-27 14:00')]], $lim);
 $ok(array_sum($d) === 0, 'intervalo vazio/invertido nao vira tempo');
 
+// ---- conexao_intervalo(): de onde sai o fim de cada sessao ----
+$agora = $t('2026-07-29 12:00');
+$iv = conexao_intervalo('2026-07-27 08:00:00', '2026-07-27 10:00:00', $agora);
+$ok($iv === [$t('2026-07-27 08:00'), $t('2026-07-27 10:00')], 'sessao fechada vira o intervalo gravado');
+
+$iv = conexao_intervalo('2026-07-29 09:00:00', '2026-07-29 11:30:00', $agora);
+$ok($iv[1] === $t('2026-07-29 11:30'), 'sessao aberta vale ate o ultimo visto, nao ate agora');
+
+// A regressao: conexao que o polling nunca viu (sem segundos e sem visto_em).
+$ok(conexao_intervalo('2026-05-02 19:00:00', null, $agora) === null,
+    'conexao nunca vista nao vira tempo (era a semana toda em 24h)');
+$ok(conexao_intervalo('2026-05-02 19:00:00', '', $agora) === null, 'fim vazio tambem e descartado');
+
+$iv = conexao_intervalo('2026-07-29 11:00:00', '2026-07-29 23:00:00', $agora);
+$ok($iv[1] === $agora, 'fim no futuro e cortado no agora');
+$ok(conexao_intervalo('2026-07-27 10:00:00', '2026-07-27 10:00:00', $agora) === null,
+    'sessao de duracao zero nao vira tempo');
+
+// E o efeito na grade: so a sessao real aparece, a orfa nao.
+$sess = [];
+foreach ([['2026-07-27 08:00:00', '2026-07-27 12:00:00'], ['2026-05-02 19:00:00', null]] as $l) {
+    $x = conexao_intervalo($l[0], $l[1], $agora);
+    if ($x !== null) { $sess[] = $x; }
+}
+$d = semana_reparte($sess, $lim);
+$ok(array_sum($d) === 4 * $H && $d[1] === 4 * $H, 'grade com 1 sessao real + 1 orfa = so as 4h reais');
+
 echo $falhas ? "\n$falhas falha(s)\n" : "\ntudo certo\n";
 exit($falhas ? 1 : 0);

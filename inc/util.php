@@ -585,3 +585,22 @@ function semana_reparte(array $sessoes, array $lim): array
     }
     return $dias;
 }
+
+// Intervalo [inicio, fim] de UMA linha de `conexoes`, em timestamp, ou null
+// quando a duracao e desconhecida.
+//
+// $fim vem do banco como conectado_em + segundos (sessao fechada) ou visto_em
+// (sessao aberta, ultimo instante confirmado pelo roteador). Vazio significa
+// conexao que o polling nunca viu: o lead.php abre a linha com segundos e
+// visto_em nulos, e o status.php so fecha as que ja foram vistas, entao ela
+// fica assim para sempre. Tratar isso como "ate agora" fazia cada cliente
+// aparecer conectado a semana inteira.
+function conexao_intervalo(?string $inicio, ?string $fim, int $agora): ?array
+{
+    if ($inicio === null || $inicio === '' || $fim === null || $fim === '') { return null; }
+    $a = strtotime($inicio);
+    $b = strtotime($fim);
+    if ($a === false || $b === false) { return null; }
+    if ($b > $agora) { $b = $agora; }      // relogio adiantado nao vira tempo
+    return $b > $a ? [$a, $b] : null;
+}
