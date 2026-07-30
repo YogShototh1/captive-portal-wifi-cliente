@@ -61,10 +61,17 @@
     var carregado = false;
     function carregar() {
         lista.innerHTML = '<p class="pc-anuncio-desc">Verificando…</p>';
+        // Mostra o motivo quando o servidor manda um: "nao deu" sozinho nao
+        // ajuda ninguem a entender o que aconteceu.
+        var falhou = function (msg) {
+            lista.innerHTML = '<p class="pc-anuncio-msg err">' + esc(msg || 'Não deu para carregar os alertas.') + '</p>';
+        };
         fetch(EP, { credentials: 'same-origin', cache: 'no-store' })
-            .then(function (r) { return r.json(); })
-            .then(function (d) {
-                if (!d || !d.ok) { lista.innerHTML = '<p class="pc-anuncio-msg err">Não deu para carregar os alertas.</p>'; return; }
+            .then(function (r) { return r.text(); })
+            .then(function (t) {
+                var d = null;
+                try { d = JSON.parse(t); } catch (e) { throw new Error('resposta inesperada do servidor'); }
+                if (!d || !d.ok) { falhou(d && d.erro); return; }
                 if (!d.avisos || !d.avisos.length) {
                     lista.innerHTML = d.marcados
                         ? '<p class="al-vazio">Nada a relatar por aqui — nenhum dos avisos que você marcou aconteceu.</p>'
@@ -86,7 +93,7 @@
                 }
                 lista.innerHTML = html;
             })
-            .catch(function () { lista.innerHTML = '<p class="pc-anuncio-msg err">Não deu para carregar os alertas.</p>'; });
+            .catch(function (e) { falhou(e && e.message); });
     }
 
     lista.addEventListener('click', function (e) {

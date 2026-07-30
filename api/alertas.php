@@ -43,6 +43,10 @@ $LIMITE   = 300;   // teto da lista que volta para a tela
 // Base comum: um registro por cliente com a primeira/ultima visita, em quantos
 // dias distintos veio e em quantas semanas distintas. Tudo por CONEXAO, que e
 // onde ficam as visitas de verdade.
+//
+// No $having so entram agregados (MAX/COUNT) ou os apelidos do SELECT (pri,
+// ult, dias, semanas, ult_antes). Coluna crua de `leads` ali da erro: o MySQL
+// nao resolve no HAVING o que nao esta no GROUP BY nem agregado.
 function base_clientes(string $ph, array $lista, string $having, array $extra = []): array
 {
     if (!$lista) {
@@ -129,6 +133,20 @@ function acessos_janela(string $ph, array $lista, int $desde): int
     return (int) $q->fetchColumn();
 }
 
+// Devolve o JSON tolerando texto que nao seja UTF-8 valido: sem o
+// INVALID_UTF8_SUBSTITUTE, um unico nome gravado em latin-1 faz o json_encode
+// devolver false e o painel recebe corpo vazio.
+function responder(array $dados): void
+{
+    $j = json_encode($dados, JSON_INVALID_UTF8_SUBSTITUTE);
+    if ($j === false) {
+        error_log('alertas: json_encode falhou — ' . json_last_error_msg());
+        http_response_code(500);
+        $j = json_encode(['ok' => false, 'erro' => 'falha ao montar a resposta']);
+    }
+    echo $j;
+}
+
 // Calcula UM aviso. Devolve ['n' => int, 'lista' => [], 'texto' => string].
 function calcular(string $id, string $ph, array $lista): array
 {
@@ -192,8 +210,10 @@ function calcular(string $id, string $ph, array $lista): array
         case 'novos_semana':
             // Primeira visita: a data gravada no lead quando existe. So cair no MIN
             // das conexoes ignoraria quem teve conexao antiga apagada por retencao.
-            $rs = base_clientes($ph, $lista,
-                'COALESCE(l.primeira_conexao, MIN(c.conectado_em)) >= (NOW() - INTERVAL 7 DAY)');
+            // No HAVING vai o APELIDO `pri`, nao a expressao: o MySQL so resolve
+            // ali colunas do GROUP BY, agregados e apelidos do SELECT — repetir
+            // l.primeira_conexao dava "Unknown column ... in 'having clause'".
+            $rs = base_clientes($ph, $lista, 'pri >= (NOW() - INTERVAL 7 DAY)');
             usort($rs, function ($a, $b) { return strcmp($b['pri'], $a['pri']); });
             $out = [];
             foreach ($rs as $r) {
@@ -255,13 +275,14 @@ try {
             exit(json_encode(['ok' => false, 'erro' => 'aviso nao disponivel']));
         }
         $r = calcular($detalhe, $ph, $lista);
-        exit(json_encode([
+        responder([
             'ok'     => true,
             'id'     => $detalhe,
             'titulo' => $cat[$detalhe][0],
             'total'  => $r['n'],
             'lista'  => array_slice($r['lista'], 0, $LIMITE),
-        ]));
+        ]);
+        exit;
     }
 
     $avisos = [];
@@ -282,8 +303,10 @@ try {
             'texto'  => $r['texto'],
         ];
     }
-    echo json_encode(['ok' => true, 'avisos' => $avisos, 'marcados' => array_sum($marcadas)]);
+    responder(['ok' => true, 'avisos' => $avisos, 'marcados' => array_sum($marcadas)]);
 } catch (Throwable $e) {
+    // Sem esta linha o erro some e a tela so diz "nao deu para carregar".
+    error_log('alertas: ' . $e->getMessage());
     http_response_code(500);
     echo json_encode(['ok' => false, 'erro' => 'falha ao calcular os alertas']);
 }
