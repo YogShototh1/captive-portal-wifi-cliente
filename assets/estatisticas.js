@@ -48,14 +48,16 @@
         var innerH = H - PT - PB, innerW = W - PL - PR;
         var base = PT + innerH;
         var passo = innerW / n;                     // uma faixa por vela
-        var larg  = Math.max(2, Math.min(16, passo * 0.62));
+        // Corpo estreito, com folga entre as velas: 16px de largura em escala
+        // de 0 a 4 virava bloco, nao vela.
+        var larg  = Math.max(1.5, Math.min(7, passo * 0.5));
         var y = function (val) { return PT + innerH - (val / teto) * innerH; };
 
         var s = '<svg class="est-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet">';
         // grade + escala na direita
         for (var g = 0; g <= 4; g++) {
-            var gy = PT + innerH - g * innerH / 4;
-            s += '<line class="est-grid" x1="' + PL + '" y1="' + gy + '" x2="' + (W - PR) + '" y2="' + gy + '"/>';
+            var gy = Math.round(PT + innerH - g * innerH / 4) + 0.5;
+            s += '<line class="est-grid' + (g === 0 ? ' est-base' : '') + '" x1="' + PL + '" y1="' + gy + '" x2="' + (W - PR) + '" y2="' + gy + '"/>';
             s += '<text class="est-txt" x="' + (W - PR + 6) + '" y="' + (gy + 3.5) + '">' + Math.round(teto * g / 4) + '</text>';
         }
         // rótulos X (pula alguns para não amontoar)
@@ -65,18 +67,20 @@
             s += '<text class="est-txt est-txt-x" x="' + (PL + i * passo + passo / 2) + '" y="' + (H - 8) + '" text-anchor="middle">' + d.labels[i] + '</text>';
         }
         // velas
+        // Nenhum balde e pulado: parado depois de movimento e queda a zero, e
+        // isso precisa aparecer como vela vermelha.
         for (i = 0; i < n; i++) {
             var o = v[i][0], hi = v[i][1], lo = v[i][2], c = v[i][3];
-            if (!hi && !o && !c) { continue; }                    // balde sem movimento
-            var cx = PL + i * passo + passo / 2;
+            if (!hi && !o && !c && !(i > 0 && v[i - 1][3])) { continue; }   // zero sobre zero: nada a mostrar
+            var cx = Math.round(PL + i * passo + passo / 2) + 0.5;         // meio pixel = traco nitido
             var cls = (c >= o) ? 'est-alta' : 'est-baixa';
             // pavio: da mínima à máxima
-            s += '<line class="est-pavio ' + cls + '" x1="' + cx.toFixed(1) + '" y1="' + y(hi).toFixed(1) +
-                 '" x2="' + cx.toFixed(1) + '" y2="' + y(lo).toFixed(1) + '"/>';
-            // corpo: entre abertura e fechamento (mínimo de 1px p/ o doji aparecer)
+            s += '<line class="est-pavio ' + cls + '" x1="' + cx + '" y1="' + y(hi).toFixed(1) +
+                 '" x2="' + cx + '" y2="' + y(lo).toFixed(1) + '"/>';
+            // corpo: entre abertura e fechamento (piso de 1,5px p/ o doji aparecer)
             var yo = y(o), yc = y(c);
             s += '<rect class="est-corpo ' + cls + '" x="' + (cx - larg / 2).toFixed(1) + '" y="' + Math.min(yo, yc).toFixed(1) +
-                 '" width="' + larg.toFixed(1) + '" height="' + Math.max(1, Math.abs(yc - yo)).toFixed(1) + '"/>';
+                 '" width="' + larg.toFixed(1) + '" height="' + Math.max(1.5, Math.abs(yc - yo)).toFixed(1) + '"/>';
         }
         // crosshair (escondido até o hover)
         s += '<rect id="est-realce" class="est-realce" y="' + PT + '" height="' + innerH + '" style="display:none"/>';

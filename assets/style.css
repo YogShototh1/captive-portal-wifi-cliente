@@ -1259,16 +1259,18 @@ html[data-tema="claro"] .painel-cliente input[type="date"].rel-data::-webkit-cal
     background: #0b0f16; border: 1px solid rgba(255,255,255,.08); border-radius: 4px;
 }
 .est-svg { display: block; width: 100%; height: auto; }
-.est-grid { stroke: rgba(255, 255, 255, 0.07); stroke-width: 1; }
+.est-grid { stroke: rgba(255, 255, 255, 0.06); stroke-width: 1; shape-rendering: crispEdges; }
+.est-base { stroke: rgba(255, 255, 255, 0.14); }
 .est-txt { fill: rgba(255, 255, 255, 0.45); font-size: 9.5px; font-family: inherit; }
 .est-txt-x { fill: rgba(255, 255, 255, 0.38); }
 
-/* Velas: corpo entre abertura e fechamento, pavio da minima a maxima. */
-.est-corpo.est-alta  { fill: #16c784; }
-.est-corpo.est-baixa { fill: #ea3943; }
-.est-pavio { stroke-width: 1.4; }
-.est-pavio.est-alta  { stroke: #16c784; }
-.est-pavio.est-baixa { stroke: #ea3943; }
+/* Velas: corpo entre abertura e fechamento, pavio da minima a maxima.
+   Tom mais fechado que o verde/vermelho puro — em tela escura o berrante cansa. */
+.est-corpo.est-alta  { fill: #26a69a; }
+.est-corpo.est-baixa { fill: #ef5350; }
+.est-pavio { stroke-width: 1; shape-rendering: crispEdges; }
+.est-pavio.est-alta  { stroke: #26a69a; }
+.est-pavio.est-baixa { stroke: #ef5350; }
 
 .est-cursor { stroke: rgba(255, 255, 255, 0.35); stroke-width: 1; stroke-dasharray: 3 3; }
 .est-realce { fill: rgba(255, 255, 255, 0.05); }

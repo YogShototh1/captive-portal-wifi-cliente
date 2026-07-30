@@ -101,11 +101,16 @@ function est_serie(array $lista, string $sql, array $chaves): array
     return $out;
 }
 
-// Velas (OHLC) de cada balde do eixo. O "preco" e a intensidade dentro do
-// periodo: quantas pessoas por fatia (10 min dentro da hora, hora dentro do
-// dia, dia dentro do mes). Abertura = primeira fatia com movimento, fechamento
-// = ultima, maxima e minima = pico e vale entre elas. Balde parado vira vela
-// zerada. Nada e inventado: tudo sai da mesma contagem da linha antiga.
+// Velas (OHLC) de cada balde do eixo. O "preco" e a intensidade de movimento:
+// pessoas por fatia (10 min dentro da hora, hora dentro do dia, dia dentro do
+// mes). Cada vela ABRE no fechamento da anterior, como numa serie de bolsa —
+// e o que faz a queda de um periodo para o outro virar vela vermelha. Sem
+// isso, cada vela olhava so para dentro de si e um dia que caiu de 7 para 0
+// aparecia sem vela nenhuma.
+//
+//   fechamento = ultima fatia com movimento (0 se o balde ficou parado)
+//   abertura   = fechamento do balde anterior (no primeiro, a propria abertura)
+//   maxima/minima = extremos das fatias, ja contando a abertura
 function est_velas(array $lista, string $sql, array $chaves): array
 {
     $porBalde = [];
@@ -116,16 +121,20 @@ function est_velas(array $lista, string $sql, array $chaves): array
             $porBalde[(string) $r['b']][] = [(int) $r['s'], (int) $r['n']];
         }
     }
-    $out = [];
+    $out  = [];
+    $ant  = null;                 // fechamento do balde anterior
     foreach ($chaves as $k) {
         $fatias = $porBalde[(string) $k] ?? [];
-        if (!$fatias) {
-            $out[] = [0, 0, 0, 0];
-            continue;
-        }
         usort($fatias, function ($a, $b) { return $a[0] <=> $b[0]; });   // ordem cronologica
         $vals = array_column($fatias, 1);
-        $out[] = [$vals[0], max($vals), min($vals), $vals[count($vals) - 1]];
+
+        $close = $vals ? $vals[count($vals) - 1] : 0;
+        $open  = $ant === null ? ($vals ? $vals[0] : 0) : $ant;
+        $high  = max($vals ? max($vals) : 0, $open, $close);
+        $low   = min($vals ? min($vals) : 0, $open, $close);
+
+        $out[] = [$open, $high, $low, $close];
+        $ant   = $close;
     }
     return $out;
 }
