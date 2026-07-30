@@ -546,3 +546,42 @@ function portal_versao(string $roteador): string
     }
     return $sig === '' ? '0' : substr(sha1($sig), 0, 16);
 }
+
+// Reparte sessoes de conexao pelos 7 dias da semana, em segundos.
+//
+// Somar `conexoes.segundos` no dia em que a sessao COMECOU dava celula de 41h
+// num dia de 24h: a sessao que varre segunda -> quarta caia inteira na segunda.
+// Aqui cada sessao e cortada na semana, os periodos que se sobrepoem viram um
+// so (dois aparelhos no ar ao mesmo tempo = um periodo conectado, nao o dobro)
+// e o resultado e repartido pelos dias que ele atravessa.
+//
+// $sessoes: lista de [inicio, fim] em timestamp.  $lim: os 8 marcos 00:00 da
+// semana (indice 0 = domingo, 7 = domingo seguinte).  Devolve 7 inteiros.
+function semana_reparte(array $sessoes, array $lim): array
+{
+    $dias = [0, 0, 0, 0, 0, 0, 0];
+    $iv = [];
+    foreach ($sessoes as $s) {
+        $ini = max((int) $s[0], $lim[0]);
+        $fim = min((int) $s[1], $lim[7]);
+        if ($fim > $ini) { $iv[] = [$ini, $fim]; }
+    }
+    usort($iv, function ($a, $b) { return $a[0] <=> $b[0]; });
+    $juntos = [];
+    foreach ($iv as $x) {
+        $n = count($juntos);
+        if ($n && $x[0] <= $juntos[$n - 1][1]) {
+            if ($x[1] > $juntos[$n - 1][1]) { $juntos[$n - 1][1] = $x[1]; }
+        } else {
+            $juntos[] = $x;
+        }
+    }
+    foreach ($juntos as $x) {
+        for ($k = 0; $k < 7; $k++) {
+            $a = max($x[0], $lim[$k]);
+            $b = min($x[1], $lim[$k + 1]);
+            if ($b > $a) { $dias[$k] += $b - $a; }
+        }
+    }
+    return $dias;
+}

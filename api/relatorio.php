@@ -103,22 +103,47 @@ if ($tipo === 'grade_semana') {
     $dom = date('Y-m-d', strtotime($hoje . ' -' . ((int) date('w') + 7 * $off) . ' day'));
     $sab = date('Y-m-d', strtotime($dom . ' +6 day'));
 
+    // Limites da semana em timestamp; o fim e exclusivo (domingo 00:00 seguinte).
+    $semIni = strtotime($dom . ' 00:00:00');
+    $semFim = strtotime($dom . ' +7 day 00:00:00');
+    $agora  = strtotime(db_now());
+    // Comeco de cada um dos 7 dias (+ o limite final) — por data, nao somando
+    // 86400, p/ nao errar se algum dia da semana nao tiver 24h.
+    $lim = [];
+    for ($k = 0; $k <= 7; $k++) { $lim[$k] = strtotime($dom . ' +' . $k . ' day 00:00:00'); }
+
     $itens = [];
     $primeira = null;
     if ($lista) {
         try {
-            $q = db()->prepare(
-                "SELECT c.lead_id, l.telefone, l.nome,
-                        DAYOFWEEK(c.conectado_em) AS d,
-                        COALESCE(SUM(c.segundos), 0) AS s
-                   FROM conexoes c JOIN leads l ON l.id = c.lead_id
-                  WHERE l.roteador IN ($ph)
-                    AND c.conectado_em >= ? AND c.conectado_em < DATE_ADD(?, INTERVAL 1 DAY)
-                  GROUP BY c.lead_id, l.telefone, l.nome, d"
-            );
-            $q->execute(array_merge($lista, [$dom, $sab]));
+            // Sessoes que ENCOSTAM na semana (nao so as que comecam nela): uma
+            // sessao de segunda a quarta precisa entrar na conta dos tres dias.
+            // Sessao ainda aberta (segundos NULL) vale ate o ultimo instante
+            // confirmado pelo roteador (visto_em), ou ate agora.
+            $sqlFim = "COALESCE(DATE_ADD(c.conectado_em, INTERVAL c.segundos SECOND), c.visto_em, NOW())";
+            $sel = "SELECT c.lead_id, l.telefone, l.nome, c.conectado_em, $sqlFim AS fim
+                      FROM conexoes c JOIN leads l ON l.id = c.lead_id
+                     WHERE l.roteador IN ($ph)
+                       AND c.conectado_em < ? AND $sqlFim >= ?";
+            try {
+                $q = db()->prepare($sel);
+                $q->execute(array_merge($lista, [date('Y-m-d H:i:s', $semFim), date('Y-m-d H:i:s', $semIni)]));
+            } catch (Throwable $e) {
+                // Banco antigo, sem conexoes.visto_em (o status.php cria na 1a
+                // rodada): cai para "aberta conta ate agora".
+                $q = db()->prepare(str_replace('c.visto_em, ', '', $sel));
+                $q->execute(array_merge($lista, [date('Y-m-d H:i:s', $semFim), date('Y-m-d H:i:s', $semIni)]));
+            }
+
+            // 1) Recorta cada sessao na semana e guarda os intervalos por cliente.
             $porLead = [];
             foreach ($q->fetchAll() as $r) {
+                $ini = strtotime((string) $r['conectado_em']);
+                $fim = $r['fim'] ? strtotime((string) $r['fim']) : $agora;
+                if ($fim > $agora) { $fim = $agora; }          // nada no futuro
+                $ini = max($ini, $semIni);
+                $fim = min($fim, $semFim);
+                if ($fim <= $ini) { continue; }
                 $id = (int) $r['lead_id'];
                 if (!isset($porLead[$id])) {
                     $porLead[$id] = [
@@ -126,12 +151,20 @@ if ($tipo === 'grade_semana') {
                         'nome'     => ($r['nome'] !== null && $r['nome'] !== '') ? (string) $r['nome'] : null,
                         'dias'     => [0, 0, 0, 0, 0, 0, 0],   // indice 0 = domingo
                         'total'    => 0,
+                        'iv'       => [],
                     ];
                 }
-                $seg = (int) $r['s'];
-                $porLead[$id]['dias'][(int) $r['d'] - 1] = $seg;
-                $porLead[$id]['total'] += $seg;
+                $porLead[$id]['iv'][] = [$ini, $fim];
             }
+
+            // 2) Junta o que se sobrepoe e reparte pelos dias (semana_reparte,
+            //    em inc/util.php — testada em tools/teste_semana.php).
+            foreach ($porLead as &$le) {
+                $le['dias']  = semana_reparte($le['iv'], $lim);
+                $le['total'] = array_sum($le['dias']);
+                unset($le['iv']);
+            }
+            unset($le);
             // Quem passou mais tempo conectado primeiro.
             usort($porLead, function ($a, $b) { return $b['total'] <=> $a['total']; });
             $itens = array_slice($porLead, 0, 500);
