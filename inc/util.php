@@ -604,3 +604,68 @@ function conexao_intervalo(?string $inicio, ?string $fim, int $agora): ?array
     if ($b > $agora) { $b = $agora; }      // relogio adiantado nao vira tempo
     return $b > $a ? [$a, $b] : null;
 }
+
+// --- Alertas: quais avisos o comprador quer ver, por CONTA ---
+// Guardado em ads/ (pasta fechada por .htaccess), uma linha JSON por conta.
+// A escolha e do usuario, nao do roteador: quem tem varios MikroTiks ve os
+// mesmos avisos em todos.
+
+// Catalogo dos avisos. tom: 'ruim' (vermelho) ou 'bom' (verde).
+// 'lista' diz se o numero abre a relacao de clientes.
+function alertas_catalogo(): array
+{
+    return [
+        'sem_vir_semana'   => ['Clientes sumidos há uma semana', 'Vieram alguma vez e não aparecem há 7 dias ou mais.', 'ruim', true],
+        'fieis_sumidos'    => ['Fiéis que sumiram', 'Vinham em 4 semanas ou mais e estão há 7 dias sem aparecer.', 'ruim', true],
+        'visita_unica'     => ['Vieram uma vez e não voltaram', 'Conheceram o Wi-Fi há mais de 7 dias e não deram as caras de novo.', 'ruim', true],
+        'queda_semana'     => ['Movimento em queda', 'Os acessos desta semana caíram mais de 20% ante a semana passada.', 'ruim', false],
+        'mikrotik_offline' => ['MikroTik fora do ar', 'O roteador parou de reportar para o painel.', 'ruim', false],
+        'forte_recorrencia'=> ['Clientes em sequência', 'Vieram 5 dias seguidos ou mais no último mês.', 'bom', true],
+        'novos_semana'     => ['Clientes novos', 'Apareceram pela primeira vez nos últimos 7 dias.', 'bom', true],
+        'reativados'       => ['Clientes que voltaram', 'Sumiram por 30 dias ou mais e reapareceram nesta semana.', 'bom', true],
+        'alta_semana'      => ['Movimento em alta', 'Os acessos desta semana subiram mais de 20% ante a semana passada.', 'bom', false],
+    ];
+}
+
+// Marcados por padrao na primeira vez (os tres do pedido + novos).
+function alertas_padrao(): array
+{
+    $out = [];
+    foreach (alertas_catalogo() as $k => $_) {
+        $out[$k] = in_array($k, ['sem_vir_semana', 'fieis_sumidos', 'forte_recorrencia', 'novos_semana'], true) ? 1 : 0;
+    }
+    return $out;
+}
+
+function alertas_file(int $compradorId): string
+{
+    return ads_dir() . '/alertas_' . $compradorId . '.json';
+}
+
+function alertas_get(int $compradorId): array
+{
+    $def = alertas_padrao();
+    $j = json_decode((string) @file_get_contents(alertas_file($compradorId)), true);
+    if (!is_array($j)) {
+        return $def;
+    }
+    $out = [];
+    foreach ($def as $k => $v) {
+        // Chave nova (alerta criado depois) segue o padrao dela.
+        $out[$k] = array_key_exists($k, $j) ? (!empty($j[$k]) ? 1 : 0) : $v;
+    }
+    return $out;
+}
+
+function alertas_set(int $compradorId, array $marcadas): void
+{
+    $out = [];
+    foreach (alertas_catalogo() as $k => $_) {
+        $out[$k] = !empty($marcadas[$k]) ? 1 : 0;
+    }
+    $dir = ads_dir();
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0755, true);
+    }
+    @file_put_contents(alertas_file($compradorId), json_encode($out));
+}

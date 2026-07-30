@@ -50,6 +50,8 @@ if ($rotQuery) {
 $dbNow = db_now();
 $nowTs = strtotime($dbNow);
 $csrf  = csrf_token();
+// Avisos que a conta escolheu acompanhar (aba Alertas).
+$alertasMarcados = alertas_get((int) $id);
 
 // Mensagens de retorno do upload de anúncio (via query string).
 $anuncioOk   = isset($_GET['anuncio_ok'])   ? (string) $_GET['anuncio_ok']   : '';
@@ -101,7 +103,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Leads — <?= h($cliente['nome'] ?: $cliente['email']) ?></title>
     <link rel="icon" href="assets/logo-icone.png?v=1" type="image/png">
-    <link rel="stylesheet" href="assets/style.css?v=104">
+    <link rel="stylesheet" href="assets/style.css?v=107">
 </head>
 <body class="painel-cliente">
     <!-- Camadas de fundo (decorativas) -->
@@ -124,6 +126,10 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                 <button type="button" class="pc-side-item" data-aba="dashboard">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
                     Dashboard
+                </button>
+                <button type="button" class="pc-side-item" data-aba="alertas">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg>
+                    Alertas
                 </button>
                 <button type="button" class="pc-side-item" data-aba="informacoes">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
@@ -339,6 +345,9 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                 </div>
             </section>
 
+            <!-- ============ ABA: ALERTAS ============ -->
+            <?php $alertasClienteId = (int) $id; require __DIR__ . '/inc/alertas_tela.php'; ?>
+
             <!-- ============ ABA: INFORMAÇÕES (hábitos de um lead) ============ -->
             <section class="pc-tela" data-tela="informacoes">
                 <div class="glow-card pc-dst-card">
@@ -519,6 +528,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                     </div>
                 </div>
                 <?php $coresClienteId = (int) $id; require __DIR__ . '/inc/cores_avancado.php'; ?>
+                <?php require __DIR__ . '/inc/alertas_modal.php'; ?>
                 <?php else: echo $avisoRoteador; endif; ?>
             </section>
 
@@ -725,6 +735,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <script src="assets/abas.js?v=4"></script>
     <script src="assets/cores.js?v=7"></script>
     <script src="assets/relatorio.js?v=15"></script>
+    <script src="assets/alertas.js?v=2"></script>
     <script src="assets/dashboard.js?v=10"></script>
     <script src="assets/dashgeral.js?v=14"></script>
     <script src="assets/acessolog.js?v=3"></script>
