@@ -700,7 +700,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <script src="assets/alertas.js?v=3"></script>
     <script src="assets/dashboard.js?v=10"></script>
     <script src="assets/dashgeral.js?v=14"></script>
-    <script src="assets/estatisticas.js?v=5"></script>
+    <script src="assets/estatisticas.js?v=6"></script>
     <script src="assets/leads-live.js?v=27"></script>
     <?php require __DIR__ . '/inc/tema.php'; ?>
 </body>

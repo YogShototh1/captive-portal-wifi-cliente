@@ -42,6 +42,7 @@ if (!in_array($filtro, ['hoje', 'semana', 'mes', 'ano'], true)) {
 // O placeholder {t} é trocado pela coluna de data de cada consulta.
 $chaves = [];
 $labels = [];
+$eixo   = [];   // rotulo do eixo X (so o mes usa diferente do label)
 switch ($filtro) {
     case 'semana':
         $seg = strtotime('monday this week');
@@ -54,12 +55,22 @@ switch ($filtro) {
         $sub  = 'HOUR({t})';
         break;
     case 'mes':
+        // O mes tem dias demais para uma vela cada — ficava tudo espacado. Cada
+        // dia vira TRES velas (manha, tarde, noite), e o eixo mostra so o dia:
+        // o rotulo sai na vela do meio, as outras duas vao em branco.
         $dias = (int) date('t');
+        $nomes = ['manhã', 'tarde', 'noite'];
         for ($d = 1; $d <= $dias; $d++) {
-            $chaves[] = $d;
-            $labels[] = sprintf('%02d/%s', $d, date('m'));
+            for ($t = 0; $t < 3; $t++) {
+                $chaves[] = $d . '-' . $t;
+                $labels[] = sprintf('%02d/%s/%s — %s', $d, date('m'), date('y'), $nomes[$t]);
+                $eixo[]   = $t === 1 ? sprintf('%02d/%s', $d, date('m')) : '';
+            }
         }
-        $expr = 'DAY({t})';
+        // manha 05h-11h, tarde 12h-17h, noite 18h-04h (a madrugada fecha o dia).
+        $expr = "CONCAT(DAY({t}), '-', CASE WHEN HOUR({t}) BETWEEN 5 AND 11 THEN 0
+                                            WHEN HOUR({t}) BETWEEN 12 AND 17 THEN 1
+                                            ELSE 2 END)";
         $cond = 'YEAR({t}) = YEAR(CURDATE()) AND MONTH({t}) = MONTH(CURDATE())';
         $sub  = 'HOUR({t})';
         break;
@@ -177,6 +188,7 @@ try {
         'ok'         => true,
         'filtro'     => $filtro,
         'labels'     => $labels,
+        'eixo'       => $eixo ?: $labels,
         'conectados' => $conectados,
         'novos'      => $novos,
         'velas_conectados' => est_velas($lista, $sqlConV, $chaves),

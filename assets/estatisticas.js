@@ -18,6 +18,12 @@
     var W = 720, H = 300, PL = 10, PR = 46, PT = 14, PB = 26;  // escala Y na direita, como nos home brokers
     var dados = null;
     var serie  = 'conectados';   // ou 'novos'
+    var DICA = {
+        hoje:   'Cada vela é uma hora, medida em fatias de 10 minutos',
+        semana: 'Cada vela é um dia, medido hora a hora',
+        mes:    'Três velas por dia: manhã, tarde e noite',
+        ano:    'Cada vela é um mês, medido dia a dia'
+    };
     var filtro = 'hoje';
 
     // Teto da escala: precisa ser MULTIPLO DE 4 do passo, senao as 4 linhas da
@@ -60,11 +66,17 @@
             s += '<line class="est-grid' + (g === 0 ? ' est-base' : '') + '" x1="' + PL + '" y1="' + gy + '" x2="' + (W - PR) + '" y2="' + gy + '"/>';
             s += '<text class="est-txt" x="' + (W - PR + 6) + '" y="' + (gy + 3.5) + '">' + Math.round(teto * g / 4) + '</text>';
         }
-        // rótulos X (pula alguns para não amontoar)
-        var pulo = Math.ceil(n / 12);
-        for (i = 0; i < n; i++) {
-            if (i % pulo !== 0 && i !== n - 1) continue;
-            s += '<text class="est-txt est-txt-x" x="' + (PL + i * passo + passo / 2) + '" y="' + (H - 8) + '" text-anchor="middle">' + d.labels[i] + '</text>';
+        // Rótulos X: no mês só a vela do meio de cada dia tem rótulo, então o
+        // "pula alguns" corre sobre os que existem — pular por índice de vela
+        // acertaria justamente as posições em branco.
+        var eixo = d.eixo || d.labels;
+        var comRotulo = [];
+        for (i = 0; i < n; i++) { if (eixo[i]) { comRotulo.push(i); } }
+        var pulo = Math.ceil(comRotulo.length / 12);
+        for (var r = 0; r < comRotulo.length; r++) {
+            if (r % pulo !== 0 && r !== comRotulo.length - 1) { continue; }
+            i = comRotulo[r];
+            s += '<text class="est-txt est-txt-x" x="' + (PL + i * passo + passo / 2).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle">' + eixo[i] + '</text>';
         }
         // velas
         // Nenhum balde e pulado: parado depois de movimento e queda a zero, e
@@ -93,9 +105,7 @@
             var tot = serie === 'novos' ? d.total_novos : d.total_conectados;
             legenda.innerHTML = '<span class="est-leg">' +
                 (serie === 'novos' ? 'Novos clientes' : 'Pessoas conectadas') + ' no período: <b>' + tot + '</b></span>' +
-                '<span class="est-leg est-leg-dica">Cada vela mostra o movimento dentro d' +
-                (filtro === 'hoje' ? 'a hora, em fatias de 10 minutos' :
-                 filtro === 'ano'  ? 'o mês, dia a dia' : 'o dia, hora a hora') + '</span>';
+                '<span class="est-leg est-leg-dica">' + DICA[filtro] + '</span>';
         }
         ligarHover(passo);
     }
@@ -117,14 +127,22 @@
             realce.setAttribute('x', PL + idx * passo); realce.setAttribute('width', passo); realce.style.display = '';
             var o = v[idx][0], hi = v[idx][1], lo = v[idx][2], c = v[idx][3];
             var dif = c - o;
-            tooltip.innerHTML = '<b>' + dados.labels[idx] + '</b>' +
-                '<span>Abertura <i>' + o + '</i></span>' +
-                '<span>Máxima <i>' + hi + '</i></span>' +
-                '<span>Mínima <i>' + lo + '</i></span>' +
-                '<span>Fechamento <i>' + c + '</i></span>' +
-                '<span class="est-tt-tot">Total no período <i>' + totaisDe(dados)[idx] + '</i></span>' +
-                '<span class="' + (dif >= 0 ? 'est-tt-alta' : 'est-tt-baixa') + '">' +
-                    (dif >= 0 ? '▲ +' : '▼ ') + dif + '</span>';
+            if (filtro === 'mes') {
+                // A vela do mês já é um pedaço do dia: aqui interessa quanto
+                // deu naquele turno, não o vaivém dentro dele.
+                tooltip.innerHTML = '<b>' + dados.labels[idx] + '</b>' +
+                    '<span>' + (serie === 'novos' ? 'Novos clientes' : 'Conexões') +
+                    ' <i>' + totaisDe(dados)[idx] + '</i></span>';
+            } else {
+                tooltip.innerHTML = '<b>' + dados.labels[idx] + '</b>' +
+                    '<span>Abertura <i>' + o + '</i></span>' +
+                    '<span>Máxima <i>' + hi + '</i></span>' +
+                    '<span>Mínima <i>' + lo + '</i></span>' +
+                    '<span>Fechamento <i>' + c + '</i></span>' +
+                    '<span class="est-tt-tot">Total no período <i>' + totaisDe(dados)[idx] + '</i></span>' +
+                    '<span class="' + (dif >= 0 ? 'est-tt-alta' : 'est-tt-baixa') + '">' +
+                        (dif >= 0 ? '▲ +' : '▼ ') + dif + '</span>';
+            }
             tooltip.style.display = 'block';
             var px = cx * (r.width / W);
             var tw = tooltip.offsetWidth;
