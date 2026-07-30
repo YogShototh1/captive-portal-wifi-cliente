@@ -307,9 +307,12 @@
             html += '<tr><td class="rs-cli">' + waLink(it.telefone, it.nome) + '</td>';
             for (j = 0; j < 7; j++) {
                 var v = it.dias[j];
-                var a = v && max ? (0.12 + 0.78 * v / max) : 0;
-                html += '<td' + (v ? ' style="background:rgba(34,211,238,' + a.toFixed(2) + ')"' +
-                        ' title="' + DS[j] + ' — ' + fmtTempo(v) + '"' : ' class="rs-zero"') +
+                // Nivel 1..5 (quintil do maior tempo da grade) em vez de cor
+                // inline: quem pinta e o CSS, entao trocar o tema ja acerta o
+                // fundo e a cor da letra sem precisar gerar de novo.
+                var n = v && max ? Math.max(1, Math.ceil(v * 5 / max)) : 0;
+                html += '<td class="' + (n ? 'rs-h rs-h' + n : 'rs-zero') + '"' +
+                    (v ? ' title="' + DS[j] + ' — ' + fmtTempo(v) + '"' : '') +
                     '>' + (v ? fmtCurto(v) : '–') + '</td>';
             }
             html += '<td class="rs-tot">' + fmtCurto(it.total) + '</td></tr>';

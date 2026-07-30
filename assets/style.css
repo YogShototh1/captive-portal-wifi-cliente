@@ -1128,7 +1128,22 @@ html[data-tema="claro"] .leg-pct small { color: var(--g-fg3); }
 /* Sem max-width: nome nenhum pode sair cortado — a coluna cresce e a caixa rola. */
 .rel-sem .rs-cli { text-align: left; position: sticky; left: 0; z-index: 1; background: var(--t-surface); }
 .rel-sem .rs-tot { font-weight: 700; }
-.rel-sem .rs-zero { color: var(--t-fg3); }
+/* Intensidade em escala monocromatica: no escuro a celula clareia ate o
+   branco; no claro escurece ate o preto. A partir do nivel em que o fundo
+   domina, a letra inverte — os limiares saem do contraste real de cada faixa,
+   nao do gosto. */
+html[data-tema] .painel-cliente .rel-sem td.rs-h1 { background: rgba(255,255,255,.16); }
+html[data-tema] .painel-cliente .rel-sem td.rs-h2 { background: rgba(255,255,255,.32); }
+html[data-tema] .painel-cliente .rel-sem td.rs-h3 { background: rgba(255,255,255,.52); color: #0b0d10; }
+html[data-tema] .painel-cliente .rel-sem td.rs-h4 { background: rgba(255,255,255,.74); color: #0b0d10; }
+html[data-tema] .painel-cliente .rel-sem td.rs-h5 { background: #ffffff; color: #0b0d10; }
+html[data-tema="claro"] .painel-cliente .rel-sem td.rs-h1 { background: rgba(0,0,0,.08); color: var(--t-fg); }
+html[data-tema="claro"] .painel-cliente .rel-sem td.rs-h2 { background: rgba(0,0,0,.20); color: var(--t-fg); }
+html[data-tema="claro"] .painel-cliente .rel-sem td.rs-h3 { background: rgba(0,0,0,.38); color: var(--t-fg); }
+html[data-tema="claro"] .painel-cliente .rel-sem td.rs-h4 { background: rgba(0,0,0,.64); color: #ffffff; }
+html[data-tema="claro"] .painel-cliente .rel-sem td.rs-h5 { background: #000000; color: #ffffff; }
+html[data-tema] .painel-cliente .rel-sem td { color: var(--t-fg); }
+html[data-tema] .painel-cliente .rel-sem td.rs-zero { color: var(--t-fg3); }
 .rel-sem tbody tr:hover .rs-cli { background: var(--t-hover); }
 
 @media (max-width: 600px) {
