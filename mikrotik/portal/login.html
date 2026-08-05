@@ -7,9 +7,7 @@
     <meta http-equiv="expires" content="-1" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Acesso Wi‑Fi</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700&family=Rubik:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Fontes: arquivos locais em fonts/, declarados no css/style.css. -->
     <link rel="stylesheet" href="css/style.css">
 </head>
 
@@ -28,6 +26,12 @@
     <!-- Lista LOCAL (flash) dos aparelhos já cadastrados, baixada pelo leadsync.
          Sem o arquivo (404) nada muda: fluxo padrão pede o número. -->
     <script src="macs.js"></script>
+    <!-- Tema definido pelo comprador no painel, mantido na flash pelo leadsync.
+         Lido aqui (sincrono, antes do 1o paint) para as cores/logo/anuncio
+         valerem mesmo sem internet. Sem o arquivo (404) nada quebra: o script
+         mais abaixo cai no painel, e sem painel fica o tema padrao. -->
+    <script src="tema.js"></script>
+    <script>window.CD_TEMA_LOCAL = !!(window.CORES || window.ESTILO);</script>
     <!-- Decide JÁ (síncrono, antes do 1º paint): aparelho conhecido nunca vê a
          tela de número. Uma capa monocromática cobre enquanto decide/carrega. -->
     <script>
@@ -65,8 +69,10 @@
                 <!-- Logo do estabelecimento: enviada pelo painel (aba Anúncio) e servida
                      pela VPS por roteador. Sem logo -> onerror mostra o ícone Wi-Fi. -->
                 <div class="brand-mark">
-                    <img class="brand-logo" src="https://captivedata.com.br/logo.php?r=$(identity)" alt="Logo"
-                         onerror="this.remove();var f=document.getElementById('brand-fallback');if(f)f.style.display='flex';">
+                    <!-- Logo da flash. Se nao existir localmente, tenta o painel; se
+                         nem isso, some e entra o icone Wi-Fi (nunca imagem quebrada). -->
+                    <img class="brand-logo" src="logo.img" alt="Logo"
+                         onerror="if(!this.dataset.r){this.dataset.r=1;this.src='https://captivedata.com.br/logo.php?r=$(identity)';return;}this.remove();var f=document.getElementById('brand-fallback');if(f)f.style.display='flex';">
                     <span class="brand-fallback" id="brand-fallback" style="display:none" aria-hidden="true">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.86a10 10 0 0 1 14 0"/><path d="M8.5 16.43a5 5 0 0 1 7 0"/></svg>
                     </span>
@@ -268,8 +274,20 @@
         // do teclado e link) passam por aqui.
         // Requisito no roteador: "trial" no login-by do perfil do hotspot.
         function runAuthentication() {
+            // O telefone vai junto no username do hotspot. Parece um detalhe, mas
+            // e o que garante o lead quando a internet do estabelecimento esta
+            // fora: o navegador do cliente nao alcanca o painel, mas o ROTEADOR
+            // fica com o numero na sessao e o leadsync o envia quando a linha
+            // voltar. Formato: T-<mac>-<telefone> (sem telefone fica so T-<mac>,
+            // que e o caso da revisita, identificada pelo MAC).
+            var tel = "";
+            try {
+                var el = document.getElementById('celular');
+                tel = el ? el.value.replace(/\D/g, '') : "";
+            } catch (e) { tel = ""; }
+            var user = "T-$(mac-esc)" + (tel ? "-" + tel : "");
             window.location.href = "$(link-login-only)?dst=" +
-                encodeURIComponent(portalDst()) + "&username=T-$(mac-esc)";
+                encodeURIComponent(portalDst()) + "&username=" + encodeURIComponent(user);
         }
 
         // === Integração com a API central (hospedagem) ===
@@ -321,15 +339,26 @@
                 });
             }
         }
-        (function () {
-            try {
-                var s = document.createElement('script');
-                s.src = "https://captivedata.com.br/dst.php?r=" + encodeURIComponent("$(identity)") + "&t=" + Date.now();
-                s.async = true;
-                s.onload = aplicarLogoForma;
-                (document.head || document.documentElement).appendChild(s);
-            } catch (e) { /* mantém o padrão */ }
-        })();
+        // O tema (cores, efeitos, destino, forma da logo) vem do arquivo LOCAL
+        // tema.js, que o leadsync mantém na flash. Ele já foi lido no <head>,
+        // antes desta linha — por isso o visual do comprador aparece de cara,
+        // mesmo sem internet nenhuma.
+        //
+        // O painel só é consultado se o arquivo local não existir (roteador que
+        // ainda não recebeu a primeira sincronia). Nesse caso vale a regra de
+        // sempre: se não responder, fica o padrão e ninguém trava.
+        aplicarLogoForma();
+        if (!window.CD_TEMA_LOCAL) {
+            (function () {
+                try {
+                    var s = document.createElement('script');
+                    s.src = "https://captivedata.com.br/dst.php?r=" + encodeURIComponent("$(identity)") + "&t=" + Date.now();
+                    s.async = true;
+                    s.onload = aplicarLogoForma;
+                    (document.head || document.documentElement).appendChild(s);
+                } catch (e) { /* mantém o padrão */ }
+            })();
+        }
 
         // === Limite diário de uso (definido no painel) ===
         // Mostra a tela de "limite atingido" por cima de tudo.
@@ -360,28 +389,72 @@
         // Envia o lead (telefone + $(mac)/$(ip)/$(identity)) para a API ANTES de liberar
         // o WiFi. Roda durante o anúncio; keepalive garante o envio mesmo quando a
         // autenticação navega a página. Se a API falhar, o WiFi é liberado mesmo assim.
+        // ===== Fila de leads que nao conseguiram sair =====
+        // O envio e por <img> (GET) porque e o unico que passa no navegador do
+        // captive portal — no iPhone (CNA) fetch/XHR sao bloqueados. Antes o
+        // resultado era ignorado: se a internet estivesse fora, o lead sumia
+        // sem deixar rastro. Agora o onerror/onload dizem se chegou, e o que
+        // nao chegou fica guardado no proprio aparelho para a proxima abertura
+        // do portal. (A outra copia vai pelo username do hotspot -> leadsync.)
+        var FILA_KEY = "cd_leads_pendentes";
+        function filaLer() {
+            try { return JSON.parse(localStorage.getItem(FILA_KEY) || "[]"); }
+            catch (e) { return []; }
+        }
+        function filaGravar(v) {
+            try { localStorage.setItem(FILA_KEY, JSON.stringify(v.slice(-20))); }
+            catch (e) { /* modo privado / sem espaco: segue sem fila */ }
+        }
+        // Dispara um lead e avisa se chegou. `params` ja vem montado.
+        function enviarLead(params, aoTerminar) {
+            try {
+                var img = new Image();
+                var respondeu = false;
+                var fim = function (ok) {
+                    if (respondeu) return;
+                    respondeu = true;
+                    if (aoTerminar) aoTerminar(ok);
+                };
+                img.onload = function () { fim(true); };
+                img.onerror = function () { fim(false); };
+                // A API responde um pixel; sem resposta em 8s, trata como falha
+                // (rede a 0,1 Mbps costuma pendurar em vez de recusar).
+                setTimeout(function () { fim(false); }, 8000);
+                img.src = API_LEAD_URL + "?" + params;
+            } catch (e) {
+                if (aoTerminar) aoTerminar(false);
+            }
+        }
+        // Tenta despachar o que ficou de visitas anteriores. Cada um que sai e
+        // removido; o que falhar de novo continua na fila.
+        function filaEnviarPendentes() {
+            var fila = filaLer();
+            if (!fila.length) return;
+            filaGravar([]);   // evita duplicar se a pagina recarregar no meio
+            fila.forEach(function (params) {
+                enviarLead(params, function (ok) {
+                    if (!ok) { var f = filaLer(); f.push(params); filaGravar(f); }
+                });
+            });
+        }
+
         var leadSent = false;
         function sendLead() {
             if (leadSent) return;
             leadSent = true;
             const phoneInput = document.getElementById('celular');
             const telefone = phoneInput ? phoneInput.value.trim() : "";
-            // Envio via <img> (GET): é o método que funciona no navegador restrito do
-            // captive portal — inclusive no iPhone (CNA), onde fetch/sendBeacon são
-            // bloqueados. Carregar imagem é permitido. O PHP grava o lead pelos parâmetros.
-            try {
-                var params =
-                    "telefone=" + encodeURIComponent(telefone) +
-                    "&mac=" + encodeURIComponent("$(mac)") +
-                    "&ip=" + encodeURIComponent("$(ip)") +
-                    "&roteador=" + encodeURIComponent("$(identity)") +
-                    "&consentimento=1" +
-                    "&t=" + Date.now();
-                var img = new Image();
-                img.src = API_LEAD_URL + "?" + params;
-            } catch (e) {
-                /* nunca bloquear a liberação do WiFi */
-            }
+            var params =
+                "telefone=" + encodeURIComponent(telefone) +
+                "&mac=" + encodeURIComponent("$(mac)") +
+                "&ip=" + encodeURIComponent("$(ip)") +
+                "&roteador=" + encodeURIComponent("$(identity)") +
+                "&consentimento=1" +
+                "&t=" + Date.now();
+            enviarLead(params, function (ok) {
+                if (ok) return;
+                var f = filaLer(); f.push(params); filaGravar(f);
+            });
         }
 
         // Exibe a página intermediária de anúncio e inicia a contagem regressiva.
@@ -462,9 +535,20 @@
                 img.style.display = 'none';
                 if (placeholder) placeholder.style.display = 'block';
             };
+            // Anuncio da flash primeiro; o painel so se o arquivo local faltar.
             var AD_URL = "https://captivedata.com.br/ad.php?r=" + encodeURIComponent("$(identity)");
-            img.src = AD_URL + "&t=" + Date.now();
+            var tentouRemoto = false;
+            var erroOriginal = img.onerror;
+            img.onerror = function () {
+                if (!tentouRemoto) { tentouRemoto = true; img.src = AD_URL + "&t=" + Date.now(); return; }
+                erroOriginal();
+            };
+            img.src = "ad.img?t=" + Date.now();
         })();
+
+        // Assim que o portal abre, tenta escoar os leads que ficaram de visitas
+        // anteriores (internet fora na hora). Nao atrapalha nada em tela.
+        filaEnviarPendentes();
 
         // Modal Controls
         function openModal(type) {

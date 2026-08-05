@@ -4,7 +4,19 @@
    cartão com brilho, componentes refinados. Preserva TODO o contrato de
    classes/IDs usados por login.html/status.html/logout.html e pelo JS.
    ========================================================================= */
-@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700&family=Rubik:wght@500;600;700;800&display=swap');
+/* Fontes na FLASH, servidas pelo proprio roteador.
+   Antes daqui saia um @import para fonts.googleapis.com — e um @import
+   segura a aplicacao do CSS INTEIRO ate o arquivo remoto responder. Numa
+   rede lenta isso deixava a tela em branco por segundos (o CNA do iPhone
+   desistia antes). Agora nada da tela de login depende da internet.
+   Os arquivos sao subsets: so os 119 caracteres que a tela escreve. */
+@font-face{font-family:'Nunito Sans';font-style:normal;font-weight:400;font-display:swap;src:url('fonts/NunitoSans-400.woff2') format('woff2')}
+@font-face{font-family:'Nunito Sans';font-style:normal;font-weight:600;font-display:swap;src:url('fonts/NunitoSans-600.woff2') format('woff2')}
+@font-face{font-family:'Nunito Sans';font-style:normal;font-weight:700;font-display:swap;src:url('fonts/NunitoSans-700.woff2') format('woff2')}
+@font-face{font-family:'Rubik';font-style:normal;font-weight:500;font-display:swap;src:url('fonts/Rubik-500.woff2') format('woff2')}
+@font-face{font-family:'Rubik';font-style:normal;font-weight:600;font-display:swap;src:url('fonts/Rubik-600.woff2') format('woff2')}
+@font-face{font-family:'Rubik';font-style:normal;font-weight:700;font-display:swap;src:url('fonts/Rubik-700.woff2') format('woff2')}
+@font-face{font-family:'Rubik';font-style:normal;font-weight:800;font-display:swap;src:url('fonts/Rubik-800.woff2') format('woff2')}
 
 :root{
   /* Tema do painel — modo claro (glassmorphism navy/cyan) */

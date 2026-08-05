@@ -144,6 +144,88 @@
 }
 
 # ============================================================
+#  Tema da tela de login (tema.js + logo + anuncio) na flash
+#  O comprador define cores/efeitos/logo/anuncio no painel; aqui o roteador
+#  BAIXA isso para a flash. O login.html le os arquivos LOCAIS, entao o visual
+#  do cliente aparece mesmo com a internet do estabelecimento fora — antes o
+#  navegador tinha que buscar do painel no momento da conexao, e sem internet
+#  a tela abria sem tema, sem logo e sem anuncio.
+#  Mesma estrutura versionada do macs.js: so grava quando a versao muda.
+# ============================================================
+:global cdTemaVer
+:if ([:typeof $cdTemaVer] = "nothing") do={ :set cdTemaVer "" }
+:local tver ""
+:do {
+  :local tr [/tool fetch url=("https://captivedata.com.br/api/tema.php?token=$token&roteador=$ident")       check-certificate=no output=user as-value]
+  :set tver ($tr->"data")
+} on-error={ :set tver "" }
+
+:if ([:len $tver] > 0 && [:len $tver] < 20 && $tver != $cdTemaVer) do={
+  :local tok 1
+  :do {
+    /tool fetch url=("https://captivedata.com.br/api/tema.php?token=$token&roteador=$ident&f=js")         check-certificate=no dst-path="flash/hostsv7/tema.js"
+  } on-error={ :set tok 0 }
+  # Logo e anuncio podem simplesmente nao existir (404) — isso NAO e falha:
+  # o login.html cai no icone Wi-Fi e no "Seu anuncio aqui".
+  :do {
+    /tool fetch url=("https://captivedata.com.br/api/tema.php?token=$token&roteador=$ident&f=logo")         check-certificate=no dst-path="flash/hostsv7/logo.img"
+  } on-error={}
+  :do {
+    /tool fetch url=("https://captivedata.com.br/api/tema.php?token=$token&roteador=$ident&f=ad")         check-certificate=no dst-path="flash/hostsv7/ad.img"
+  } on-error={}
+  # So marca a versao quando o tema.js (o essencial) desceu inteiro.
+  :if ($tok = 1) do={ :set cdTemaVer $tver }
+}
+
+# ============================================================
+#  Leads presos no roteador (fila)
+#  O login.html manda o telefone junto no username da sessao
+#  (T-<mac>-<telefone>). Quando a internet do estabelecimento esta fora, o
+#  NAVEGADOR do cliente nao alcanca o painel e o lead se perderia — mas o
+#  roteador ficou com o numero. Aqui ele e despejado assim que a linha volta.
+#  Cada MAC e enviado UMA vez por sessao (a lista global evita repetir a cada
+#  rodada); o servidor ainda ignora repeticao dentro de 10 min, por seguranca.
+# ============================================================
+:global cdLeadsFeitos
+:if ([:typeof $cdLeadsFeitos] = "nothing") do={ :set cdLeadsFeitos "" }
+:local pend ""
+:local pcount 0
+:foreach i in=[/ip hotspot active find] do={
+  :local u [/ip hotspot active get $i user]
+  :local m [/ip hotspot active get $i mac-address]
+  # Interessa so "T-<mac>-<telefone>": tem que comecar com T- e ter o 2o hifen.
+  :if ([:len $u] > 2 && [:pick $u 0 2] = "T-") do={
+    :local resto [:pick $u 2 [:len $u]]
+    :local h [:find $resto "-"]
+    :if ([:typeof $h] = "num") do={
+      :local tel [:pick $resto ($h + 1) [:len $resto]]
+      # So manda o que ainda nao foi mandado nesta sessao do roteador.
+      :if ([:len $tel] > 9 && [:typeof [:find $cdLeadsFeitos $m]] != "num") do={
+        :set pend ($pend . $m . "|" . $tel . ",")
+        :set pcount ($pcount + 1)
+      }
+    }
+  }
+}
+:if ($pcount > 0) do={
+  :local lok 0
+  :do {
+    /tool fetch url="https://captivedata.com.br/api/lead_lote.php" http-method=post check-certificate=no         http-header-field="Content-Type: application/x-www-form-urlencoded"         http-data=("token=$token&roteador=$ident&d=$pend") output=none
+    :set lok 1
+  } on-error={ :set lok 0 }
+  # So marca como enviado se o painel confirmou; senao tenta de novo na proxima
+  # rodada — que e justamente o comportamento de fila que se quer aqui.
+  :if ($lok = 1) do={
+    :foreach i in=[/ip hotspot active find] do={
+      :local m [/ip hotspot active get $i mac-address]
+      :if ([:typeof [:find $cdLeadsFeitos $m]] != "num") do={ :set cdLeadsFeitos ($cdLeadsFeitos . $m . ",") }
+    }
+    # Nao deixa a lista crescer sem fim (memoria do script).
+    :if ([:len $cdLeadsFeitos] > 3000) do={ :set cdLeadsFeitos "" }
+  }
+}
+
+# ============================================================
 #  Log de acessos (metadados: IP de destino por cliente)
 #  Envia ao painel: mapa ip-cliente=MAC (hotspot ativo) + as conexoes ativas
 #  (ipCliente>ipDestino). So destinos publicos. O painel deduplica e so o ADMIN
