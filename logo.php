@@ -8,8 +8,19 @@ ini_set('display_errors', '0');
 
 require_once __DIR__ . '/inc/util.php';
 
+// ?r=<identity>  o login.html do hotspot, que conhece o próprio identity.
+// ?h=<hash>      a página-ponte do Instagram (ig.php), que é pública e não deve
+//                carregar o identity do MikroTik na URL. Parâmetro separado de
+//                propósito: sem ambiguidade sobre o que veio.
+$hash     = isset($_GET['h']) ? (string) $_GET['h'] : '';
 $roteador = isset($_GET['r']) ? (string) $_GET['r'] : '';
-$file = $roteador !== '' ? logo_atual($roteador) : null;
+if (preg_match('/^[0-9a-f]{40}$/', $hash)) {
+    $file = ig_logo_hash($hash);
+    $chave = $hash;
+} else {
+    $file = $roteador !== '' ? logo_atual($roteador) : null;
+    $chave = $roteador;
+}
 
 if (!$file) {
     http_response_code(404);
@@ -21,7 +32,7 @@ if (!$file) {
 $ext   = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 $mime  = ($ext === 'png') ? 'image/png' : 'image/jpeg';
 $mtime = filemtime($file);
-$etag  = '"' . md5($roteador . '|' . $mtime) . '"';
+$etag  = '"' . md5($chave . '|' . $mtime) . '"';
 
 header('Content-Type: ' . $mime);
 header('Access-Control-Allow-Origin: *');

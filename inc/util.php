@@ -281,6 +281,152 @@ function estilo_set(string $roteador, array $marcadas): void
     @file_put_contents($dir . '/estilo_' . sha1(trim($roteador)) . '.json', json_encode($out));
 }
 
+// --- Página-ponte do Instagram, personalizada por roteador ---
+//
+// Por que a ponte existe: destino direto no instagram.com NÃO funciona no CNA
+// do iPhone. Sem cookies, o Instagram força o redirect instagram:// e o CNA
+// bloqueia com "Erro ao Abrir a Página". A ponte é uma página nossa, que sempre
+// carrega, com um botão que o cliente toca para ir ao perfil.
+//
+// Até aqui a ponte era uma só (ig.php?u=perfil, cara do Captive Data) e quem
+// quisesse a identidade da loja ganhava uma pasta feita à mão — foi o caso do
+// /maniasdosul/. Isto põe a mesma personalização na mão do comprador: cores,
+// textos e efeitos por roteador, no molde do que já existe para a tela de
+// login (cores_get/estilo_get).
+function ig_padrao(): array
+{
+    return [
+        'perfil'  => '',
+        'titulo'  => 'Siga a gente no Instagram',
+        'sub'     => 'Wi-Fi liberado! Aproveite e siga o nosso perfil.',
+        'chamada' => 'Novidades, promoções e bastidores — siga o perfil e fique por dentro.',
+        'botao'   => 'Abrir no Instagram',
+        'rodape'  => '',
+        'cores'   => [
+            'bg'     => '#faf5ff',   // fundo da tela
+            'card'   => '#ffffff',   // cartão do perfil
+            'fg'     => '#0f172a',   // título
+            'fg2'    => '#64748b',   // textos secundários
+            'btn'    => '#7c3aed',   // botão (degradê 1)
+            'btn2'   => '#ec4899',   // botão (degradê 2)
+            'btnfg'  => '#ffffff',   // texto do botão
+            'border' => '#ece3fb',   // bordas
+        ],
+        'estilo'  => [
+            'logo'    => 1,  // mostra a logo enviada no painel
+            'cartao'  => 1,  // bloco do perfil (desligado = só título e botão)
+            'sombra'  => 1,  // sombra sob o cartão
+            'manchas' => 1,  // manchas de luz no fundo
+            'grad'    => 1,  // degradê no botão (0 = cor chapada)
+            'redondo' => 1,  // cantos arredondados
+            'copiar'  => 1,  // botão "copiar @" (salva quem não consegue abrir)
+        ],
+    ];
+}
+
+// Os arquivos de ads/ ja sao nomeados pelo sha1 do identity, entao a pagina
+// publica e servida a partir do HASH — o identity do MikroTik nunca vai para a
+// URL, e o ig.php nao precisa de banco para descobrir de quem e a pagina.
+function ig_hash(string $roteador): string { return sha1(trim($roteador)); }
+function ig_file(string $roteador): string { return ig_file_hash(ig_hash($roteador)); }
+function ig_file_hash(string $hash): string { return ads_dir() . '/' . $hash . '.ig.json'; }
+
+// Logo do comprador (a mesma da tela de login) a partir do hash.
+function ig_logo_hash(string $hash): ?string
+{
+    foreach (['png', 'jpg'] as $ext) {
+        $p = ads_dir() . '/logo_' . $hash . '.' . $ext;
+        if (is_file($p)) { return $p; }
+    }
+    return null;
+}
+
+// Config da ponte do roteador, já com os defaults preenchidos.
+function ig_get(string $roteador): array
+{
+    return ig_get_hash(trim($roteador) === '' ? '' : ig_hash($roteador));
+}
+
+// Idem, direto pelo hash (é o que a página pública usa).
+function ig_get_hash(string $hash): array
+{
+    $def = ig_padrao();
+    if ($hash === '' || !preg_match('/^[0-9a-f]{40}$/', $hash)) { return $def; }
+    $j = json_decode((string) @file_get_contents(ig_file_hash($hash)), true);
+    if (!is_array($j)) { return $def; }
+
+    $out = $def;
+    // Perfil do Instagram: as mesmas regras do proprio Instagram.
+    if (isset($j['perfil']) && preg_match('/^[A-Za-z0-9._]{1,30}$/', (string) $j['perfil'])) {
+        $out['perfil'] = (string) $j['perfil'];
+    }
+    foreach (['titulo', 'sub', 'chamada', 'botao', 'rodape'] as $k) {
+        if (isset($j[$k]) && is_string($j[$k])) {
+            $out[$k] = mb_substr(trim($j[$k]), 0, 160);
+        }
+    }
+    foreach ($def['cores'] as $k => $v) {
+        if (isset($j['cores'][$k]) && preg_match('/^#[0-9a-fA-F]{6}$/', (string) $j['cores'][$k])) {
+            $out['cores'][$k] = strtolower((string) $j['cores'][$k]);
+        }
+    }
+    foreach ($def['estilo'] as $k => $v) {
+        if (isset($j['estilo']) && array_key_exists($k, $j['estilo'])) {
+            $out['estilo'][$k] = empty($j['estilo'][$k]) ? 0 : 1;
+        }
+    }
+    return $out;
+}
+
+// Grava o que veio validado. Base = o que ja esta salvo, nao o default: salvar
+// so uma parte (ex.: so as cores) nao zera o resto.
+function ig_set(string $roteador, array $cfg): bool
+{
+    if (trim($roteador) === '') { return false; }
+    $atual = ig_get($roteador);
+    $novo  = $atual;
+
+    if (isset($cfg['perfil'])) {
+        $p = ltrim(trim((string) $cfg['perfil']), '@');
+        // Aceita o link colado inteiro, nao so o @: e o que a pessoa tem em maos.
+        if (preg_match('~instagram\.com/([A-Za-z0-9._]{1,30})~i', $p, $m)) { $p = $m[1]; }
+        $novo['perfil'] = preg_match('/^[A-Za-z0-9._]{1,30}$/', $p) ? $p : '';
+    }
+    foreach (['titulo', 'sub', 'chamada', 'botao', 'rodape'] as $k) {
+        if (isset($cfg[$k])) { $novo[$k] = mb_substr(trim((string) $cfg[$k]), 0, 160); }
+    }
+    foreach (ig_padrao()['cores'] as $k => $v) {
+        if (isset($cfg['cores'][$k]) && preg_match('/^#[0-9a-fA-F]{6}$/', (string) $cfg['cores'][$k])) {
+            $novo['cores'][$k] = strtolower((string) $cfg['cores'][$k]);
+        }
+    }
+    // Flags so sao lidas quando o form avisa que mandou o bloco delas (checkbox
+    // desmarcado nao viaja no POST) — mesmo sentinela do estilo da tela de login.
+    if (!empty($cfg['tem_flags'])) {
+        foreach (ig_padrao()['estilo'] as $k => $v) {
+            $novo['estilo'][$k] = !empty($cfg['estilo'][$k]) ? 1 : 0;
+        }
+    }
+
+    $dir = ads_dir();
+    if (!is_dir($dir)) { @mkdir($dir, 0755, true); }
+    return @file_put_contents(ig_file($roteador), json_encode($novo, JSON_UNESCAPED_UNICODE)) !== false;
+}
+
+// Endereço público da ponte do roteador. O hash é o mesmo que nomeia os
+// arquivos em ads/ — o identity do MikroTik não vai para a URL.
+function ig_url(string $roteador): string
+{
+    return 'https://captivedata.com.br/ig.php?r=' . ig_hash($roteador);
+}
+
+// A ponte só serve de destino depois que o comprador informou o perfil — sem
+// ele o botão não teria para onde ir.
+function ig_pronta(string $roteador): bool
+{
+    return ig_get($roteador)['perfil'] !== '';
+}
+
 // --- Site de destino pós-anúncio (dst do hotspot), por roteador ---
 
 // Destino padrão quando o comprador ainda não configurou um.

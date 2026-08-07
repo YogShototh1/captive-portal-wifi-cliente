@@ -68,6 +68,10 @@ $estilo    = $rotAtivo !== null ? estilo_get($rotAtivo) : estilo_padrao();
 $dstOk    = isset($_GET['dst_ok'])   ? (string) $_GET['dst_ok']   : '';
 $dstErro  = isset($_GET['dst_erro']) ? (string) $_GET['dst_erro'] : '';
 $dstAtual = $rotAtivo !== null ? dst_atual($rotAtivo) : null;
+// Página-ponte do Instagram montada pelo comprador (botão "URL de Instagram").
+$ig    = $rotAtivo !== null ? ig_get($rotAtivo) : ig_padrao();
+$igOk  = isset($_GET['ig_ok'])   ? (string) $_GET['ig_ok']   : '';
+$igErro = isset($_GET['ig_erro']) ? (string) $_GET['ig_erro'] : '';
 
 // Status do MikroTik (coletor). O JS reatualiza a cada poll de leads_online.php.
 $mkOnline = mikrotiks_online($rotQuery);
@@ -105,7 +109,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Leads</title>
     <link rel="icon" href="assets/logo-icone.png?v=1" type="image/png">
-    <link rel="stylesheet" href="assets/style.css?v=112">
+    <link rel="stylesheet" href="assets/style.css?v=113">
 </head>
 <body class="painel-cliente">
     <div class="pc-bg-gradient"></div>
@@ -537,6 +541,8 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                             <p class="pc-dst-atual">Atual: <strong><?= $dstAtual ? h($dstAtual) : 'https://www.google.com (padrão)' ?></strong></p>
                             <?php if ($dstOk): ?><p class="pc-anuncio-msg ok"><?= h($dstOk) ?></p><?php endif; ?>
                             <?php if ($dstErro): ?><p class="pc-anuncio-msg err"><?= h($dstErro) ?></p><?php endif; ?>
+                            <?php if ($igOk): ?><p class="pc-anuncio-msg ok"><?= h($igOk) ?></p><?php endif; ?>
+                            <?php if ($igErro): ?><p class="pc-anuncio-msg err"><?= h($igErro) ?></p><?php endif; ?>
                             <form class="pc-dst-form" method="post" action="api/set_dst.php">
                                 <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
                                 <input type="hidden" name="roteador" value="<?= h((string) $rotAtivo) ?>">
@@ -544,9 +550,17 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                                        value="<?= h($dstAtual ?? '') ?>" required>
                                 <button type="submit" class="pc-btn-primary">Adicionar</button>
                             </form>
+                            <div class="pc-dst-ig">
+                                <button type="button" class="pc-btn-ig" id="ig-abrir">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+                                    URL de Instagram
+                                </button>
+                                <span class="pc-dst-ig-dica">Monte uma página com a sua cara para receber quem sai do anúncio e mandar para o seu perfil.</span>
+                            </div>
                         </div>
                     </div>
                 </div>
+                <?php require __DIR__ . '/inc/ig_modal.php'; ?>
                 <?php else: echo $avisoRoteador; endif; ?>
             </section>
 
@@ -694,6 +708,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
 
     <script src="assets/abas.js?v=4"></script>
     <script src="assets/cores.js?v=7"></script>
+    <script src="assets/ig.js?v=1"></script>
     <script src="assets/relatorio.js?v=16"></script>
     <script src="assets/alertas.js?v=3"></script>
     <script src="assets/dashboard.js?v=10"></script>

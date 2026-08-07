@@ -752,6 +752,34 @@ a.pc-pag-btn:hover { background: rgba(34,211,238, 0.2); border-color: #22d3ee; c
 .painel-cliente .pc-dst-atual { font-size: 13px; color: rgba(255, 255, 255, 0.7); word-break: break-all; }
 .painel-cliente .pc-dst-atual strong { color: #67e8f9; font-weight: 700; }
 
+/* --- Botão "URL de Instagram", abaixo do campo de destino --- */
+.painel-cliente .pc-dst-ig {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.08);
+}
+.painel-cliente .pc-btn-ig {
+    display: inline-flex; align-items: center; gap: 9px; flex: 0 0 auto; cursor: pointer;
+    padding: 10px 18px; border-radius: 10px; border: 1px solid rgba(255,255,255,.14);
+    /* Degradê do próprio Instagram: o botão se explica sem precisar de rótulo. */
+    background: linear-gradient(100deg, #f9ce34, #ee2a7b 55%, #6228d7);
+    color: #fff; font-family: inherit; font-size: 14px; font-weight: 700;
+    transition: transform .2s, box-shadow .3s;
+}
+.painel-cliente .pc-btn-ig:hover { transform: translateY(-1px); box-shadow: 0 10px 24px -10px rgba(238,42,123,.6); }
+.painel-cliente .pc-btn-ig svg { width: 17px; height: 17px; }
+.painel-cliente .pc-dst-ig-dica { flex: 1 1 220px; font-size: 12.5px; color: rgba(255,255,255,.5); line-height: 1.5; }
+
+/* --- Campos de texto do modal da página de Instagram --- */
+.painel-cliente .ig-campo { display: block; margin-bottom: 13px; }
+.painel-cliente .ig-campo-nome {
+    display: block; margin-bottom: 5px; font-size: 12.5px; font-weight: 600; color: rgba(255,255,255,.75);
+}
+.painel-cliente .ig-campo .pc-dst-input { width: 100%; min-width: 0; height: 40px; font-size: 14px; }
+.painel-cliente .ig-campo-dica { display: block; margin-top: 4px; font-size: 11.5px; color: rgba(255,255,255,.4); }
+.painel-cliente .ig-aviso {
+    margin: 10px 0 8px; font-size: 12px; color: rgba(255,255,255,.5); line-height: 1.5;
+}
+
 /* --- Último envio + histórico da página de login ---
    O histórico é um <details> nativo: abre e fecha sem uma linha de JS. Só o
    marcador padrão sai de cena, trocado por uma seta que gira com [open]. */
@@ -1615,6 +1643,12 @@ html[data-tema="claro"] .dash-tt { background: rgba(255,255,255,0.92); border-co
 html[data-tema="claro"] .est-filtro { background: rgba(255,255,255,0.6); border-color: rgba(15,23,42,0.14); color: var(--g-fg2); }
 html[data-tema="claro"] .est-filtro.atual { background: var(--g-cyan); border-color: var(--g-cyan); color: #fff; }
 html[data-tema="claro"] .rel-resumo { color: var(--g-fg2); }
+/* --- Botão e campos da página de Instagram --- */
+html[data-tema="claro"] .pc-dst-ig { border-top-color: rgba(15,23,42,0.10); }
+html[data-tema="claro"] .pc-dst-ig-dica { color: var(--g-fg2); }
+html[data-tema="claro"] .ig-campo-nome { color: var(--g-fg); }
+html[data-tema="claro"] .ig-campo-dica, html[data-tema="claro"] .ig-aviso { color: var(--g-fg2); }
+
 /* --- Histórico de envios da página de login --- */
 html[data-tema="claro"] .pc-hist-btn {
     background: rgba(255,255,255,0.6); border-color: rgba(15,23,42,0.14); color: var(--g-fg2);
