@@ -37,7 +37,11 @@ if ($roteador === '') {
 
 mikrotik_tocar($roteador);
 header('X-Content-Type-Options: nosniff');
-header('Cache-Control: no-store');
+// no-transform: o Cloudflare está na frente e, sem isto, ele comprime a
+// resposta e troca o Content-Length por Transfer-Encoding: chunked. Os dois
+// atrapalham — o /tool fetch do RouterOS abortava o download, e o gzip sobre
+// bytes aleatórios ainda INFLA o corpo (mediria compressão, não banda).
+header('Cache-Control: no-store, no-transform');
 
 $f = (string) ($_REQUEST['f'] ?? '');
 
@@ -57,7 +61,9 @@ if ($f === 'down') {
 
     header('Content-Type: application/octet-stream');
     header('Content-Length: ' . ($mb * 1024 * 1024));
-    header('Content-Encoding: identity');
+    // Nada de Content-Encoding aqui: declarar "identity" fazia o Cloudflare
+    // acrescentar um segundo cabeçalho ("gzip") e a resposta chegava com dois,
+    // que é inválido. Quem resolve isso é o no-transform, lá em cima.
 
     // Bytes aleatórios: com zeros, qualquer compressão no caminho inflaria o
     // número — mediria compressão, não banda.

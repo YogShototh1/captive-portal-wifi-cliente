@@ -814,7 +814,7 @@ a.pc-pag-btn:hover { background: rgba(34,211,238, 0.2); border-color: #22d3ee; c
 .painel-cliente .sp-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 0 22px rgba(255,255,255,.22); }
 .painel-cliente .sp-btn:disabled { opacity: .5; cursor: default; }
 /* Durante o teste o ponteiro já conta a história; o botão sai de cena. */
-.painel-cliente #speed-box.rodando .sp-btn { opacity: .35; }
+.painel-cliente #speedrt-box.rodando .sp-btn { opacity: .35; }
 
 /* --- Histórico de logos e anúncios: miniatura + botão de repor --- */
 .painel-cliente .pc-mhist { margin-top: 12px; }

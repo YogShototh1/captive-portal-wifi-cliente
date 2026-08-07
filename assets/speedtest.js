@@ -1,17 +1,13 @@
-/* Aba "Teste de velocidade" — duas medições, cada uma respondendo uma pergunta:
+/* Aba "Teste de velocidade": mede a internet que chega no MikroTik do cliente.
 
-   1) INTERNET DA LOJA (#speedrt-box): o MikroTik baixa do nosso servidor e o
-      SERVIDOR cronometra. É a velocidade que chega no roteador do cliente,
-      medida sem ninguém ir até lá. O painel só pede e fica esperando o
-      resultado aparecer — quem executa é o leadsync, na rodada seguinte.
-
-   2) ESTE APARELHO (#speed-box): o navegador baixa do nosso servidor. Serve
-      para separar "o link da loja está ruim" de "a minha conexão está ruim".
-
-   O mostrador é o mesmo nos dois, por isso vive numa função só. */
+   O painel so PEDE o teste e fica esperando: quem executa e o leadsync, na
+   rodada seguinte, e quem cronometra o download e o SERVIDOR — assim nao se
+   depende do relogio do RouterOS nem se grava nada na flash dele (a do hEX
+   Gr3 tem 16 MB e vive cheia). O ping vem do roteador, medido contra um
+   destino externo, para ser a latencia da internet da loja. */
 (function () {
 
-    // ===== Mostrador (escala + ponteiro), reaproveitado pelos dois testes =====
+    // ===== Mostrador: escala + ponteiro =====
     //
     // A escala NÃO é linear: cada intervalo entre marcas ocupa a mesma fatia do
     // arco. É o que dá espaço de sobra ao trecho de 0 a 100, onde quase todo
@@ -92,7 +88,6 @@
     function fmt(v) { return v >= 100 ? v.toFixed(0) : v.toFixed(2); }
     function qs(base, q) { return base + (base.indexOf('?') >= 0 ? '&' : '?') + q; }
 
-    // ===== 1) Internet da LOJA =====
     (function () {
         var box = document.getElementById('speedrt-box');
         if (!box) return;
@@ -220,109 +215,4 @@
         });
     })();
 
-    // ===== 2) Este aparelho =====
-    (function () {
-        var box = document.getElementById('speed-box');
-        if (!box) return;
-        var EP = box.getAttribute('data-endpoint');
-        var btn = document.getElementById('sp-iniciar');
-        var vUni = document.getElementById('sp-unidade');
-        var elD = document.getElementById('sp-down');
-        var elU = document.getElementById('sp-up');
-        var elP = document.getElementById('sp-ping');
-        var elF = document.getElementById('sp-fase');
-        var med = criarMedidor('sp');
-        if (!btn || !med) return;
-
-        function fase(t) { if (elF) elF.textContent = t; }
-        function url(q) { return qs(EP, q + '&t=' + Date.now() + Math.random()); }
-
-        function medirPing() {
-            var a = [];
-            function uma() {
-                var t0 = performance.now();
-                return fetch(url('f=ping'), { cache: 'no-store', credentials: 'same-origin' })
-                    .then(function (r) { return r.text(); })
-                    .then(function () { a.push(performance.now() - t0); });
-            }
-            var p = Promise.resolve();
-            for (var i = 0; i < 5; i++) p = p.then(uma);
-            // Mediana: um pico solto não contamina.
-            return p.then(function () { a.sort(function (x, y) { return x - y; }); return a[Math.floor(a.length / 2)]; });
-        }
-
-        function medirDownload(mb) {
-            var t0 = performance.now(), lidos = 0;
-            return fetch(url('f=down&mb=' + mb), { cache: 'no-store', credentials: 'same-origin' })
-                .then(function (r) {
-                    if (!r.ok) throw new Error('http ' + r.status);
-                    if (!r.body || !r.body.getReader) {
-                        // Navegador sem streams: mede só no fim, sem ponteiro ao vivo.
-                        return r.arrayBuffer().then(function (b) {
-                            return b.byteLength * 8 / ((performance.now() - t0) / 1000) / 1e6;
-                        });
-                    }
-                    var reader = r.body.getReader();
-                    return (function ler() {
-                        return reader.read().then(function (res) {
-                            if (res.done) return lidos * 8 / ((performance.now() - t0) / 1000) / 1e6;
-                            lidos += res.value.length;
-                            var seg = (performance.now() - t0) / 1000;
-                            if (seg > 0.25) med.irPara(lidos * 8 / seg / 1e6);
-                            return ler();
-                        });
-                    })();
-                });
-        }
-
-        function medirUpload(mb) {
-            var pedaco = new Uint8Array(1024 * 1024);
-            for (var i = 0; i < pedaco.length; i += 4096) pedaco[i] = i & 255;
-            var partes = [];
-            for (var k = 0; k < mb; k++) partes.push(pedaco);
-            var corpo = new Blob(partes, { type: 'application/octet-stream' });
-            var t0 = performance.now();
-            return fetch(url('f=up'), { method: 'POST', body: corpo, cache: 'no-store', credentials: 'same-origin' })
-                .then(function (r) { return r.text(); })
-                .then(function () { return mb * 1024 * 1024 * 8 / ((performance.now() - t0) / 1000) / 1e6; });
-        }
-
-        var rodando = false;
-        btn.addEventListener('click', function () {
-            if (rodando) return;
-            rodando = true;
-            box.classList.add('rodando');
-            btn.disabled = true;
-            elD.textContent = '—'; elU.textContent = '—'; elP.textContent = '—';
-            med.zerar();
-
-            fase('Medindo a latência…');
-            medirPing().then(function (ms) {
-                elP.textContent = Math.round(ms);
-                fase('Medindo o download…');
-                if (vUni) vUni.textContent = 'Mbps ↓';
-                return medirDownload(8);
-            }).then(function (mbps) {
-                elD.textContent = fmt(mbps);
-                med.irPara(mbps);
-                fase('Medindo o upload…');
-                return new Promise(function (r) { setTimeout(r, 700); }).then(function () {
-                    med.zerar();
-                    if (vUni) vUni.textContent = 'Mbps ↑';
-                    return medirUpload(4);
-                });
-            }).then(function (mbps) {
-                elU.textContent = fmt(mbps);
-                med.irPara(mbps);
-                fase('Pronto');
-            }).catch(function () {
-                fase('Não foi possível concluir o teste. Tente de novo.');
-            }).then(function () {
-                rodando = false;
-                box.classList.remove('rodando');
-                btn.disabled = false;
-                btn.textContent = 'Testar de novo';
-            });
-        });
-    })();
 })();
