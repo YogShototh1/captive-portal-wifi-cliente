@@ -86,6 +86,7 @@ $bandaErro = isset($_GET['banda_erro']) ? (string) $_GET['banda_erro'] : '';
 $portalOk    = isset($_GET['portal_ok'])   ? (string) $_GET['portal_ok']   : '';
 $portalErro  = isset($_GET['portal_erro']) ? (string) $_GET['portal_erro'] : '';
 $portalFiles = $rotAtivo !== null ? portal_files($rotAtivo) : [];
+$portalHist  = $rotAtivo !== null ? portal_hist($rotAtivo)  : [];
 
 // Aviso mostrado nas abas de configuração quando a conta multi está em "todos".
 $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" aria-hidden="true"></span><div class="glow-body"><div class="pc-dst">'
@@ -103,7 +104,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Leads — <?= h($cliente['nome'] ?: $cliente['email']) ?></title>
     <link rel="icon" href="assets/logo-icone.png?v=1" type="image/png">
-    <link rel="stylesheet" href="assets/style.css?v=109">
+    <link rel="stylesheet" href="assets/style.css?v=110">
 </head>
 <body class="painel-cliente">
     <!-- Camadas de fundo (decorativas) -->
@@ -605,6 +606,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                             <h2 class="pc-anuncio-title">Página de login do hotspot (MikroTik)</h2>
                             <div class="pc-anuncio-target">Roteador <strong><?= h((string) $rotAtivo) ?></strong></div>
                             <p class="pc-anuncio-desc">Envie um <strong>.zip</strong> do template (com <code>login.html</code>, <code>css/</code>, <code>img/</code>, <code>xml/</code>…): extraímos e o MikroTik substitui os de <code>flash/hostsv7</code> em até ~1 min (as subpastas são criadas sozinhas). Ou envie um arquivo avulso para trocar só ele. Até 2 MB por arquivo.</p>
+                            <?php require __DIR__ . '/inc/portal_hist_tela.php'; ?>
                             <?php if ($portalFiles): ?>
                                 <p class="pc-dst-atual">No servidor (<?= count($portalFiles) ?>): <strong><?= h(implode(', ', $portalFiles)) ?></strong></p>
                                 <p class="pc-dst-atual"><a class="pc-btn" href="api/download_portal.php?cliente_id=<?= (int) $id ?>&amp;roteador=<?= urlencode((string) $rotAtivo) ?>">Baixar cópia atual (.zip)</a> — os mesmos arquivos aplicados em <code>flash/hostsv7</code>; nada é apagado.</p>

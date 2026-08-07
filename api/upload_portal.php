@@ -25,6 +25,16 @@ if ((int) $c['is_admin'] === 1) {
     $voltar   = '../painel.php' . ($roteador !== '' ? '?r=' . rawurlencode($roteador) : '');
 }
 
+// Quem assina o envio no histórico. Marca o admin: quando o portal quebra, saber
+// se quem trocou foi o dono da conta ou o suporte agindo por ele muda a conversa.
+function quem_enviou(array $c): string
+{
+    $n = trim((string) ($c['nome'] ?? ''));
+    if ($n === '') { $n = trim((string) ($c['email'] ?? '')); }
+    if ($n === '') { $n = 'desconhecido'; }
+    return ((int) ($c['is_admin'] ?? 0) === 1) ? $n . ' (admin)' : $n;
+}
+
 function voltar_msg(string $to, string $key, string $msg): void
 {
     $sep = (strpos($to, '?') === false) ? '?' : '&';
@@ -189,6 +199,7 @@ if ($ext === 'zip') {
         rrmdir($tmpDir);
         voltar_msg($voltar, 'portal_erro', 'Não foi possível salvar os arquivos.');
     }
+    portal_hist_add($roteador, $nome, $qtd, quem_enviou($c));
     $msg = "$qtd arquivo(s) do template aplicados";
     if ($falhas > 0) {
         $msg .= " — atenção: $falhas não puderam ser gravados (falha de leitura/gravação no servidor)";
@@ -211,4 +222,5 @@ if (!move_uploaded_file((string) $f['tmp_name'], $base . '/' . $nome)) {
     voltar_msg($voltar, 'portal_erro', "Não foi possível salvar \"$nome\".");
 }
 @chmod($base . '/' . $nome, 0644);
+portal_hist_add($roteador, $nome, 1, quem_enviou($c));
 voltar_msg($voltar, 'portal_ok', "\"$nome\" atualizado. O MikroTik aplica em até ~1 min.");

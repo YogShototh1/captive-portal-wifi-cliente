@@ -751,6 +751,44 @@ a.pc-pag-btn:hover { background: rgba(34,211,238, 0.2); border-color: #22d3ee; c
 .painel-cliente .pc-dst { display: flex; flex-direction: column; gap: 10px; }
 .painel-cliente .pc-dst-atual { font-size: 13px; color: rgba(255, 255, 255, 0.7); word-break: break-all; }
 .painel-cliente .pc-dst-atual strong { color: #67e8f9; font-weight: 700; }
+
+/* --- Último envio + histórico da página de login ---
+   O histórico é um <details> nativo: abre e fecha sem uma linha de JS. Só o
+   marcador padrão sai de cena, trocado por uma seta que gira com [open]. */
+.painel-cliente .pc-hist-ult { margin-bottom: 2px; }
+.painel-cliente .pc-hist { margin-top: 2px; }
+.painel-cliente .pc-hist-btn {
+    display: inline-flex; align-items: center; gap: 7px; width: max-content; cursor: pointer;
+    padding: 7px 14px; border-radius: 9px;
+    background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.10);
+    color: rgba(255, 255, 255, 0.78); font-size: 13px; font-weight: 600;
+    list-style: none; -webkit-user-select: none; user-select: none;
+    transition: background .2s, border-color .2s, color .2s;
+}
+.painel-cliente .pc-hist-btn::-webkit-details-marker { display: none; }
+.painel-cliente .pc-hist-btn::before { content: "\25B8"; font-size: 11px; transition: transform .2s; }
+.painel-cliente .pc-hist[open] .pc-hist-btn::before { transform: rotate(90deg); }
+.painel-cliente .pc-hist-btn:hover {
+    background: rgba(255, 255, 255, 0.10); border-color: rgba(255, 255, 255, 0.22); color: #fff;
+}
+.painel-cliente .pc-hist-lista {
+    list-style: none; margin: 10px 0 0; padding: 0; overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px;
+}
+.painel-cliente .pc-hist-item {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+    padding: 9px 13px; font-size: 13px; border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+/* O primeiro é o que está no ar agora: sem linha em cima e levemente destacado. */
+.painel-cliente .pc-hist-item:first-child { border-top: none; background: rgba(255, 255, 255, 0.03); }
+.painel-cliente .pc-hist-nome { color: #fff; font-weight: 600; word-break: break-all; }
+.painel-cliente .pc-hist-meta {
+    flex: 0 0 auto; color: rgba(255, 255, 255, 0.5); font-size: 12px; text-align: right;
+}
+@media (max-width: 560px) {
+    .painel-cliente .pc-hist-item { flex-direction: column; gap: 2px; }
+    .painel-cliente .pc-hist-meta { text-align: left; }
+}
 .painel-cliente .pc-dst-form { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 2px; }
 .painel-cliente .pc-dst-input {
     flex: 1; min-width: 240px; height: 44px; padding: 0 14px; font-size: 15px; color: #fff;
@@ -1523,6 +1561,17 @@ html[data-tema="claro"] .dash-tt { background: rgba(255,255,255,0.92); border-co
 html[data-tema="claro"] .est-filtro, html[data-tema="claro"] .est-serie { background: rgba(255,255,255,0.6); border-color: rgba(15,23,42,0.14); color: var(--g-fg2); }
 html[data-tema="claro"] .est-filtro.atual, html[data-tema="claro"] .est-serie.atual { background: var(--g-cyan); border-color: var(--g-cyan); color: #fff; }
 html[data-tema="claro"] .rel-resumo { color: var(--g-fg2); }
+/* --- Histórico de envios da página de login --- */
+html[data-tema="claro"] .pc-hist-btn {
+    background: rgba(255,255,255,0.6); border-color: rgba(15,23,42,0.14); color: var(--g-fg2);
+}
+html[data-tema="claro"] .pc-hist-btn:hover { background: rgba(255,255,255,0.9); color: var(--g-fg); }
+html[data-tema="claro"] .pc-hist-lista { border-color: rgba(15,23,42,0.12); }
+html[data-tema="claro"] .pc-hist-item { border-top-color: rgba(15,23,42,0.08); }
+html[data-tema="claro"] .pc-hist-item:first-child { background: rgba(15,23,42,0.03); }
+html[data-tema="claro"] .pc-hist-nome { color: var(--g-fg); }
+html[data-tema="claro"] .pc-hist-meta { color: var(--g-fg2); }
+
 html[data-tema="claro"] .rel-rotulo, html[data-tema="claro"] .rel-valor { color: var(--g-fg); }
 html[data-tema="claro"] .rel-pct { color: var(--g-fg2); }
 html[data-tema="claro"] .rel-barra-wrap { background: rgba(15,23,42,0.10); }

@@ -547,6 +547,48 @@ function portal_versao(string $roteador): string
     return $sig === '' ? '0' : substr(sha1($sig), 0, 16);
 }
 
+// --- Historico de envios da pagina de login do hotspot ---
+//
+// O disco nao guarda essa informacao: o .zip e desmontado na extracao (so
+// sobram os arquivos soltos) e cada envio apaga o anterior. Sem registro
+// proprio nao da para saber QUAL template esta no ar nem desde quando — o que
+// importa quando o portal quebra e e preciso decidir se foi o ultimo envio.
+//
+// Uma linha JSON por roteador, em ads/ (pasta fechada por .htaccess), no mesmo
+// esquema dos alertas. Nao vai para o banco porque nao e dado de cliente e
+// nunca e consultado em conjunto.
+const PORTAL_HIST_MAX = 40;
+
+function portal_hist_file(string $roteador): string
+{
+    return anuncio_base($roteador) . '.hist.json';
+}
+
+// Mais recente primeiro.
+function portal_hist(string $roteador): array
+{
+    if (trim($roteador) === '') { return []; }
+    $j = @file_get_contents(portal_hist_file($roteador));
+    $d = $j === false ? null : json_decode($j, true);
+    return is_array($d) ? $d : [];
+}
+
+// $qtd: arquivos aplicados (1 num envio avulso). $quem: quem estava logado.
+function portal_hist_add(string $roteador, string $nome, int $qtd, string $quem): void
+{
+    if (trim($roteador) === '') { return; }
+    // db_now() e nao date(): e o mesmo relogio das outras datas do painel, entao
+    // o horario do envio nao diverge do das conexoes.
+    try { $agora = db_now(); } catch (Throwable $e) { $agora = date('Y-m-d H:i:s'); }
+    $h = portal_hist($roteador);
+    array_unshift($h, ['nome' => $nome, 'qtd' => $qtd, 'quem' => $quem, 'em' => $agora]);
+    @file_put_contents(
+        portal_hist_file($roteador),
+        json_encode(array_slice($h, 0, PORTAL_HIST_MAX), JSON_UNESCAPED_UNICODE),
+        LOCK_EX
+    );
+}
+
 // Reparte sessoes de conexao pelos 7 dias da semana, em segundos.
 //
 // Somar `conexoes.segundos` no dia em que a sessao COMECOU dava celula de 41h
