@@ -1280,15 +1280,15 @@ html[data-tema="claro"] .painel-cliente input[type="date"].rel-data::-webkit-cal
 /* --- Estatísticas: filtros + gráfico de linhas (SVG puro) --- */
 /* --- Aba Estatisticas: grafico de VELAS, no estilo de home broker --- */
 .est-barra { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
-.est-filtros, .est-series { display: flex; gap: 8px; flex-wrap: wrap; }
-.est-filtro, .est-serie {
+.est-filtros { display: flex; gap: 8px; flex-wrap: wrap; }
+.est-filtro {
     padding: 8px 18px; border-radius: 999px; cursor: pointer;
     background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12);
     color: rgba(255, 255, 255, 0.75); font-family: inherit; font-size: 13px; font-weight: 700;
     transition: background .2s, color .2s, border-color .2s;
 }
-.est-filtro:hover, .est-serie:hover { border-color: #22d3ee; color: #fff; }
-.est-filtro.atual, .est-serie.atual { background: #0891b2; border-color: #0891b2; color: #fff; }
+.est-filtro:hover { border-color: #22d3ee; color: #fff; }
+.est-filtro.atual { background: #0891b2; border-color: #0891b2; color: #fff; }
 
 /* O grafico ganha painel proprio, escuro nos dois temas: o traco em degrade e
    o brilho atras dele so tem contraste sobre fundo escuro. */
@@ -1307,38 +1307,50 @@ html[data-tema="claro"] .painel-cliente input[type="date"].rel-data::-webkit-cal
 .est-txt { fill: rgba(255, 255, 255, 0.45); font-size: 9.5px; font-family: inherit; }
 .est-txt-x { fill: rgba(255, 255, 255, 0.42); }
 
-/* Paradas dos gradientes do SVG (stop-color é propriedade CSS, então o tema
-   manda no degradê sem o JS precisar saber de cor nenhuma). */
-.est-c1 { stop-color: #fbbf24; }
-.est-c2 { stop-color: #f97316; }
-.est-c3 { stop-color: #ec4899; }
-.est-a1 { stop-color: #f97316; stop-opacity: .28; }
-.est-a2 { stop-color: #f97316; stop-opacity: 0; }
+/* Paradas dos gradientes do SVG (stop-color é propriedade CSS, então a paleta
+   fica aqui e o JS não precisa saber de cor nenhuma).
+   Curva 1 = conexões totais (âmbar -> rosa); curva 2 = novos clientes (ciano
+   -> índigo). Matizes opostas de propósito: as duas andam juntas e coladas
+   quando quase todo mundo é cliente novo. */
+.est-c1a { stop-color: #fbbf24; }
+.est-c1b { stop-color: #f97316; }
+.est-c1c { stop-color: #ec4899; }
+.est-c2a { stop-color: #22d3ee; }
+.est-c2b { stop-color: #818cf8; }
+.est-a1  { stop-color: #f97316; stop-opacity: .22; }
+.est-a2  { stop-color: #f97316; stop-opacity: 0; }
 
-/* Barras do total ao fundo: textura do movimento, sem disputar com a linha. */
-.est-barras rect { fill: rgba(255, 255, 255, 0.07); }
-
-.est-area  { fill: url(#est-g-area); }
-.est-linha {
-    fill: none; stroke: url(#est-g-traco); stroke-width: 2.6;
-    stroke-linecap: round; stroke-linejoin: round;
+.est-area { fill: url(#est-g-area); }
+.est-l1, .est-l2 { fill: none; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.est-l1 { stroke: url(#est-g1); }
+.est-l2 { stroke: url(#est-g2); }
+/* Os mesmos caminhos, borrados e por baixo: é daqui que vem o brilho. */
+.est-l1-brilho, .est-l2-brilho {
+    fill: none; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; opacity: .45;
 }
-/* O mesmo caminho, borrado e por baixo: é daqui que vem o brilho da curva. */
-.est-linha-brilho {
-    fill: none; stroke: url(#est-g-traco); stroke-width: 5;
-    stroke-linecap: round; stroke-linejoin: round; opacity: .5;
-}
+.est-l1-brilho { stroke: url(#est-g1); }
+.est-l2-brilho { stroke: url(#est-g2); }
 
-.est-ponto-halo { fill: #ec4899; opacity: .25; }
-.est-ponto      { fill: #fff; stroke: #ec4899; stroke-width: 2; }
+.est-ponto-halo { opacity: .25; }
+.est-ponto      { fill: #fff; stroke-width: 2; }
 .est-valor {
-    fill: #fff; font-size: 15px; font-weight: 700; font-family: inherit;
-    paint-order: stroke; stroke: rgba(19,16,36,.75); stroke-width: 3px;
+    font-size: 14px; font-weight: 700; font-family: inherit;
+    paint-order: stroke; stroke: rgba(19,16,36,.8); stroke-width: 3px;
 }
+/* Cor por curva: o marcador, o halo e o número herdam a cor da própria linha,
+   então não é preciso legenda para saber de quem é o valor. */
+.est-ponto-halo.est-f1 { fill: #ec4899; }
+.est-ponto.est-f1      { stroke: #ec4899; }
+.est-valor.est-f1      { fill: #fb923c; }
+.est-ponto-halo.est-f2 { fill: #22d3ee; }
+.est-ponto.est-f2      { stroke: #22d3ee; }
+.est-valor.est-f2      { fill: #67e8f9; }
 
 .est-cursor { stroke: rgba(255, 255, 255, 0.3); stroke-width: 1; stroke-dasharray: 3 3; }
 .est-realce { fill: rgba(255, 255, 255, 0.05); }
-.est-marca  { fill: #fff; stroke: #f97316; stroke-width: 2; }
+.est-marca  { fill: #fff; stroke-width: 2; }
+.est-marca.est-f1 { stroke: #f97316; }
+.est-marca.est-f2 { stroke: #22d3ee; }
 
 .est-tooltip {
     position: absolute; display: none; pointer-events: none; z-index: 5;
@@ -1349,12 +1361,27 @@ html[data-tema="claro"] .painel-cliente input[type="date"].rel-data::-webkit-cal
 .est-tooltip b { display: block; margin-bottom: 5px; font-size: 12.5px; }
 .est-tooltip span { display: flex; justify-content: space-between; gap: 18px; color: rgba(255,255,255,.62); }
 .est-tooltip i { font-style: normal; font-weight: 600; color: #fff; font-variant-numeric: tabular-nums; }
-.est-tt-tot { margin-top: 5px; padding-top: 5px; border-top: 1px solid rgba(255,255,255,.12); }
-.est-tt-alta  { color: #16c784 !important; font-weight: 600; }
-.est-tt-baixa { color: #ea3943 !important; font-weight: 600; }
+
+/* Bolinha na cor da curva: amarra cada número à linha de onde ele veio, no
+   tooltip e na variação, sem repetir o nome da série. */
+.est-tt-p1::before, .est-tt-p2::before { content: "\25CF"; margin-right: 7px; font-size: 9px; }
+.est-tt-p1::before { color: #f97316; }
+.est-tt-p2::before { color: #22d3ee; }
+/* Variação contra o ponto à esquerda, uma por curva. */
+.est-tt-var { margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,.12); }
+.est-tt-var i { display: flex; gap: 12px; }
+.est-tt-var em { font-style: normal; font-weight: 700; font-size: 11.5px; }
+.est-tt-var em.est-tt-p1 { color: #fb923c; }
+.est-tt-var em.est-tt-p2 { color: #67e8f9; }
+.est-tt-var em::before { font-size: 8px; margin-right: 4px; }
 
 .est-legenda { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 10px; font-size: 12.5px; color: rgba(255, 255, 255, 0.7); }
 .est-leg-dica { color: rgba(255, 255, 255, 0.45); }
+/* Mesma bolinha da tooltip: é isto que diz qual curva é qual. */
+.est-leg-1::before, .est-leg-2::before { content: "\25CF"; margin-right: 7px; font-size: 9px; }
+.est-leg-1::before { color: #f97316; }
+.est-leg-2::before { color: #22d3ee; }
+.est-leg b { color: #fff; font-weight: 700; }
 
 /* Celular: drawer sobreposto, fechado por padrão */
 @media (max-width: 900px) {
@@ -1585,8 +1612,8 @@ html[data-tema="claro"] .dash-tt { background: rgba(255,255,255,0.92); border-co
 
 /* Série "novos" = branca no escuro; no claro vira tinta escura (branco sumiria) */
 
-html[data-tema="claro"] .est-filtro, html[data-tema="claro"] .est-serie { background: rgba(255,255,255,0.6); border-color: rgba(15,23,42,0.14); color: var(--g-fg2); }
-html[data-tema="claro"] .est-filtro.atual, html[data-tema="claro"] .est-serie.atual { background: var(--g-cyan); border-color: var(--g-cyan); color: #fff; }
+html[data-tema="claro"] .est-filtro { background: rgba(255,255,255,0.6); border-color: rgba(15,23,42,0.14); color: var(--g-fg2); }
+html[data-tema="claro"] .est-filtro.atual { background: var(--g-cyan); border-color: var(--g-cyan); color: #fff; }
 html[data-tema="claro"] .rel-resumo { color: var(--g-fg2); }
 /* --- Histórico de envios da página de login --- */
 html[data-tema="claro"] .pc-hist-btn {
@@ -1640,7 +1667,7 @@ html[data-tema="claro"] .est-legenda { color: var(--g-fg2); }
 /* Hovers com fundo cyan claro: texto branco ficava ilegível */
 html[data-tema="claro"] .pc-conex-seta:hover,
 html[data-tema="claro"] a.pc-pag-btn:hover,
-html[data-tema="claro"] .est-filtro:hover, html[data-tema="claro"] .est-serie:hover { color: var(--g-fg); }
+html[data-tema="claro"] .est-filtro:hover { color: var(--g-fg); }
 /* Grade e cursor do gráfico de linhas (brancos sumiam no claro) */
 
 
@@ -2003,9 +2030,9 @@ html[data-tema] .painel-cliente td.pc-limite { white-space: nowrap; }
    colorido de proposito — aqui e so a "casca"). */
 html[data-tema] .painel-cliente .rel-mais { background: transparent; border: 1px solid var(--t-line); color: var(--t-fg2); border-radius: var(--t-r); }
 html[data-tema] .painel-cliente .rel-mais:hover { background: var(--t-hover); border-color: var(--t-fg); color: var(--t-fg); }
-html[data-tema] .painel-cliente .est-filtro, html[data-tema] .painel-cliente .est-serie { background: transparent; border: 1px solid var(--t-line); color: var(--t-fg2); border-radius: 100px; font-weight: 500; }
-html[data-tema] .painel-cliente .est-filtro:hover, html[data-tema] .painel-cliente .est-serie:hover { border-color: var(--t-fg); color: var(--t-fg); background: var(--t-hover); }
-html[data-tema] .painel-cliente .est-filtro.atual, html[data-tema] .painel-cliente .est-serie.atual { background: var(--t-fg); border-color: var(--t-fg); color: var(--t-bg); }
+html[data-tema] .painel-cliente .est-filtro { background: transparent; border: 1px solid var(--t-line); color: var(--t-fg2); border-radius: 100px; font-weight: 500; }
+html[data-tema] .painel-cliente .est-filtro:hover { border-color: var(--t-fg); color: var(--t-fg); background: var(--t-hover); }
+html[data-tema] .painel-cliente .est-filtro.atual { background: var(--t-fg); border-color: var(--t-fg); color: var(--t-bg); }
 html[data-tema] .painel-cliente .pc-dst-atual strong { color: var(--t-fg); }
 html[data-tema] .painel-cliente .dash-dia { border-radius: var(--t-r); }
 html[data-tema] .painel-cliente .dash-dia.visitado { background: var(--t-fg); border-color: var(--t-fg); color: var(--t-bg); }

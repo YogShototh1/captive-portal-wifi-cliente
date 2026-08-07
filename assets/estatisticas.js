@@ -1,15 +1,15 @@
-/* Aba Estatísticas: curva de intensidade (SVG puro) com filtros
-   hoje/semana/mês/ano e um botão para alternar entre todas as conexões e só
-   as novas. Cada ponto é um balde do eixo; o valor é a intensidade dentro
-   dele (pessoas por fatia de 10 min / por hora / por dia), medida de contagem
-   real, não de estimativa.
+/* Aba Estatísticas: duas curvas no mesmo gráfico — conexões totais e novos
+   clientes — com filtros hoje/semana/mês/ano.
 
-   A curva é a MESMA que as velas desenhavam: cada balde abre no fechamento do
-   anterior, então ligar os fechamentos reproduz exatamente o caminho que os
-   corpos das velas descreviam. Abertura, máxima, mínima e fechamento seguem
-   no tooltip — mudou o desenho, não o que é medido.
+   As duas juntas em vez de um botão que alternava entre elas: a pergunta que
+   o gráfico responde é "quanto do movimento é gente nova", e isso só se lê
+   comparando as duas linhas ao mesmo tempo. Como todo novo cliente também é
+   uma conexão, a linha de novos nunca passa da de totais — as duas dividem a
+   mesma escala sem competir.
 
-   Config vem do #estatisticas-box (data-endpoint). */
+   Cada ponto é um balde do eixo (hora / dia / turno / mês) e vale a contagem
+   real daquele balde: pessoas distintas que conectaram, e quantas delas eram
+   a primeira vez. Config vem do #estatisticas-box (data-endpoint). */
 (function () {
     var box = document.getElementById('estatisticas-box');
     if (!box) return;
@@ -18,17 +18,15 @@
     var tooltip = document.getElementById('est-tooltip');
     var legenda = document.getElementById('est-legenda');
     var filtros = box.querySelectorAll('.est-filtro');
-    var series  = box.querySelectorAll('.est-serie');
     if (!wrap) return;
 
-    var W = 720, H = 300, PL = 10, PR = 46, PT = 14, PB = 26;  // escala Y na direita, como nos home brokers
+    var W = 720, H = 300, PL = 10, PR = 46, PT = 14, PB = 26;  // escala Y na direita
     var dados = null;
-    var serie  = 'conectados';   // ou 'novos'
     var DICA = {
-        hoje:   'Cada ponto é uma hora, medida em fatias de 10 minutos',
-        semana: 'Cada ponto é um dia, medido hora a hora',
+        hoje:   'Cada ponto é uma hora do dia de hoje',
+        semana: 'Cada ponto é um dia desta semana',
         mes:    'Três pontos por dia: manhã, tarde e noite',
-        ano:    'Cada ponto é um mês, medido dia a dia'
+        ano:    'Cada ponto é um mês deste ano'
     };
     var filtro = 'hoje';
 
@@ -47,9 +45,6 @@
         }
         return Math.ceil(max / (10 * pot)) * 10 * pot;
     }
-
-    function velasDe(d)  { return serie === 'novos' ? d.velas_novos : d.velas_conectados; }
-    function totaisDe(d) { return serie === 'novos' ? d.novos : d.conectados; }
 
     // Catmull-Rom -> cubicas de Bezier: a curva passa POR todos os pontos (nao
     // e aproximacao) e chega suave. O y dos controles fica preso entre os dois
@@ -71,24 +66,32 @@
         return d;
     }
 
+    // "+3" / "−1" / "=" — o menos e o sinal tipografico, nao o hifen.
+    function delta(n) { return n > 0 ? '+' + n : (n < 0 ? '−' + Math.abs(n) : '='); }
+    function seta(n)  { return n > 0 ? '▲ ' : (n < 0 ? '▼ ' : ''); }
+
     function render(d) {
         dados = d;
-        var v = velasDe(d), n = v.length, i;
+        var con = d.conectados, nov = d.novos, n = con.length, i;
+        // Novo cliente tambem e uma conexao, entao o teto sai dos totais.
         var pico = 1;
-        for (i = 0; i < n; i++) { if (v[i][1] > pico) pico = v[i][1]; }
+        for (i = 0; i < n; i++) { if (con[i] > pico) { pico = con[i]; } }
         var teto = tetoBonito(pico);
         var innerH = H - PT - PB, innerW = W - PL - PR;
         var base = PT + innerH;
-        var passo = innerW / n;                     // uma faixa por balde
+        var passo = innerW / n;
         var y = function (val) { return PT + innerH - (val / teto) * innerH; };
         var cxDe = function (k) { return PL + k * passo + passo / 2; };
 
         var s = '<svg class="est-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet">';
-        // Gradiente do traço (ao longo do tempo), do preenchimento (some para
-        // baixo) e o borrão que faz o brilho atrás da linha.
+        // Um degrade por curva (ao longo do tempo), o preenchimento da curva de
+        // totais e o borrao que faz o brilho atras das linhas.
         s += '<defs>' +
-             '<linearGradient id="est-g-traco" x1="0" y1="0" x2="1" y2="0">' +
-                '<stop offset="0" class="est-c1"/><stop offset=".55" class="est-c2"/><stop offset="1" class="est-c3"/>' +
+             '<linearGradient id="est-g1" x1="0" y1="0" x2="1" y2="0">' +
+                '<stop offset="0" class="est-c1a"/><stop offset=".55" class="est-c1b"/><stop offset="1" class="est-c1c"/>' +
+             '</linearGradient>' +
+             '<linearGradient id="est-g2" x1="0" y1="0" x2="1" y2="0">' +
+                '<stop offset="0" class="est-c2a"/><stop offset="1" class="est-c2b"/>' +
              '</linearGradient>' +
              '<linearGradient id="est-g-area" x1="0" y1="0" x2="0" y2="1">' +
                 '<stop offset="0" class="est-a1"/><stop offset="1" class="est-a2"/>' +
@@ -97,22 +100,6 @@
                 '<feGaussianBlur stdDeviation="7"/>' +
              '</filter>' +
              '</defs>';
-
-        // Barras ao fundo: o TOTAL de cada balde. Escala própria (o total é
-        // outra grandeza que a intensidade da curva), por isso ficam apagadas e
-        // sem eixo — servem de textura do movimento, e o número exato está no
-        // tooltip. Altura máxima de 62% para não competir com a linha.
-        var tot = totaisDe(d), picoT = 1;
-        for (i = 0; i < n; i++) { if (tot[i] > picoT) { picoT = tot[i]; } }
-        var lb = Math.max(1.5, Math.min(9, passo * 0.42));
-        s += '<g class="est-barras">';
-        for (i = 0; i < n; i++) {
-            if (!tot[i]) { continue; }
-            var hb = (tot[i] / picoT) * innerH * 0.62;
-            s += '<rect x="' + (cxDe(i) - lb / 2).toFixed(1) + '" y="' + (base - hb).toFixed(1) +
-                 '" width="' + lb.toFixed(1) + '" height="' + hb.toFixed(1) + '" rx="1"/>';
-        }
-        s += '</g>';
 
         // grade + escala na direita
         for (var g = 0; g <= 4; g++) {
@@ -131,52 +118,60 @@
             if (r % pulo !== 0 && r !== comRotulo.length - 1) { continue; }
             i = comRotulo[r];
             var rx = cxDe(i);
-            // Coluna sob cada rótulo: dá a leitura de onde o tempo passa sem
-            // pesar. Fica atrás de tudo porque vem antes da curva no SVG.
             s += '<line class="est-grid-v" x1="' + (Math.round(rx) + 0.5) + '" y1="' + PT +
                  '" x2="' + (Math.round(rx) + 0.5) + '" y2="' + base + '"/>';
             s += '<text class="est-txt est-txt-x" x="' + rx.toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle">' + eixo[i] + '</text>';
         }
 
-        // A curva: fechamento de cada balde. Nenhum é pulado — parar depois de
-        // movimento é queda a zero, e a linha tem que descer até lá.
-        var pts = [];
-        for (i = 0; i < n; i++) { pts.push([cxDe(i), y(v[i][3])]); }
-        var dLinha = curva(pts);
-        s += '<path class="est-area" d="' + dLinha + 'L' + pts[n - 1][0].toFixed(1) + ' ' + base +
-             'L' + pts[0][0].toFixed(1) + ' ' + base + 'Z"/>';
-        s += '<path class="est-linha-brilho" d="' + dLinha + '" filter="url(#est-brilho)"/>';
-        s += '<path class="est-linha" d="' + dLinha + '"/>';
+        // As duas curvas. Nenhum balde e pulado: parar depois de movimento e
+        // queda a zero, e a linha tem que descer ate la.
+        var p1 = [], p2 = [];
+        for (i = 0; i < n; i++) { p1.push([cxDe(i), y(con[i])]); p2.push([cxDe(i), y(nov[i])]); }
+        var d1 = curva(p1), d2 = curva(p2);
 
-        // Ponto final marcado, como no painel de indicador. Vai no último balde
-        // COM movimento, não no último do eixo: em "hoje" as horas que ainda não
-        // chegaram valem zero, e o marcador cairia no rodapé sem dizer nada.
-        var ult = -1;
-        for (i = n - 1; i >= 0; i--) { if (v[i][3] > 0) { ult = i; break; } }
-        if (ult >= 0) {
-            var px = pts[ult][0], py = pts[ult][1];
-            s += '<circle class="est-ponto-halo" cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" r="7"/>';
-            s += '<circle class="est-ponto" cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" r="3.2"/>';
-            // Encosta na borda direita? O rótulo vira para dentro do gráfico.
+        // Preenchimento so sob os totais: a de novos fica sempre por dentro, e
+        // duas areas empilhadas viravam mancha.
+        s += '<path class="est-area" d="' + d1 + 'L' + p1[n - 1][0].toFixed(1) + ' ' + base +
+             'L' + p1[0][0].toFixed(1) + ' ' + base + 'Z"/>';
+        s += '<path class="est-l1-brilho" d="' + d1 + '" filter="url(#est-brilho)"/>';
+        s += '<path class="est-l2-brilho" d="' + d2 + '" filter="url(#est-brilho)"/>';
+        s += '<path class="est-l1" d="' + d1 + '"/>';
+        s += '<path class="est-l2" d="' + d2 + '"/>';
+
+        // Ponto final de cada curva, com o valor. Vai no ultimo balde COM
+        // movimento, nao no ultimo do eixo: em "hoje" as horas que ainda nao
+        // chegaram valem zero, e o marcador cairia no rodape sem dizer nada.
+        function marcarFim(vals, pts, cls, acima) {
+            var k = -1;
+            for (var j = vals.length - 1; j >= 0; j--) { if (vals[j] > 0) { k = j; break; } }
+            if (k < 0) { return ''; }
+            var px = pts[k][0], py = pts[k][1];
             var fim = px > W - PR - 34;
-            s += '<text class="est-valor" x="' + (px + (fim ? -10 : 10)).toFixed(1) + '" y="' + (py - 9).toFixed(1) +
-                 '" text-anchor="' + (fim ? 'end' : 'start') + '">' + v[ult][3] + '</text>';
+            return '<circle class="est-ponto-halo ' + cls + '" cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" r="7"/>' +
+                   '<circle class="est-ponto ' + cls + '" cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" r="3.2"/>' +
+                   '<text class="est-valor ' + cls + '" x="' + (px + (fim ? -10 : 10)).toFixed(1) +
+                   '" y="' + (py + (acima ? -9 : 16)).toFixed(1) + '" text-anchor="' + (fim ? 'end' : 'start') + '">' + vals[k] + '</text>';
         }
+        // Totais acima da linha, novos abaixo: quando as duas terminam juntas,
+        // os rotulos nao se sobrepoem.
+        s += marcarFim(con, p1, 'est-f1', true);
+        s += marcarFim(nov, p2, 'est-f2', false);
 
-        // crosshair + ponto que corre sobre a linha (escondidos até o hover)
+        // crosshair + marca em cada curva (escondidos até o hover)
         s += '<rect id="est-realce" class="est-realce" y="' + PT + '" height="' + innerH + '" style="display:none"/>';
         s += '<line id="est-cursor" class="est-cursor" y1="' + PT + '" y2="' + base + '" style="display:none"/>';
-        s += '<circle id="est-marca" class="est-marca" r="4" style="display:none"/>';
+        s += '<circle id="est-marca1" class="est-marca est-f1" r="4" style="display:none"/>';
+        s += '<circle id="est-marca2" class="est-marca est-f2" r="4" style="display:none"/>';
         s += '</svg>';
         wrap.innerHTML = s;
         wrap.appendChild(tooltip);
-        // O hover precisa da posição de cada ponto para colar a marca na linha.
-        wrap._pts = pts;
+        wrap._p1 = p1;
+        wrap._p2 = p2;
 
         if (legenda) {
-            var tot = serie === 'novos' ? d.total_novos : d.total_conectados;
-            legenda.innerHTML = '<span class="est-leg">' +
-                (serie === 'novos' ? 'Novos clientes' : 'Pessoas conectadas') + ' no período: <b>' + tot + '</b></span>' +
+            legenda.innerHTML =
+                '<span class="est-leg est-leg-1">Conexões totais: <b>' + d.total_conectados + '</b></span>' +
+                '<span class="est-leg est-leg-2">Novos clientes: <b>' + d.total_novos + '</b></span>' +
                 '<span class="est-leg est-leg-dica">' + DICA[filtro] + '</span>';
         }
         ligarHover(passo);
@@ -186,10 +181,11 @@
         var svg = wrap.querySelector('svg');
         var cursor = document.getElementById('est-cursor');
         var realce = document.getElementById('est-realce');
-        var marca  = document.getElementById('est-marca');
+        var m1 = document.getElementById('est-marca1');
+        var m2 = document.getElementById('est-marca2');
         function mover(e) {
             if (!dados) return;
-            var v = velasDe(dados), n = v.length;
+            var con = dados.conectados, nov = dados.novos, n = con.length;
             var r = svg.getBoundingClientRect();
             var mx = (e.clientX - r.left) * (W / r.width);     // px -> viewBox
             var idx = Math.floor((mx - PL) / passo);
@@ -198,31 +194,25 @@
             var cx = PL + idx * passo + passo / 2;
             cursor.setAttribute('x1', cx); cursor.setAttribute('x2', cx); cursor.style.display = '';
             realce.setAttribute('x', PL + idx * passo); realce.setAttribute('width', passo); realce.style.display = '';
-            var p = wrap._pts && wrap._pts[idx];
-            if (marca && p) {
-                marca.setAttribute('cx', p[0]); marca.setAttribute('cy', p[1]); marca.style.display = '';
+            if (wrap._p1 && wrap._p1[idx]) {
+                m1.setAttribute('cx', wrap._p1[idx][0]); m1.setAttribute('cy', wrap._p1[idx][1]); m1.style.display = '';
+                m2.setAttribute('cx', wrap._p2[idx][0]); m2.setAttribute('cy', wrap._p2[idx][1]); m2.style.display = '';
             }
-            var o = v[idx][0], hi = v[idx][1], lo = v[idx][2], c = v[idx][3];
-            var dif = c - o;
-            if (filtro === 'mes') {
-                // A vela do mês já é um pedaço do dia: aqui interessa quanto
-                // deu naquele turno, não o vaivém dentro dele.
-                tooltip.innerHTML = '<b>' + dados.labels[idx] + '</b>' +
-                    '<span>' + (serie === 'novos' ? 'Novos clientes' : 'Conexões') +
-                    ' <i>' + totaisDe(dados)[idx] + '</i></span>';
-            } else {
-                // Os mesmos quatro números das velas, com nome de curva: o que
-                // era abertura/fechamento agora é por onde a linha entra e sai
-                // do ponto. Nada mudou na medição.
-                tooltip.innerHTML = '<b>' + dados.labels[idx] + '</b>' +
-                    '<span>Entrou em <i>' + o + '</i></span>' +
-                    '<span>Pico <i>' + hi + '</i></span>' +
-                    '<span>Mínimo <i>' + lo + '</i></span>' +
-                    '<span>Saiu em <i>' + c + '</i></span>' +
-                    '<span class="est-tt-tot">Total no período <i>' + totaisDe(dados)[idx] + '</i></span>' +
-                    '<span class="' + (dif >= 0 ? 'est-tt-alta' : 'est-tt-baixa') + '">' +
-                        (dif >= 0 ? '▲ +' : '▼ ') + dif + '</span>';
+
+            var html = '<b>' + dados.labels[idx] + '</b>' +
+                '<span class="est-tt-p1">Conexões totais <i>' + con[idx] + '</i></span>' +
+                '<span class="est-tt-p2">Novos clientes <i>' + nov[idx] + '</i></span>';
+            // Variação contra o ponto à esquerda. No primeiro do eixo não há
+            // com o que comparar, então a linha simplesmente não aparece.
+            if (idx > 0) {
+                var dCon = con[idx] - con[idx - 1], dNov = nov[idx] - nov[idx - 1];
+                html += '<span class="est-tt-var">Ante ' + dados.labels[idx - 1] + '<i>' +
+                    '<em class="est-tt-p1">' + seta(dCon) + delta(dCon) + '</em>' +
+                    '<em class="est-tt-p2">' + seta(dNov) + delta(dNov) + '</em>' +
+                    '</i></span>';
             }
+            tooltip.innerHTML = html;
+
             tooltip.style.display = 'block';
             var px = cx * (r.width / W);
             var tw = tooltip.offsetWidth;
@@ -233,7 +223,8 @@
             tooltip.style.display = 'none';
             cursor.style.display = 'none';
             realce.style.display = 'none';
-            if (marca) { marca.style.display = 'none'; }
+            m1.style.display = 'none';
+            m2.style.display = 'none';
         }
         svg.addEventListener('mousemove', mover);
         svg.addEventListener('mouseleave', sair);
@@ -259,16 +250,6 @@
 
     for (var i = 0; i < filtros.length; i++) {
         filtros[i].addEventListener('click', function () { carregar(this.getAttribute('data-filtro')); });
-    }
-    // Trocar de série não refaz a consulta: os dois conjuntos já vieram juntos.
-    for (i = 0; i < series.length; i++) {
-        series[i].addEventListener('click', function () {
-            serie = this.getAttribute('data-serie');
-            for (var j = 0; j < series.length; j++) {
-                series[j].classList.toggle('atual', series[j] === this);
-            }
-            if (dados) { render(dados); }
-        });
     }
     carregar('hoje');
 })();

@@ -1,5 +1,5 @@
 <?php
-// Estatísticas (JSON) para o gráfico de velas: série "conectados" (conexões)
+// Estatísticas (JSON) para o gráfico da aba: série "conectados" (conexões)
 // e "novos" (primeira conexão do número) por período:
 //   filtro=hoje   -> por hora (00..23) do dia atual
 //   filtro=semana -> por dia da semana ATUAL (segunda a domingo)
@@ -52,12 +52,11 @@ switch ($filtro) {
         }
         $expr = 'DATE({t})';
         $cond = 'YEARWEEK({t}, 1) = YEARWEEK(CURDATE(), 1)';
-        $sub  = 'HOUR({t})';
         break;
     case 'mes':
-        // O mes tem dias demais para uma vela cada — ficava tudo espacado. Cada
-        // dia vira TRES velas (manha, tarde, noite), e o eixo mostra so o dia:
-        // o rotulo sai na vela do meio, as outras duas vao em branco.
+        // O mes tem dias demais para um ponto cada — ficava tudo espacado. Cada
+        // dia vira TRES pontos (manha, tarde, noite), e o eixo mostra so o dia:
+        // o rotulo sai no ponto do meio, os outros dois vao em branco.
         $dias = (int) date('t');
         $nomes = ['manhã', 'tarde', 'noite'];
         for ($d = 1; $d <= $dias; $d++) {
@@ -72,7 +71,6 @@ switch ($filtro) {
                                             WHEN HOUR({t}) BETWEEN 12 AND 17 THEN 1
                                             ELSE 2 END)";
         $cond = 'YEAR({t}) = YEAR(CURDATE()) AND MONTH({t}) = MONTH(CURDATE())';
-        $sub  = 'HOUR({t})';
         break;
     case 'ano':
         $nomes = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
@@ -82,7 +80,6 @@ switch ($filtro) {
         }
         $expr = 'MONTH({t})';
         $cond = 'YEAR({t}) = YEAR(CURDATE())';
-        $sub  = 'DAY({t})';
         break;
     default: // hoje
         for ($h = 0; $h < 24; $h++) {
@@ -91,7 +88,6 @@ switch ($filtro) {
         }
         $expr = 'HOUR({t})';
         $cond = 'DATE({t}) = CURDATE()';
-        $sub  = 'FLOOR(MINUTE({t}) / 10)';   // 6 fatias de 10 min dentro da hora
 }
 
 // Consulta agrupada -> array alinhado com $chaves (balde ausente = 0).
@@ -112,44 +108,6 @@ function est_serie(array $lista, string $sql, array $chaves): array
     return $out;
 }
 
-// Velas (OHLC) de cada balde do eixo. O "preco" e a intensidade de movimento:
-// pessoas por fatia (10 min dentro da hora, hora dentro do dia, dia dentro do
-// mes). Cada vela ABRE no fechamento da anterior, como numa serie de bolsa —
-// e o que faz a queda de um periodo para o outro virar vela vermelha. Sem
-// isso, cada vela olhava so para dentro de si e um dia que caiu de 7 para 0
-// aparecia sem vela nenhuma.
-//
-//   fechamento = ultima fatia com movimento (0 se o balde ficou parado)
-//   abertura   = fechamento do balde anterior (no primeiro, a propria abertura)
-//   maxima/minima = extremos das fatias, ja contando a abertura
-function est_velas(array $lista, string $sql, array $chaves): array
-{
-    $porBalde = [];
-    if ($lista) {
-        $q = db()->prepare($sql);
-        $q->execute($lista);
-        foreach ($q->fetchAll() as $r) {
-            $porBalde[(string) $r['b']][] = [(int) $r['s'], (int) $r['n']];
-        }
-    }
-    $out  = [];
-    $ant  = null;                 // fechamento do balde anterior
-    foreach ($chaves as $k) {
-        $fatias = $porBalde[(string) $k] ?? [];
-        usort($fatias, function ($a, $b) { return $a[0] <=> $b[0]; });   // ordem cronologica
-        $vals = array_column($fatias, 1);
-
-        $close = $vals ? $vals[count($vals) - 1] : 0;
-        $open  = $ant === null ? ($vals ? $vals[0] : 0) : $ant;
-        $high  = max($vals ? max($vals) : 0, $open, $close);
-        $low   = min($vals ? min($vals) : 0, $open, $close);
-
-        $out[] = [$open, $high, $low, $close];
-        $ant   = $close;
-    }
-    return $out;
-}
-
 try {
     $ph = $lista ? implode(',', array_fill(0, count($lista), '?')) : '';
 
@@ -166,21 +124,6 @@ try {
                   AND " . str_replace('{t}', 'l.primeira_conexao', $cond) . '
                 GROUP BY b';
 
-    // Mesmas contagens, agora quebradas por fatia dentro do balde.
-    $sqlConV = "SELECT " . str_replace('{t}', 'c.conectado_em', $expr) . " AS b,
-                       " . str_replace('{t}', 'c.conectado_em', $sub) . " AS s,
-                       COUNT(DISTINCT c.lead_id) AS n
-                  FROM conexoes c JOIN leads l ON l.id = c.lead_id
-                 WHERE l.roteador IN ($ph) AND " . str_replace('{t}', 'c.conectado_em', $cond) . '
-                 GROUP BY b, s';
-    $sqlNovV = "SELECT " . str_replace('{t}', 'l.primeira_conexao', $expr) . " AS b,
-                       " . str_replace('{t}', 'l.primeira_conexao', $sub) . " AS s,
-                       COUNT(*) AS n
-                  FROM leads l
-                 WHERE l.roteador IN ($ph) AND l.primeira_conexao IS NOT NULL
-                   AND " . str_replace('{t}', 'l.primeira_conexao', $cond) . '
-                 GROUP BY b, s';
-
     $conectados = est_serie($lista, $sqlCon, $chaves);
     $novos      = est_serie($lista, $sqlNov, $chaves);
 
@@ -191,8 +134,6 @@ try {
         'eixo'       => $eixo ?: $labels,
         'conectados' => $conectados,
         'novos'      => $novos,
-        'velas_conectados' => est_velas($lista, $sqlConV, $chaves),
-        'velas_novos'      => est_velas($lista, $sqlNovV, $chaves),
         'total_conectados' => array_sum($conectados),
         'total_novos'      => array_sum($novos),
     ]);
