@@ -1025,29 +1025,54 @@ a.pc-pag-btn:hover { background: rgba(34,211,238, 0.2); border-color: #22d3ee; c
 /* min-width:0 é obrigatório: sem ele o filho de flex herda a largura intrínseca
    da tabela (nowrap) e o scroll lateral vaza da tabela para a página inteira. */
 .pc-layout .pc-shell { flex: 1 1 0; min-width: 0; }
+/* --- Menu lateral: cabe inteiro em qualquer tela, sem barra de rolagem ---
+   São 12 itens mais a marca e o "Sair". Com medidas fixas isso somava ~630px e
+   virava scroll em qualquer janela mais baixa (um notebook de 600px já pegava).
+   Aqui cada medida é um clamp em vh: em tela alta fica no tamanho cheio, em
+   tela baixa tudo encolhe junto — fonte, ícone, respiro e espaçamento — e o
+   conteúdo continua inteiro à vista.
+   A largura sai da própria fonte, então o menu estreita junto com os itens em
+   vez de manter uma faixa vazia à direita. */
 .pc-sidebar {
-    flex: 0 0 232px; width: 232px;
+    --sb-fs:   clamp(10.5px, 1.5vh, 14px);      /* texto dos itens */
+    --sb-py:   clamp(3px,   1.15vh, 11px);      /* respiro de cada item */
+    --sb-gap:  clamp(0px,   0.42vh, 4px);       /* entre itens */
+    --sb-pad:  clamp(6px,   2.1vh,  22px);      /* margem interna do menu */
+    --sb-bloco: clamp(5px,  2.2vh,  24px);      /* marca -> lista -> rodapé */
+    --sb-ico:  clamp(13px,  1.85vh, 17px);
+    --sb-w:    calc(var(--sb-fs) * 12 + 62px);  /* cabe o item mais longo */
+
+    flex: 0 0 var(--sb-w); width: var(--sb-w);
     position: sticky; top: 0; align-self: flex-start;
-    height: 100vh; height: 100dvh; overflow-y: auto;
-    padding: 22px 14px;
-    display: flex; flex-direction: column; gap: 24px;
+    height: 100vh; height: 100dvh;
+    overflow: hidden;                            /* a barra de rolagem sai */
+    padding: var(--sb-pad) clamp(8px, 1vw, 14px);
+    display: flex; flex-direction: column; gap: var(--sb-bloco);
     background: rgba(10,14,23,0.75);
     border-right: 1px solid rgba(255, 255, 255, 0.08);
     transition: margin-left .28s ease;
 }
-body.pc-menu-fechado .pc-sidebar { margin-left: -232px; }
-.pc-side-brand { display: flex; align-items: center; gap: 10px; padding: 0 6px; }
-.pc-side-brand img { width: 34px; height: 34px; border-radius: 9px; }
-.pc-side-brand span { font-size: 16px; font-weight: 800; color: #fff; letter-spacing: -0.2px; }
-.pc-side-nav { display: flex; flex-direction: column; gap: 4px; }
+body.pc-menu-fechado .pc-sidebar { margin-left: calc(-1 * var(--sb-w)); }
+.pc-side-brand { display: flex; align-items: center; gap: 10px; padding: 0 6px; min-width: 0; }
+.pc-side-brand img {
+    width: clamp(20px, 3.2vh, 34px); height: clamp(20px, 3.2vh, 34px);
+    border-radius: 9px; flex: 0 0 auto;
+}
+.pc-side-brand span {
+    font-size: clamp(11.5px, 1.75vh, 16px); font-weight: 800; color: #fff; letter-spacing: -0.2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pc-side-nav { display: flex; flex-direction: column; gap: var(--sb-gap); min-height: 0; }
 .pc-side-item {
-    display: flex; align-items: center; gap: 11px;
-    padding: 11px 13px; border-radius: 10px; border: none; background: none;
-    color: rgba(255, 255, 255, 0.65); font-family: inherit; font-size: 14px; font-weight: 600;
-    text-align: left; cursor: pointer; width: 100%;
+    display: flex; align-items: center; gap: clamp(8px, 1.2vh, 11px);
+    padding: var(--sb-py) clamp(9px, 1.4vh, 13px);
+    border-radius: 10px; border: none; background: none;
+    color: rgba(255, 255, 255, 0.65); font-family: inherit;
+    font-size: var(--sb-fs); font-weight: 600; line-height: 1.25;
+    text-align: left; cursor: pointer; width: 100%; white-space: nowrap;
     transition: background .2s, color .2s;
 }
-.pc-side-item svg { width: 17px; height: 17px; flex: 0 0 auto; opacity: .85; }
+.pc-side-item svg { width: var(--sb-ico); height: var(--sb-ico); flex: 0 0 auto; opacity: .85; }
 .pc-side-item:hover { background: rgba(255, 255, 255, 0.07); color: #fff; }
 .pc-side-item.atual { background: rgba(8,145,178, 0.30); color: #fff; }
 .pc-side-item.atual::after {
@@ -1056,15 +1081,21 @@ body.pc-menu-fechado .pc-sidebar { margin-left: -232px; }
 }
 .pc-side-backdrop { display: none; }
 
-/* Rodapé da sidebar: "Sair" separado das opções, colado no fim, vermelho */
-.pc-side-foot { margin-top: auto; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.10); }
+/* Rodapé da sidebar: "Sair" separado das opções, colado no fim, vermelho.
+   Encolhe junto com o resto (mesmos clamps), senão ele sozinho reintroduziria
+   o transbordo que o menu acabou de perder. */
+.pc-side-foot {
+    margin-top: auto; padding-top: clamp(6px, 1.3vh, 14px);
+    border-top: 1px solid rgba(255, 255, 255, 0.10);
+}
 .pc-side-sair {
-    display: flex; align-items: center; gap: 11px;
-    padding: 11px 13px; border-radius: 10px;
-    color: #f87171; font-family: inherit; font-size: 14px; font-weight: 600;
+    display: flex; align-items: center; gap: clamp(8px, 1.2vh, 11px);
+    padding: var(--sb-py) clamp(9px, 1.4vh, 13px); border-radius: 10px;
+    color: #f87171; font-family: inherit; font-size: var(--sb-fs); font-weight: 600;
+    line-height: 1.25; white-space: nowrap;
     text-decoration: none; transition: background .2s, color .2s;
 }
-.pc-side-sair svg { width: 18px; height: 18px; flex: 0 0 auto; }
+.pc-side-sair svg { width: var(--sb-ico); height: var(--sb-ico); flex: 0 0 auto; }
 .pc-side-sair:hover { background: rgba(248, 113, 113, 0.12); color: #fca5a5; }
 
 /* Botão hambúrguer no topo */
@@ -2135,15 +2166,18 @@ html[data-tema] .painel-cliente .dash-dia.visitado { background: var(--t-fg); bo
    raio ficam globais, entao o tema vale nas duas larguras. */
 @media (min-width: 601px) {
     /* ---------- Menu lateral ---------- */
-html[data-tema] .painel-cliente .pc-sidebar { padding: 26px 12px; gap: 26px; }
-    html[data-tema] .painel-cliente .pc-side-brand { padding: 0 10px; }
-    html[data-tema] .painel-cliente .pc-side-brand span { font-size: 16px; }
-    html[data-tema] .painel-cliente .pc-side-nav { gap: 2px; }
-    html[data-tema] .painel-cliente .pc-side-item { padding: 12px 14px; font-size: 14px; }
+    /* As medidas seguem os clamps declarados em .pc-sidebar — este bloco tem
+       especificidade maior (0,3,1) e, com valores fixos, anulava o encolhimento
+       e trazia de volta a barra de rolagem do menu. Aqui ele só ajusta o que é
+       do tema (respiro horizontal um pouco maior), deixando a altura escalar. */
+    html[data-tema] .painel-cliente .pc-sidebar { padding: var(--sb-pad) clamp(7px, 1vw, 12px); gap: var(--sb-bloco); }
+    html[data-tema] .painel-cliente .pc-side-brand { padding: 0 clamp(6px, 0.8vw, 10px); }
+    html[data-tema] .painel-cliente .pc-side-nav { gap: var(--sb-gap); }
+    html[data-tema] .painel-cliente .pc-side-item { padding: var(--sb-py) clamp(10px, 1.5vh, 14px); font-size: var(--sb-fs); }
     /* O ponto de "aba ativa" vira uma barra reta na borda esquerda. */
 html[data-tema] .painel-cliente .pc-side-item.atual::after { width: 2px; height: auto; }
-    html[data-tema] .painel-cliente .pc-side-foot { padding-top: 14px; }
-    html[data-tema] .painel-cliente .pc-side-sair { padding: 12px 14px; font-size: 14px; }
+    html[data-tema] .painel-cliente .pc-side-foot { padding-top: clamp(6px, 1.3vh, 14px); }
+    html[data-tema] .painel-cliente .pc-side-sair { padding: var(--sb-py) clamp(10px, 1.5vh, 14px); font-size: var(--sb-fs); }
     html[data-tema] .painel-cliente .pc-brand { font-size: 30px; }
     html[data-tema] .painel-cliente .pc-sub { font-size: 14px; margin-top: 6px; }
     /* Status do MikroTik: faixa reta,
