@@ -41,7 +41,7 @@ $csrf = csrf_token();
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="icon" href="assets/logo-icone.png?v=1" type="image/png">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-    <link rel="stylesheet" href="assets/style.css?v=116">
+    <link rel="stylesheet" href="assets/style.css?v=117">
 </head>
 <body class="login-screen">
     <!-- Camadas de fundo (decorativas) -->

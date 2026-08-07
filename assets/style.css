@@ -1034,12 +1034,14 @@ a.pc-pag-btn:hover { background: rgba(34,211,238, 0.2); border-color: #22d3ee; c
    A largura sai da própria fonte, então o menu estreita junto com os itens em
    vez de manter uma faixa vazia à direita. */
 .pc-sidebar {
-    --sb-fs:   clamp(10.5px, 1.5vh, 14px);      /* texto dos itens */
-    --sb-py:   clamp(3px,   1.15vh, 11px);      /* respiro de cada item */
-    --sb-gap:  clamp(0px,   0.42vh, 4px);       /* entre itens */
-    --sb-pad:  clamp(6px,   2.1vh,  22px);      /* margem interna do menu */
-    --sb-bloco: clamp(5px,  2.2vh,  24px);      /* marca -> lista -> rodapé */
-    --sb-ico:  clamp(13px,  1.85vh, 17px);
+    /* Os mínimos só entram em tela muito baixa (celular deitado): abaixo deles
+       o rodapé passaria por cima do último item. */
+    --sb-fs:   clamp(11px,  2.1vh,  14px);      /* texto dos itens */
+    --sb-py:   clamp(3px,   1.1vh,  11px);      /* respiro mínimo de cada item */
+    --sb-gap:  clamp(2px,   1.4vh,  22px);      /* entre itens */
+    --sb-pad:  clamp(8px,   2.1vh,  22px);      /* margem interna do menu */
+    --sb-bloco: clamp(7px,  2.2vh,  24px);      /* marca -> lista -> rodapé */
+    --sb-ico:  clamp(13px,  1.9vh,  18px);
     --sb-w:    calc(var(--sb-fs) * 12 + 62px);  /* cabe o item mais longo */
 
     flex: 0 0 var(--sb-w); width: var(--sb-w);
@@ -1062,8 +1064,19 @@ body.pc-menu-fechado .pc-sidebar { margin-left: calc(-1 * var(--sb-w)); }
     font-size: clamp(11.5px, 1.75vh, 16px); font-weight: 800; color: #fff; letter-spacing: -0.2px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.pc-side-nav { display: flex; flex-direction: column; gap: var(--sb-gap); min-height: 0; }
+/* A lista toma a altura que sobra e os itens crescem dentro dela: o menu ocupa
+   a tela de cima a baixo em vez de ficar espremido no topo com um vazio antes
+   do rodapé. O teto por item evita que, numa tela bem alta, cada botão vire um
+   bloco enorme. */
+.pc-side-nav {
+    flex: 1 1 auto; min-height: 0;
+    display: flex; flex-direction: column; gap: var(--sb-gap);
+}
 .pc-side-item {
+    /* Sem teto o item viraria um bloco de 110px numa tela de 1440; com teto
+       baixo demais sobrava vazio antes do rodapé, que foi a reclamação. Nas
+       alturas usuais (720–1080) o flex preenche tudo e o teto nem entra. */
+    flex: 1 1 auto; max-height: 84px;
     display: flex; align-items: center; gap: clamp(8px, 1.2vh, 11px);
     padding: var(--sb-py) clamp(9px, 1.4vh, 13px);
     border-radius: 10px; border: none; background: none;
@@ -1079,13 +1092,24 @@ body.pc-menu-fechado .pc-sidebar { margin-left: calc(-1 * var(--sb-w)); }
     content: ""; margin-left: auto; width: 7px; height: 7px; border-radius: 50%;
     background: #22d3ee; box-shadow: 0 0 8px rgba(34,211,238, 0.9);
 }
+/* Abaixo de 420px de altura (celular deitado) os itens já estão no mínimo e
+   ainda assim o rodapé passaria por cima do último. Aí a rolagem volta: texto
+   sobreposto é pior que rolar. Nenhuma tela em pé nem monitor chega aqui. */
+@media (max-height: 420px) {
+    .pc-sidebar { overflow-y: auto; }
+    .pc-side-item { flex: 0 0 auto; }
+}
+
 .pc-side-backdrop { display: none; }
 
 /* Rodapé da sidebar: "Sair" separado das opções, colado no fim, vermelho.
    Encolhe junto com o resto (mesmos clamps), senão ele sozinho reintroduziria
    o transbordo que o menu acabou de perder. */
+/* Sem margin-top:auto: quem empurra o rodapé para o fim agora é a lista, que
+   cresce para ocupar a altura. Com os dois, em tela muito baixa o auto brigava
+   com o flex e comia alguns pixels do último item. */
 .pc-side-foot {
-    margin-top: auto; padding-top: clamp(6px, 1.3vh, 14px);
+    padding-top: clamp(6px, 1.3vh, 14px);
     border-top: 1px solid rgba(255, 255, 255, 0.10);
 }
 .pc-side-sair {
