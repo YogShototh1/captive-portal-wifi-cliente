@@ -84,12 +84,12 @@ if ($f === 'down') {
         if (connection_aborted()) { break; }     // o roteador desistiu
     }
     flush();
-    $dur = microtime(true) - $t0;
-
-    // Só vale gravar o que mediu algo: menos de 0,2s é ruído.
-    if ($dur > 0.2 && $enviados > 0) {
-        speed_gravar($roteador, ['down' => round($enviados * 8 / $dur / 1e6, 2), 'mb' => $mb]);
-    }
+    // NÃO se calcula velocidade aqui. Há um Cloudflare na frente da hospedagem:
+    // ele engole a resposta inteira depressa e só então a repassa ao roteador,
+    // então o que se cronometra deste lado é o trecho servidor->Cloudflare, e
+    // não o que chega na loja. Quem mede é o RouterOS, que reporta no f=res.
+    // O tempo daqui fica só como registro, para comparar se um dia divergir.
+    speed_gravar($roteador, ['mb' => $mb, 'srv' => round(microtime(true) - $t0, 3)]);
     exit;
 }
 
@@ -97,6 +97,18 @@ if ($f === 'down') {
 if ($f === 'res') {
     header('Content-Type: text/plain; charset=utf-8');
     $extra = [];
+
+    // A VELOCIDADE vem daqui: o /tool fetch devolve quantos bytes baixou e em
+    // quanto tempo, medidos no próprio roteador. É o único número que reflete o
+    // que chega na loja — ver o comentário do f=down sobre o Cloudflare.
+    $bytes = (float) ($_REQUEST['bytes'] ?? 0);
+    $dur   = speed_dur_seg((string) ($_REQUEST['dur'] ?? ''));
+    if ($bytes > 0 && $dur !== null && $dur > 0) {
+        $extra['down']  = round($bytes * 8 / $dur / 1e6, 2);
+        $extra['bytes'] = (int) $bytes;
+        $extra['seg']   = $dur;
+    }
+
     // avg-rtt do RouterOS: vem como "12ms300us", "1s200ms" ou já um número.
     $ping = trim((string) ($_REQUEST['ping'] ?? ''));
     if ($ping !== '') {
@@ -106,7 +118,10 @@ if ($f === 'res') {
     if (isset($_REQUEST['erro']) && $_REQUEST['erro'] !== '') {
         $extra['erro'] = mb_substr((string) $_REQUEST['erro'], 0, 80);
     }
-    if ($extra) { speed_gravar($roteador, $extra); }
+    // Grava mesmo vazio: o "acabou sem número" precisa aparecer na tela, senão
+    // o painel fica girando até desistir sozinho, sem dizer o que houve.
+    if (!$extra) { $extra['erro'] = 'o roteador nao mediu a velocidade'; }
+    speed_gravar($roteador, $extra);
     exit('ok');
 }
 

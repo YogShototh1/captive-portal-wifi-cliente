@@ -350,6 +350,35 @@ function speed_gravar(string $roteador, array $dados): void
         json_encode(array_slice($h, 0, SPEED_HIST_MAX), JSON_UNESCAPED_UNICODE), LOCK_EX);
 }
 
+// A duração que o /tool fetch devolve, em segundos.
+// O RouterOS escreve tempo de dois jeitos: "6s500ms" / "1m2s" (o formato de
+// duração) ou "00:00:06.500000" (o de relógio). Cobre os dois; null se não der.
+function speed_dur_seg(string $v): ?float
+{
+    $v = strtolower(trim($v));
+    if ($v === '') { return null; }
+    if (is_numeric($v)) { return (float) $v > 0 ? (float) $v : null; }
+
+    // Formato de relógio: hh:mm:ss(.frac)
+    if (preg_match('/^(\d+):(\d+):(\d+(?:\.\d+)?)$/', $v, $m)) {
+        $s = ((int) $m[1]) * 3600 + ((int) $m[2]) * 60 + (float) $m[3];
+        return $s > 0 ? round($s, 4) : null;
+    }
+
+    // Formato de duração: 1d2h3m4s500ms600us
+    $mult = ['d' => 86400, 'h' => 3600, 'm' => 60, 's' => 1, 'ms' => 0.001, 'us' => 0.000001];
+    $s = 0.0;
+    $achou = false;
+    // ms e us antes de m e s, senão o sufixo curto casaria primeiro.
+    if (preg_match_all('/(\d+(?:\.\d+)?)\s*(ms|us|[dhms])/', $v, $mm, PREG_SET_ORDER)) {
+        foreach ($mm as $x) {
+            $s += ((float) $x[1]) * $mult[$x[2]];
+            $achou = true;
+        }
+    }
+    return ($achou && $s > 0) ? round($s, 4) : null;
+}
+
 // O avg-rtt do RouterOS não vem em milissegundos puros: pode ser "12ms300us",
 // "1s200ms" ou já um número. Converte tudo para ms, ou null se não der.
 function speed_rtt_ms(string $v): ?float

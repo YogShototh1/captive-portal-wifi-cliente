@@ -77,6 +77,30 @@ $ok(count(speed_hist($R)) === SPEED_HIST_MAX, 'para no teto de ' . SPEED_HIST_MA
 $ok(speed_hist($R)[0]['down'] == SPEED_HIST_MAX + 5, 'a mais recente sobrevive', speed_hist($R)[0]['down']);
 
 // ---------------------------------------------------------------
+// A VELOCIDADE e calculada com o que o ROTEADOR mediu (bytes + duracao), nao
+// com o tempo do servidor: o Cloudflare no meio faz o servidor cronometrar so
+// o trecho ate ele.
+echo "\nduracao do RouterOS -> segundos\n";
+foreach (['6s500ms' => 6.5, '00:00:06.500000' => 6.5, '1m2s' => 62.0, '250ms' => 0.25,
+          '1s' => 1.0, '3.75' => 3.75, '00:01:30' => 90.0] as $e => $esp) {
+    $r = speed_dur_seg((string) $e);
+    $ok($r !== null && abs($r - $esp) < 0.001, "\"$e\" -> {$esp}s", var_export($r, true));
+}
+$ok(speed_dur_seg('') === null, 'vazio nao vira zero');
+$ok(speed_dur_seg('nada') === null, 'lixo nao vira zero');
+$ok(speed_dur_seg('0') === null, 'zero nao passa (evitaria divisao por zero)');
+
+echo "\nconta da velocidade\n";
+// 6 MB em 6,29 s = 8 Mbps
+$bytes = 6 * 1024 * 1024;
+$seg = speed_dur_seg('6s290ms');
+$mbps = round($bytes * 8 / $seg / 1e6, 2);
+$ok(abs($mbps - 8.0) < 0.05, '6 MiB em 6,29s = 8 Mbps', $mbps);
+// 6 MB em 0,5 s = 100 Mbps
+$mbps = round($bytes * 8 / speed_dur_seg('500ms') / 1e6, 2);
+$ok(abs($mbps - 100.66) < 0.05, '6 MiB em 0,5s = ~100 Mbps', $mbps);
+
+// ---------------------------------------------------------------
 echo "\nrtt do RouterOS -> ms\n";
 foreach (['12ms300us' => 12.3, '1s200ms' => 1200.0, '500us' => 0.5, '23' => 23.0,
           '2s' => 2000.0, '45ms' => 45.0] as $e => $esp) {

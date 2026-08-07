@@ -282,13 +282,15 @@
 #  O comprador pede pelo painel; aqui so se pergunta "tem teste?" a cada
 #  rodada — uma resposta de 1 byte, barata.
 #
-#  Quem cronometra o download e o SERVIDOR, nao este script: ele mede quanto
-#  tempo levou para empurrar os bytes ate aqui. Assim nao dependemos do relogio
-#  do RouterOS, e nada e gravado na flash (output=none descarta os dados) — a
-#  flash do hEX Gr3 tem 16 MB e vive cheia.
+#  QUEM MEDE E ESTE SCRIPT, nao o servidor. Ha um Cloudflare na frente da
+#  hospedagem: ele engole a resposta inteira depressa e so entao a repassa para
+#  ca, entao o tempo cronometrado do lado do servidor e o do trecho ate o
+#  Cloudflare — nao o que chega na loja. O /tool fetch devolve quantos bytes
+#  baixou e em quanto tempo (as-value), e sao esses dois numeros que viajam de
+#  volta no f=res.
 #
-#  O ping e a unica parte que o servidor nao consegue medir de la; esse vai
-#  daqui, depois do download.
+#  output=none: os bytes sao descartados conforme chegam, entao nada vai para a
+#  flash (a do hEX Gr3 tem 16 MB e vive cheia) nem fica preso na memoria.
 # ============================================================
 :do {
   :local pedido "0"
@@ -299,13 +301,21 @@
   } on-error={ :set pedido "0" }
 
   :if ([:len $pedido] > 0 && $pedido != "0") do={
-    # Download: output=none = nao guarda nada, so puxa. Quem cronometra e o
-    # servidor, entao aqui nao se calcula velocidade nenhuma.
     :local erro ""
+    :local bytes 0
+    :local dur ""
     :do {
-      /tool fetch url=("https://captivedata.com.br/api/speed_rt.php?token=$token&roteador=$ident&f=down&mb=$pedido") \
-          check-certificate=no output=none
+      :local dl [/tool fetch url=("https://captivedata.com.br/api/speed_rt.php?token=$token&roteador=$ident&f=down&mb=$pedido") \
+          check-certificate=no output=none as-value]
+      :set bytes ($dl->"downloaded")
+      :set dur ($dl->"duration")
     } on-error={ :set erro "download" }
+
+    # O downloaded costuma vir em KiB. Se o numero ficou pequeno demais para o
+    # tamanho pedido, e porque veio em KiB — converte para bytes.
+    :if ([:typeof $bytes] = "num" && $bytes > 0 && $bytes < ($pedido * 1048576 / 2)) do={
+      :set bytes ($bytes * 1024)
+    }
 
     # Ping ate um destino externo: mede a latencia da internet da loja, nao a
     # do caminho ate o painel.
@@ -316,7 +326,7 @@
     } on-error={ :set rtt "" }
 
     :do {
-      /tool fetch url=("https://captivedata.com.br/api/speed_rt.php?token=$token&roteador=$ident&f=res&ping=$rtt&erro=$erro") \
+      /tool fetch url=("https://captivedata.com.br/api/speed_rt.php?token=$token&roteador=$ident&f=res&bytes=$bytes&dur=$dur&ping=$rtt&erro=$erro") \
           check-certificate=no output=none
     } on-error={}
   }
