@@ -302,7 +302,10 @@ function estilo_set(string $roteador, array $marcadas): void
 // que ocupa a tela toda de um Pro Max (430pt), precisa de 1290px de largura.
 // Limites menores que isso deixam a imagem visivelmente borrada no aparelho do
 // cliente — economia que sai caro. Ver quem chama esta funcao.
-function imagem_flash(string $origem, int $maxLado, bool $comAlpha = false, int $qualidade = 90): string
+// $tetoKB: limite duro do que pode ir para a flash. Sem ele, um PNG grande que
+// o JPEG comprime mal escapava inteiro — e a flash do roteador nao tem folga
+// para isso.
+function imagem_flash(string $origem, int $maxLado, bool $comAlpha = false, int $qualidade = 90, int $tetoKB = 700): string
 {
     if (!is_file($origem) || !function_exists('imagecreatefromstring')) {
         return $origem;
@@ -319,7 +322,7 @@ function imagem_flash(string $origem, int $maxLado, bool $comAlpha = false, int 
         return $destino;
     }
     // Já é pequena o bastante e não vale mexer.
-    if ($tam[0] <= $maxLado && @filesize($origem) <= 120 * 1024) {
+    if ($tam[0] <= $maxLado && $tam[1] <= $maxLado && @filesize($origem) <= 120 * 1024) {
         return $origem;
     }
 
@@ -329,31 +332,52 @@ function imagem_flash(string $origem, int $maxLado, bool $comAlpha = false, int 
     }
     $l = imagesx($img);
     $a = imagesy($img);
-    $escala = min(1, $maxLado / max($l, $a));
-    $nl = max(1, (int) round($l * $escala));
-    $na = max(1, (int) round($a * $escala));
 
-    $novo = imagecreatetruecolor($nl, $na);
-    if ($temAlpha) {
-        imagealphablending($novo, false);
-        imagesavealpha($novo, true);
-    } else {
-        // PNG achatado em JPEG: o que era transparente viraria preto, então
-        // pinta o fundo de branco antes de copiar.
-        imagefilledrectangle($novo, 0, 0, $nl, $na, imagecolorallocate($novo, 255, 255, 255));
+    // Tenta na medida cheia; se o arquivo passar do teto, aperta a qualidade e,
+    // se ainda assim não couber, encolhe a imagem. O teto existe porque a flash
+    // do roteador tem 16 MB NO TOTAL: sem ele, uma arte exportada sem compressão
+    // (que o PNG guarda mal e o JPEG comprime pior ainda) iria inteira para lá.
+    $tentativas = [
+        [$maxLado, $qualidade], [$maxLado, 80], [$maxLado, 70],
+        [(int) round($maxLado * 0.75), 80], [(int) round($maxLado * 0.6), 75],
+    ];
+    $ok = false;
+    foreach ($tentativas as [$lado, $q]) {
+        $escala = min(1, $lado / max($l, $a));
+        $nl = max(1, (int) round($l * $escala));
+        $na = max(1, (int) round($a * $escala));
+
+        $novo = imagecreatetruecolor($nl, $na);
+        if ($temAlpha) {
+            imagealphablending($novo, false);
+            imagesavealpha($novo, true);
+        } else {
+            // PNG achatado em JPEG: o que era transparente viraria preto, então
+            // pinta o fundo de branco antes de copiar.
+            imagefilledrectangle($novo, 0, 0, $nl, $na, imagecolorallocate($novo, 255, 255, 255));
+        }
+        imagecopyresampled($novo, $img, 0, 0, 0, 0, $nl, $na, $l, $a);
+        $ok = $temAlpha ? @imagepng($novo, $destino, 8) : @imagejpeg($novo, $destino, $q);
+        imagedestroy($novo);
+
+        if ($ok && is_file($destino) && filesize($destino) <= $tetoKB * 1024) {
+            break;   // coube
+        }
     }
-    imagecopyresampled($novo, $img, 0, 0, 0, 0, $nl, $na, $l, $a);
-
-    $ok = $temAlpha ? @imagepng($novo, $destino, 8) : @imagejpeg($novo, $destino, $qualidade);
     imagedestroy($img);
-    imagedestroy($novo);
 
     if (!$ok || !is_file($destino)) {
         return $origem;
     }
     @chmod($destino, 0644);
-    // Converteu e ficou MAIOR? Acontece com imagem já otimizada — fica o original.
-    return @filesize($destino) < @filesize($origem) ? $destino : $origem;
+    // Converteu e ficou MAIOR que o original? Acontece com imagem já otimizada.
+    // Fica o original — MAS só se ele mesmo couber no teto; senão vai o
+    // convertido, porque o que não pode é a flash do roteador levar um arquivo
+    // gigante.
+    if (@filesize($destino) >= @filesize($origem) && @filesize($origem) <= $tetoKB * 1024) {
+        return $origem;
+    }
+    return $destino;
 }
 
 // --- Página-ponte do Instagram, personalizada por roteador ---

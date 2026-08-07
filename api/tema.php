@@ -115,13 +115,13 @@ if ($f === 'logo' && $logo !== null) {
     // A logo aparece com no máximo 220px de largura (style.css do portal). Num
     // iPhone são 3 pixels físicos por pixel CSS, logo 660px — 700 dá a folga.
     // Mantém PNG quando a origem é PNG: a logo pode ter fundo vazado.
-    $alvo = imagem_flash($logo, 700, true);
+    $alvo = imagem_flash($logo, 700, true, 90, 150);
 } elseif ($f === 'ad' && $anun !== null) {
     // O anúncio ocupa a tela inteira. Num iPhone Pro Max isso dá 1290px de
     // largura, então 1600 no maior lado cobre qualquer celular — na prática
     // quase nenhum anúncio é reduzido, e a economia vem toda de sair do PNG.
     // Alpha aqui não serve para nada: a imagem cobre a tela.
-    $alvo = imagem_flash($anun, 1600, false);
+    $alvo = imagem_flash($anun, 1600, false, 90, 700);
 }
 if ($alvo === null || !is_file($alvo)) {
     http_response_code(404);
