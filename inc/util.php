@@ -359,9 +359,10 @@ function speed_dur_seg(string $v): ?float
     if ($v === '') { return null; }
     if (is_numeric($v)) { return (float) $v > 0 ? (float) $v : null; }
 
-    // Formato de relógio: hh:mm:ss(.frac)
-    if (preg_match('/^(\d+):(\d+):(\d+(?:\.\d+)?)$/', $v, $m)) {
-        $s = ((int) $m[1]) * 3600 + ((int) $m[2]) * 60 + (float) $m[3];
+    // Formato de relógio: hh:mm:ss(.frac), com um "Nd" opcional na frente
+    // (é assim que o RouterOS escreve diferença de :timestamp).
+    if (preg_match('/^(?:(\d+)d\s*)?(\d+):(\d+):(\d+(?:\.\d+)?)$/', $v, $m)) {
+        $s = ((int) ($m[1] ?: 0)) * 86400 + ((int) $m[2]) * 3600 + ((int) $m[3]) * 60 + (float) $m[4];
         return $s > 0 ? round($s, 4) : null;
     }
 

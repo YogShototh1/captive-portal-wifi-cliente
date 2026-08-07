@@ -301,21 +301,23 @@
   } on-error={ :set pedido "0" }
 
   :if ([:len $pedido] > 0 && $pedido != "0") do={
+    # O tempo e cronometrado AQUI, com :timestamp. O as-value do fetch devolvia
+    # "downloaded" e "duration" vazios quando output=none — o ping chegava ao
+    # painel e a velocidade nao, entao o resultado saia sempre "sem resultado".
+    # Marcar o relogio antes e depois nao depende do que o fetch resolve
+    # devolver, e o numero de bytes ja se sabe: e o tamanho que foi pedido.
     :local erro ""
-    :local bytes 0
-    :local dur ""
+    :local t0 [:timestamp]
     :do {
-      :local dl [/tool fetch url=("https://captivedata.com.br/api/speed_rt.php?token=$token&roteador=$ident&f=down&mb=$pedido") \
-          check-certificate=no output=none as-value]
-      :set bytes ($dl->"downloaded")
-      :set dur ($dl->"duration")
+      /tool fetch url=("https://captivedata.com.br/api/speed_rt.php?token=$token&roteador=$ident&f=down&mb=$pedido") \
+          check-certificate=no output=none
     } on-error={ :set erro "download" }
+    :local dur ([:timestamp] - $t0)
 
-    # O downloaded costuma vir em KiB. Se o numero ficou pequeno demais para o
-    # tamanho pedido, e porque veio em KiB — converte para bytes.
-    :if ([:typeof $bytes] = "num" && $bytes > 0 && $bytes < ($pedido * 1048576 / 2)) do={
-      :set bytes ($bytes * 1024)
-    }
+    # Baixou inteiro? Entao sao os MB pedidos. Se deu erro no meio, nao ha
+    # tamanho confiavel e o painel mostra a falha em vez de um numero inventado.
+    :local bytes 0
+    :if ($erro = "") do={ :set bytes ($pedido * 1048576) }
 
     # Ping ate um destino externo: mede a latencia da internet da loja, nao a
     # do caminho ate o painel.

@@ -120,7 +120,13 @@ if ($f === 'res') {
     }
     // Grava mesmo vazio: o "acabou sem número" precisa aparecer na tela, senão
     // o painel fica girando até desistir sozinho, sem dizer o que houve.
-    if (!$extra) { $extra['erro'] = 'o roteador nao mediu a velocidade'; }
+    // E guarda o que o roteador mandou de fato — sem isso, "sem resultado" não
+    // diz se o problema foi o download, o formato do tempo ou outra coisa.
+    if (!isset($extra['down'])) {
+        $extra['cru'] = mb_substr('bytes=' . (string) ($_REQUEST['bytes'] ?? '-')
+                      . ' dur=' . (string) ($_REQUEST['dur'] ?? '-'), 0, 120);
+        if (!isset($extra['erro'])) { $extra['erro'] = 'sem medida de velocidade'; }
+    }
     speed_gravar($roteador, $extra);
     exit('ok');
 }
