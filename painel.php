@@ -109,7 +109,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Leads</title>
     <link rel="icon" href="assets/logo-icone.png?v=1" type="image/png">
-    <link rel="stylesheet" href="assets/style.css?v=117">
+    <link rel="stylesheet" href="assets/style.css?v=118">
 </head>
 <body class="painel-cliente">
     <div class="pc-bg-gradient"></div>
@@ -165,6 +165,10 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                 <button type="button" class="pc-side-item" data-aba="estatisticas">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="m19 9-5 5-4-4-3 3"/></svg>
                     Estatísticas
+                </button>
+                <button type="button" class="pc-side-item" data-aba="velocidade">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/><path d="m13.4 10.6 4.6-4.6"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>
+                    Teste de velocidade
                 </button>
             </nav>
             <div class="pc-side-foot">
@@ -657,6 +661,9 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                     </div>
                 </div>
             </section>
+
+            <!-- ============ ABA: TESTE DE VELOCIDADE ============ -->
+            <?php require __DIR__ . '/inc/speedtest_tela.php'; ?>
         </div>
     </div>
 
@@ -716,6 +723,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <script src="assets/dashboard.js?v=10"></script>
     <script src="assets/dashgeral.js?v=14"></script>
     <script src="assets/estatisticas.js?v=8"></script>
+    <script src="assets/speedtest.js?v=1"></script>
     <script src="assets/leads-live.js?v=27"></script>
     <?php require __DIR__ . '/inc/tema.php'; ?>
 </body>

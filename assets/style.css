@@ -8,6 +8,23 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
 
+/* --- Barra de rolagem própria, fina e discreta ---
+   Duas sintaxes porque nenhuma cobre todos os navegadores: Firefox entende
+   scrollbar-width/scrollbar-color; Chrome, Edge e Safari usam ::-webkit-*.
+   Quem não entender nenhuma fica com a barra padrão, que é o certo — o site
+   nunca depende disto para funcionar.
+   A cor vem do tema: as regras claras estão junto do resto do tema claro. */
+* { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.20) transparent; }
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.18); border-radius: 999px;
+    /* A borda transparente afina o polegar sem estreitar a área de clique. */
+    border: 2px solid transparent; background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.32); background-clip: content-box; }
+::-webkit-scrollbar-corner { background: transparent; }
+
 body {
     background: radial-gradient(circle at center, #1a1a1a 0%, #0B0B0B 100%);
     color: var(--txt);
@@ -751,6 +768,53 @@ a.pc-pag-btn:hover { background: rgba(34,211,238, 0.2); border-color: #22d3ee; c
 .painel-cliente .pc-dst { display: flex; flex-direction: column; gap: 10px; }
 .painel-cliente .pc-dst-atual { font-size: 13px; color: rgba(255, 255, 255, 0.7); word-break: break-all; }
 .painel-cliente .pc-dst-atual strong { color: #67e8f9; font-weight: 700; }
+
+/* --- Teste de velocidade --- */
+.painel-cliente .sp-topo {
+    display: flex; gap: 26px; flex-wrap: wrap; justify-content: center;
+    margin: 18px 0 4px;
+}
+.painel-cliente .sp-kpi { display: flex; align-items: baseline; gap: 8px; font-variant-numeric: tabular-nums; }
+.painel-cliente .sp-kpi svg { width: 16px; height: 16px; align-self: center; }
+.painel-cliente .sp-kpi b { font-size: 19px; font-weight: 700; color: #fff; min-width: 2.4em; text-align: right; }
+.painel-cliente .sp-kpi i {
+    font-style: normal; font-size: 11px; font-weight: 700; letter-spacing: .09em;
+    color: rgba(255,255,255,.5);
+}
+.painel-cliente .sp-kpi-down svg { color: #22d3ee; }
+.painel-cliente .sp-kpi-up   svg { color: #a78bfa; }
+.painel-cliente .sp-kpi-ping svg { color: #fbbf24; }
+
+.painel-cliente .sp-medidor { display: flex; justify-content: center; margin-top: 6px; }
+.painel-cliente .sp-svg { width: min(100%, 360px); height: auto; }
+.painel-cliente .sp-fundo  { stroke: rgba(255,255,255,.10); stroke-width: 12; stroke-linecap: round; }
+.painel-cliente .sp-arco   { stroke: url(#sp-grad); stroke-width: 12; stroke-linecap: round; }
+.sp-g1 { stop-color: #22d3ee; }
+.sp-g2 { stop-color: #a78bfa; }
+.painel-cliente .sp-tick    { stroke: rgba(255,255,255,.28); stroke-width: 1.5; }
+.painel-cliente .sp-tick-tx { fill: rgba(255,255,255,.42); font-size: 10px; font-family: inherit; }
+.painel-cliente .sp-ponteiro {
+    stroke: #fff; stroke-width: 2.5; stroke-linecap: round;
+    filter: drop-shadow(0 0 5px rgba(255,255,255,.5));
+}
+.painel-cliente .sp-eixo  { fill: #fff; }
+.painel-cliente .sp-valor {
+    fill: #fff; font-size: 34px; font-weight: 800; font-family: inherit;
+    font-variant-numeric: tabular-nums;
+}
+.painel-cliente .sp-unidade { fill: rgba(255,255,255,.5); font-size: 12px; font-weight: 600; font-family: inherit; }
+
+.painel-cliente .sp-fase { text-align: center; font-size: 13px; color: rgba(255,255,255,.6); margin-top: 2px; min-height: 1.3em; }
+.painel-cliente .sp-btn {
+    display: block; margin: 14px auto 0; padding: 12px 40px; border-radius: 999px; cursor: pointer;
+    background: #fff; color: #0b0d10; border: none;
+    font-family: inherit; font-size: 15px; font-weight: 700; letter-spacing: .04em;
+    transition: transform .2s, box-shadow .3s, opacity .2s;
+}
+.painel-cliente .sp-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 0 22px rgba(255,255,255,.22); }
+.painel-cliente .sp-btn:disabled { opacity: .5; cursor: default; }
+/* Durante o teste o ponteiro já conta a história; o botão sai de cena. */
+.painel-cliente #speed-box.rodando .sp-btn { opacity: .35; }
 
 /* --- Histórico de logos e anúncios: miniatura + botão de repor --- */
 .painel-cliente .pc-mhist { margin-top: 12px; }
@@ -1739,6 +1803,27 @@ html[data-tema="claro"] .dash-tt { background: rgba(255,255,255,0.92); border-co
 html[data-tema="claro"] .est-filtro { background: rgba(255,255,255,0.6); border-color: rgba(15,23,42,0.14); color: var(--g-fg2); }
 html[data-tema="claro"] .est-filtro.atual { background: var(--g-cyan); border-color: var(--g-cyan); color: #fff; }
 html[data-tema="claro"] .rel-resumo { color: var(--g-fg2); }
+/* --- Teste de velocidade no tema claro --- */
+html[data-tema="claro"] .sp-kpi b { color: var(--g-fg); }
+html[data-tema="claro"] .sp-kpi i { color: var(--g-fg2); }
+html[data-tema="claro"] .sp-fundo { stroke: rgba(15,23,42,.10); }
+html[data-tema="claro"] .sp-tick { stroke: rgba(15,23,42,.28); }
+html[data-tema="claro"] .sp-tick-tx { fill: rgba(15,23,42,.45); }
+html[data-tema="claro"] .sp-ponteiro { stroke: var(--g-fg); filter: none; }
+html[data-tema="claro"] .sp-eixo { fill: var(--g-fg); }
+html[data-tema="claro"] .sp-valor { fill: var(--g-fg); }
+html[data-tema="claro"] .sp-unidade, html[data-tema="claro"] .sp-fase { fill: var(--g-fg2); color: var(--g-fg2); }
+html[data-tema="claro"] .sp-btn { background: var(--g-fg); color: #fff; }
+
+/* --- Barra de rolagem no tema claro --- */
+html[data-tema="claro"] * { scrollbar-color: rgba(15,23,42,0.22) transparent; }
+html[data-tema="claro"] ::-webkit-scrollbar-thumb {
+    background: rgba(15,23,42,0.20); background-clip: content-box;
+}
+html[data-tema="claro"] ::-webkit-scrollbar-thumb:hover {
+    background: rgba(15,23,42,0.34); background-clip: content-box;
+}
+
 /* --- Histórico de logos e anúncios --- */
 html[data-tema="claro"] .mh-item { border-color: rgba(15,23,42,0.12); background: rgba(15,23,42,0.02); }
 html[data-tema="claro"] .mh-item.em-uso { border-color: var(--g-cyan); background: rgba(34,211,238,0.10); }
