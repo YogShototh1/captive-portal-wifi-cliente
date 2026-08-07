@@ -109,7 +109,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Leads</title>
     <link rel="icon" href="assets/logo-icone.png?v=1" type="image/png">
-    <link rel="stylesheet" href="assets/style.css?v=113">
+    <link rel="stylesheet" href="assets/style.css?v=114">
 </head>
 <body class="painel-cliente">
     <div class="pc-bg-gradient"></div>
