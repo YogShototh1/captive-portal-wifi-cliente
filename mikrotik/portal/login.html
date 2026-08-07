@@ -380,8 +380,42 @@
             } catch (e) { /* mantém liberado */ }
         })();
 
+        // === Página-ponte do Instagram servida pelo PRÓPRIO ROTEADOR ===
+        // Quando o destino é a ponte do Instagram, o leadsync guarda uma cópia
+        // dela em flash/hostsv7/ig.html e o tema.js marca PORTAL_DST_LOCAL.
+        // Usar a cópia evita o cliente ter que baixar a página do painel logo
+        // depois do anúncio — com a internet do estabelecimento estrangulada
+        // (o caso de 0,1 Mbps), é a diferença entre abrir na hora e não abrir.
+        //
+        // A marca do tema.js diz que a cópia DEVERIA estar lá; não que está. O
+        // download pode ter falhado, ou o servlet do hotspot pode se recusar a
+        // servir o arquivo. Por isso testamos antes: só troca o destino se o
+        // arquivo responder de verdade. Falhou, fica o do painel — o cliente
+        // nunca termina o anúncio sem destino.
+        var dstLocalOk = false;
+        (function () {
+            if (typeof window.PORTAL_DST_LOCAL !== 'string' || !window.PORTAL_DST_LOCAL) return;
+            try {
+                // Mesma origem (o próprio hotspot), então XHR passa — o que o
+                // CNA bloqueia é requisição para fora antes da autenticação.
+                // Roda durante os 10s do anúncio, tempo de sobra.
+                var x = new XMLHttpRequest();
+                x.open('GET', window.PORTAL_DST_LOCAL + '?t=' + Date.now(), true);
+                x.timeout = 3000;
+                x.onload = function () { if (x.status >= 200 && x.status < 300) dstLocalOk = true; };
+                x.send();
+            } catch (e) { /* fica o destino do painel */ }
+        })();
+
         // Retorna o destino configurado (ou o padrão).
         function portalDst() {
+            // A cópia local só entra se ela respondeu no teste acima. O caminho
+            // é absoluto a partir da origem do hotspot: esta página está sendo
+            // servida por ele, então location.origin já é o endereço certo,
+            // qualquer que seja o IP ou o DNS do hotspot na instalação.
+            if (dstLocalOk) {
+                try { return location.origin + '/' + window.PORTAL_DST_LOCAL; } catch (e) {}
+            }
             return (typeof window.PORTAL_DST === 'string' && window.PORTAL_DST) ? window.PORTAL_DST : PORTAL_DST_PADRAO;
         }
 

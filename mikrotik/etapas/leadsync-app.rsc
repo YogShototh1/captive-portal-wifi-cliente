@@ -10,40 +10,15 @@
 #   4) aplica o limite de banda por usuario via /queue simple
 #
 #  ANTES DE USAR: troque o token pelo admin_token do seu inc/config.php.
+#
+#  ESTE E O APP. O scheduler NAO importa este arquivo — quem faz isso e o
+#  canal (flash/leadsync.rsc), no fim dele, dentro de :do{} on-error={}.
+#  Por isso aqui pode-se mexer a vontade: um erro neste arquivo nao derruba
+#  o contato com o painel, e a correcao chega sozinha na rodada seguinte.
 # ============================================================
 
 :local token "SEU_ADMIN_TOKEN_AQUI"
 :local ident [/system identity get name]
-
-# ============================================================
-#  BLOCO 0 - auto-atualizacao deste script
-#  Roda ANTES de tudo e nunca deixa erro escapar. Enquanto este pedaco viver, o
-#  painel consegue corrigir qualquer coisa no roteador sem visita - inclusive um
-#  erro neste proprio arquivo. Nao havia isso antes: uma vez instalado, o script
-#  so mudava indo ate o local.
-#
-#  O painel responde qual versao do leadsync deve rodar. Se for diferente da que
-#  esta em memoria, baixa por cima de flash/leadsync.rsc; o scheduler
-#  (/import flash/leadsync.rsc) executa a versao nova na proxima volta.
-# ============================================================
-:global cdSyncVer
-:if ([:typeof $cdSyncVer] = "nothing") do={ :set cdSyncVer "" }
-:do {
-  :local sv ""
-  :do {
-    :local svr [/tool fetch url=("https://captivedata.com.br/api/leadsync.php?token=$token&roteador=$ident") \
-        check-certificate=no output=user as-value]
-    :set sv ($svr->"data")
-  } on-error={ :set sv "" }
-  :if ([:len $sv] > 0 && [:len $sv] < 20 && $sv != $cdSyncVer) do={
-    :do {
-      /tool fetch url=("https://captivedata.com.br/api/leadsync.php?token=$token&roteador=$ident&f=1") \
-          check-certificate=no dst-path="flash/leadsync.rsc"
-      :set cdSyncVer $sv
-    } on-error={}
-  }
-} on-error={}
-
 
 # 1) coletar os MACs das sessoes ativas + consumo (bytes-in + bytes-out)
 #    uso = "MAC=bytes,MAC=bytes,..." (o servidor grava na conexao aberta)

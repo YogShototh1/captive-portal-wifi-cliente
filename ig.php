@@ -21,6 +21,11 @@ require_once __DIR__ . '/inc/util.php';
 
 $hash   = (string) ($_GET['r'] ?? '');
 $previa = !empty($_GET['previa']);
+// &local=1: a versão que vive NA FLASH do roteador (api/tema.php a entrega e o
+// leadsync a grava como flash/hostsv7/ig.html). A única diferença é a logo, que
+// aponta para o arquivo local em vez do painel — assim a página abre inteira
+// sem tocar na internet, que é o ponto de servi-la do roteador.
+$local  = !empty($_GET['local']);
 
 if (preg_match('/^[0-9a-f]{40}$/', $hash)) {
     $cfg  = ig_get_hash($hash);
@@ -145,7 +150,7 @@ html.cd-no-cartao .card{display:none}
 </head>
 <body class="<?= !empty($st['manchas']) ? 'cd-manchas' : '' ?>">
     <?php if ($temLogo): ?>
-    <img class="logo" id="cd-logo" src="logo.php?h=<?= h($hash) ?>" alt="">
+    <img class="logo" id="cd-logo" src="<?= $local ? 'logo.img' : 'logo.php?h=' . h($hash) ?>" alt="">
     <?php endif; ?>
 
     <h1 id="cd-titulo"><?= h($cfg['titulo']) ?></h1>

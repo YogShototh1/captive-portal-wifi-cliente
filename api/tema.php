@@ -6,6 +6,7 @@
 //   &f=js     : tema.js  -> window.CORES / window.ESTILO / window.PORTAL_DST
 //   &f=logo   : a imagem da logo do comprador (ou 404 se não tiver)
 //   &f=ad     : a imagem do anúncio do comprador (ou 404 se não tiver)
+//   &f=ig     : a página-ponte do Instagram, para servir DO ROTEADOR (ou 404)
 //
 // Por que na flash: antes o login.html buscava tudo isso do painel A CADA
 // conexão de cliente (dst.php, logo.php, ad.php). Com a internet do
@@ -50,8 +51,11 @@ function carimbo(?string $f): string
 {
     return $f && is_file($f) ? (string) @filemtime($f) . ':' . (string) @filesize($f) : '-';
 }
+// A config da página de Instagram entra na conta: trocou a cor ou o texto dela
+// no painel, o roteador rebaixa o ig.html na rodada seguinte.
+$ig = ig_get($roteador);
 $assinatura = substr(sha1(json_encode(
-    [$cores, $estilo, $dst, $forma, carimbo($logo), carimbo($anun)]
+    [$cores, $estilo, $dst, $forma, carimbo($logo), carimbo($anun), $ig]
 )), 0, 12);
 
 $f = (string) ($_REQUEST['f'] ?? '');
@@ -70,6 +74,29 @@ if ($f === 'js') {
     echo 'window.LOGO_FORMA=' . json_encode($forma) . ";\n";
     echo 'window.CORES=' . json_encode($cores) . ";\n";
     echo 'window.ESTILO=' . json_encode($estilo) . ";\n";
+    // Diz ao login.html que existe uma cópia da página-ponte na flash. Ele
+    // ainda TESTA o arquivo antes de usar (ver login.html): esta marca é a
+    // intenção, não a garantia — o download pode ter falhado nesta rodada.
+    if ($dst === ig_url($roteador) && ig_pronta($roteador)) {
+        echo "window.PORTAL_DST_LOCAL=\"ig.html\";\n";
+    }
+    exit;
+}
+
+// A página-ponte para viver na flash. Só existe se o comprador montou a dele e
+// ela é o destino em uso — senão o roteador não tem o que guardar.
+if ($f === 'ig') {
+    if (!ig_pronta($roteador) || $dst !== ig_url($roteador)) {
+        http_response_code(404);
+        exit('');
+    }
+    // A MESMA página do ig.php, com &local=1 (a logo aponta para o arquivo da
+    // flash). Gerada aqui dentro para não haver uma segunda versão do markup.
+    $_GET['r']     = ig_hash($roteador);
+    $_GET['local'] = '1';
+    unset($_GET['previa'], $_GET['f']);
+    header('Content-Type: text/html; charset=utf-8');
+    require __DIR__ . '/../ig.php';
     exit;
 }
 
