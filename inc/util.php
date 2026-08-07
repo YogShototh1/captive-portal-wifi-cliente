@@ -294,9 +294,15 @@ function estilo_set(string $roteador, array $marcadas): void
 // é pequena). Nunca falha de um jeito que impeça a entrega.
 // $comAlpha: só a LOGO precisa de fundo transparente. O anúncio ocupa a tela
 // inteira, então alpha ali não serve para nada — e manter um PNG fotográfico
-// como PNG é o que fazia um anúncio de 1024x1536 pesar 2,5 MB. Em JPEG a mesma
-// imagem cai para pouco mais de 100 KB.
-function imagem_flash(string $origem, int $maxLado, bool $comAlpha = false, int $qualidade = 82): string
+// como PNG é o que fazia um anúncio de 1024x1536 pesar 2,5 MB.
+//
+// Sobre os limites, que NAO sao chutados: o que manda e quantos pixels o
+// cliente enxerga no celular. Um iPhone tem 3 pixels fisicos por pixel de CSS,
+// entao a logo (max-width 220px no style.css) precisa de 660px, e o anuncio,
+// que ocupa a tela toda de um Pro Max (430pt), precisa de 1290px de largura.
+// Limites menores que isso deixam a imagem visivelmente borrada no aparelho do
+// cliente — economia que sai caro. Ver quem chama esta funcao.
+function imagem_flash(string $origem, int $maxLado, bool $comAlpha = false, int $qualidade = 90): string
 {
     if (!is_file($origem) || !function_exists('imagecreatefromstring')) {
         return $origem;
