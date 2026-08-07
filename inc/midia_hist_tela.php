@@ -8,11 +8,17 @@
 // Incluído pelo painel do cliente e pela tela do admin. Espera no escopo:
 //   $mhTipo ('logo'|'anuncio')   $rotAtivo   $csrf
 //   $mhClienteId (int|null) — só no admin
+// A imagem que está no ar entra no histórico se ainda não estiver. Cobre quem
+// já tinha logo/anúncio de antes desta tela existir: sem isso, a primeira
+// imagem só apareceria aqui depois de ser substituída — e aí já era tarde.
+$mhAtual = midia_atual((string) $rotAtivo, $mhTipo);
+if ($mhAtual !== null && midia_hist_arquivo((string) $rotAtivo, $mhTipo, (string) midia_hist_ativo((string) $rotAtivo, $mhTipo)) === null) {
+    midia_hist_add((string) $rotAtivo, $mhTipo, $mhAtual, 'em uso quando o histórico começou');
+}
+
 $mhLista = midia_hist((string) $rotAtivo, $mhTipo);
-if (count($mhLista) < 2) {
-    // Com um envio só (ou nenhum) não há o que escolher — a lista seria uma
-    // cópia do que já está na tela.
-    return;
+if (!$mhLista) {
+    return;   // nunca enviou nada: não há o que mostrar
 }
 $mhAtivo = midia_hist_ativo((string) $rotAtivo, $mhTipo);
 $mhCid   = isset($mhClienteId) ? (int) $mhClienteId : null;
@@ -20,7 +26,7 @@ $mhQuery = 'roteador=' . urlencode((string) $rotAtivo) . '&tipo=' . $mhTipo
          . ($mhCid !== null ? '&cliente_id=' . $mhCid : '');
 ?>
 <details class="pc-hist pc-mhist">
-    <summary class="pc-hist-btn">Imagens anteriores (<?= count($mhLista) ?>)</summary>
+    <summary class="pc-hist-btn">Imagens guardadas (<?= count($mhLista) ?>)</summary>
     <div class="mh-grade">
         <?php foreach ($mhLista as $it): $emUso = ($mhAtivo !== null && $it['id'] === $mhAtivo); ?>
         <div class="mh-item<?= $emUso ? ' em-uso' : '' ?>">

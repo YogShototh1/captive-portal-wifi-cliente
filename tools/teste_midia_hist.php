@@ -84,6 +84,31 @@ midia_hist_usar($R, 'logo', $ids['azul.jpg']);
 $ok(!is_file(midia_base($R, 'logo') . '.flash.jpg'), 'o derivado para a flash e descartado na troca');
 
 // ---------------------------------------------------------------
+// O fluxo REAL do upload: a que sai e guardada antes de o arquivo ser trocado.
+// Sem isso, a imagem anterior sumia justamente quando passaria a fazer falta.
+echo "\na imagem que SAI nao se perde\n";
+$limpar();
+$fazer("$tmp/velha.jpg", 11, 22, 33);
+copy("$tmp/velha.jpg", midia_base($R, 'logo') . '.jpg');      // ja estava no ar,
+$idVelha = substr(sha1_file("$tmp/velha.jpg"), 0, 16);        // sem historico nenhum
+$ok(midia_hist($R, 'logo') === [], 'ponto de partida: imagem no ar, historico vazio');
+
+// upload novo: guarda a que sai, apaga, grava a que entra, guarda a que entra
+$anterior = midia_atual($R, 'logo');
+midia_hist_add($R, 'logo', $anterior, 'logo anterior');
+@unlink(midia_base($R, 'logo') . '.jpg');
+$fazer("$tmp/nova.jpg", 99, 88, 77);
+copy("$tmp/nova.jpg", midia_base($R, 'logo') . '.jpg');
+midia_hist_add($R, 'logo', midia_base($R, 'logo') . '.jpg', 'nova.jpg');
+
+$h = midia_hist($R, 'logo');
+$ok(count($h) === 2, 'depois de UM upload ja ha duas imagens guardadas', count($h));
+$ok(midia_hist_arquivo($R, 'logo', $idVelha) !== null, 'a que saiu continua recuperavel');
+$ok(midia_hist_ativo($R, 'logo') === substr(sha1_file("$tmp/nova.jpg"), 0, 16), 'a nova esta no ar');
+$ok(midia_hist_usar($R, 'logo', $idVelha) === true, 'da para voltar para a antiga');
+$ok(midia_hist_ativo($R, 'logo') === $idVelha, 'e ela volta a ser a ativa');
+
+// ---------------------------------------------------------------
 echo "\nteto de " . MIDIA_HIST_MAX . " itens\n";
 $limpar();
 $sumido = null;

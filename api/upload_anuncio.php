@@ -79,6 +79,12 @@ $dir = ads_dir();
 if (!is_dir($dir)) {
     @mkdir($dir, 0755, true);
 }
+// O anúncio que está SAINDO entra no histórico antes de ser apagado — senão
+// ele se perde justamente no momento em que passaria a fazer falta.
+$anterior = anuncio_atual($roteador);
+if ($anterior !== null) {
+    midia_hist_add($roteador, 'anuncio', $anterior, 'anúncio anterior');
+}
 // Remove o anúncio anterior deste roteador (qualquer extensão) e grava o novo.
 foreach (['jpg', 'png'] as $e) {
     @unlink(anuncio_base($roteador) . '.' . $e);

@@ -75,6 +75,12 @@ $dir = ads_dir();
 if (!is_dir($dir)) {
     @mkdir($dir, 0755, true);
 }
+// A logo que está SAINDO entra no histórico antes de ser apagada — senão ela
+// se perde justamente no momento em que passaria a fazer falta.
+$anterior = logo_atual($roteador);
+if ($anterior !== null) {
+    midia_hist_add($roteador, 'logo', $anterior, 'logo anterior');
+}
 foreach (['jpg', 'png'] as $e) {
     @unlink(logo_base($roteador) . '.' . $e);
     // O derivado reduzido da logo anterior sai junto: ele é mais novo que o
