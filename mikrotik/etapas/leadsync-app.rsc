@@ -336,10 +336,17 @@
 
     # Ping ate um destino externo: mede a latencia da internet da loja, nao a
     # do caminho ate o painel.
+    #
+    # O as-value do /ping NAO devolve avg-rtt — devolve uma LISTA, um item por
+    # pacote, cada um com o seu "time". Pedir o avg-rtt trazia vazio, e por isso
+    # o painel nunca mostrava o ping. Aqui os tempos sao colhidos um a um e a
+    # media e feita no servidor, que ja sabe converter "12ms300us" em numero.
     :local rtt ""
     :do {
-      :local pg [/ping 8.8.8.8 count=3 as-value]
-      :set rtt ($pg->"avg-rtt")
+      :foreach r in=[/ping 8.8.8.8 count=3 as-value] do={
+        :local t ($r->"time")
+        :if ([:typeof $t] != "nothing") do={ :set rtt ($rtt . $t . ",") }
+      }
     } on-error={ :set rtt "" }
 
     :do {

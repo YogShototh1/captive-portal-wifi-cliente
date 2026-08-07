@@ -79,11 +79,18 @@ if ($f === 'res') {
         if ($over !== null) { $extra['setup'] = round($over, 3); }
     }
 
-    // avg-rtt do RouterOS: vem como "12ms300us", "1s200ms" ou já um número.
+    // O ping chega como a LISTA dos tempos de cada pacote ("12ms300us,11ms,…"),
+    // não como uma média pronta: o as-value do /ping não devolve avg-rtt, só os
+    // pacotes um a um. A média sai aqui, onde já se sabe converter os formatos
+    // de tempo do RouterOS. Um valor solto (sem vírgula) também passa.
     $ping = trim((string) ($_REQUEST['ping'] ?? ''));
     if ($ping !== '') {
-        $ms = speed_rtt_ms($ping);
-        if ($ms !== null) { $extra['ping'] = $ms; }
+        $vals = [];
+        foreach (explode(',', $ping) as $p) {
+            $ms = speed_rtt_ms(trim($p));
+            if ($ms !== null) { $vals[] = $ms; }
+        }
+        if ($vals) { $extra['ping'] = round(array_sum($vals) / count($vals), 1); }
     }
     if (isset($_REQUEST['erro']) && $_REQUEST['erro'] !== '') {
         $extra['erro'] = mb_substr((string) $_REQUEST['erro'], 0, 80);
@@ -92,10 +99,13 @@ if ($f === 'res') {
     // o painel fica girando até desistir sozinho, sem dizer o que houve.
     // E guarda o que o roteador mandou de fato — sem isso, "sem resultado" não
     // diz se o problema foi o download, o formato do tempo ou outra coisa.
-    if (!isset($extra['down'])) {
+    if (!isset($extra['down']) || !isset($extra['ping'])) {
         $extra['cru'] = mb_substr('bytes=' . (string) ($_REQUEST['bytes'] ?? '-')
-                      . ' dur=' . (string) ($_REQUEST['dur'] ?? '-'), 0, 120);
-        if (!isset($extra['erro'])) { $extra['erro'] = 'sem medida de velocidade'; }
+                      . ' dur=' . (string) ($_REQUEST['dur'] ?? '-')
+                      . ' ping=' . (string) ($_REQUEST['ping'] ?? '-'), 0, 160);
+        if (!isset($extra['down']) && !isset($extra['erro'])) {
+            $extra['erro'] = 'sem medida de velocidade';
+        }
     }
     speed_gravar($roteador, $extra);
     exit('ok');

@@ -101,6 +101,28 @@ $mbps = round($bytes * 8 / speed_dur_seg('500ms') / 1e6, 2);
 $ok(abs($mbps - 100.66) < 0.05, '6 MiB em 0,5s = ~100 Mbps', $mbps);
 
 // ---------------------------------------------------------------
+// O /ping do RouterOS NAO devolve avg-rtt no as-value: devolve uma lista, um
+// item por pacote. A media e feita aqui.
+echo "\nmedia dos tempos de cada pacote\n";
+$media = function (string $ping): ?float {
+    $v = [];
+    foreach (explode(',', $ping) as $p) {
+        $ms = speed_rtt_ms(trim($p));
+        if ($ms !== null) { $v[] = $ms; }
+    }
+    return $v ? round(array_sum($v) / count($v), 1) : null;
+};
+foreach (['12ms300us,11ms800us,13ms100us' => 12.4,
+          '15ms,16ms,14ms,'               => 15.0,   // virgula sobrando no fim
+          '8ms500us'                      => 8.5,    // um pacote so
+          '1s200ms,1s100ms'               => 1150.0] as $e => $esp) {
+    $r = $media((string) $e);
+    $ok($r !== null && abs($r - $esp) < 0.05, "\"$e\" -> {$esp} ms", var_export($r, true));
+}
+$ok($media(',,') === null, 'lista vazia nao vira zero');
+$ok($media('') === null, 'string vazia nao vira zero');
+
+// ---------------------------------------------------------------
 echo "\nrtt do RouterOS -> ms\n";
 foreach (['12ms300us' => 12.3, '1s200ms' => 1200.0, '500us' => 0.5, '23' => 23.0,
           '2s' => 2000.0, '45ms' => 45.0] as $e => $esp) {
