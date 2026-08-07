@@ -380,6 +380,126 @@ function imagem_flash(string $origem, int $maxLado, bool $comAlpha = false, int 
     return $destino;
 }
 
+// --- Histórico de logos e anúncios enviados, por roteador ---
+//
+// Antes, enviar uma logo nova APAGAVA a anterior. Trocar o anúncio de volta
+// (fim de uma promoção, por exemplo) exigia achar o arquivo original no
+// computador — e quem não achava, perdia. Aqui cada envio fica guardado e o
+// comprador escolhe qual está no ar, sem reenviar nada.
+//
+// Arquivos planos em ads/, sem subpasta: a hospedagem compartilhada nem sempre
+// deixa criar diretório, e é a mesma razão pela qual o portal guarda
+// "css~style.css" em vez de "css/style.css".
+//   ads/<hash>.hist-<tipo>.json      índice
+//   ads/<hash>.hist-<tipo>-<id>.<e>  os arquivos
+const MIDIA_HIST_MAX = 8;
+
+function midia_tipos(): array { return ['logo', 'anuncio']; }
+
+// Onde vive o arquivo EM USO de cada tipo (o que o roteador baixa).
+function midia_base(string $roteador, string $tipo): string
+{
+    return $tipo === 'logo' ? logo_base($roteador) : anuncio_base($roteador);
+}
+function midia_atual(string $roteador, string $tipo): ?string
+{
+    return $tipo === 'logo' ? logo_atual($roteador) : anuncio_atual($roteador);
+}
+
+function midia_hist_file(string $roteador, string $tipo): string
+{
+    return anuncio_base($roteador) . '.hist-' . $tipo . '.json';
+}
+function midia_hist_img(string $roteador, string $tipo, string $id, string $ext): string
+{
+    return anuncio_base($roteador) . '.hist-' . $tipo . '-' . $id . '.' . $ext;
+}
+
+// Mais recente primeiro.
+function midia_hist(string $roteador, string $tipo): array
+{
+    if (trim($roteador) === '' || !in_array($tipo, midia_tipos(), true)) { return []; }
+    $j = json_decode((string) @file_get_contents(midia_hist_file($roteador, $tipo)), true);
+    return is_array($j) ? $j : [];
+}
+
+// Guarda uma cópia do arquivo que acabou de virar o ativo.
+// O id é o hash do CONTEÚDO: reenviar a mesma imagem não cria item repetido,
+// só a traz de volta para o topo da lista.
+function midia_hist_add(string $roteador, string $tipo, string $arquivo, string $nomeOriginal): void
+{
+    if (!is_file($arquivo) || !in_array($tipo, midia_tipos(), true)) { return; }
+    $id  = substr(sha1_file($arquivo) ?: '', 0, 16);
+    $ext = strtolower(pathinfo($arquivo, PATHINFO_EXTENSION));
+    if ($id === '' || !in_array($ext, ['jpg', 'png'], true)) { return; }
+
+    $h = midia_hist($roteador, $tipo);
+    // Já existe? Tira da posição antiga para reentrar no topo.
+    $h = array_values(array_filter($h, function ($x) use ($id) { return ($x['id'] ?? '') !== $id; }));
+
+    $copia = midia_hist_img($roteador, $tipo, $id, $ext);
+    if (!is_file($copia) && !@copy($arquivo, $copia)) { return; }
+    @chmod($copia, 0644);
+
+    try { $agora = db_now(); } catch (Throwable $e) { $agora = date('Y-m-d H:i:s'); }
+    array_unshift($h, [
+        'id'   => $id,
+        'ext'  => $ext,
+        'nome' => mb_substr(trim($nomeOriginal), 0, 80),
+        'em'   => $agora,
+    ]);
+
+    // Passou do teto: os mais antigos saem, e o arquivo deles some junto —
+    // senão a hospedagem acumularia imagem que ninguém mais alcança.
+    foreach (array_slice($h, MIDIA_HIST_MAX) as $velho) {
+        @unlink(midia_hist_img($roteador, $tipo, (string) $velho['id'], (string) $velho['ext']));
+    }
+    $h = array_slice($h, 0, MIDIA_HIST_MAX);
+
+    @file_put_contents(midia_hist_file($roteador, $tipo), json_encode($h, JSON_UNESCAPED_UNICODE), LOCK_EX);
+}
+
+// Caminho do arquivo guardado, ou null se o id não estiver no histórico.
+// Nunca monta caminho a partir do que veio do cliente: o id é procurado no
+// índice, e só o que está lá pode ser lido.
+function midia_hist_arquivo(string $roteador, string $tipo, string $id): ?string
+{
+    foreach (midia_hist($roteador, $tipo) as $x) {
+        if ((string) ($x['id'] ?? '') === $id) {
+            $p = midia_hist_img($roteador, $tipo, $id, (string) $x['ext']);
+            return is_file($p) ? $p : null;
+        }
+    }
+    return null;
+}
+
+// Repõe um item do histórico como o que está no ar.
+function midia_hist_usar(string $roteador, string $tipo, string $id): bool
+{
+    $origem = midia_hist_arquivo($roteador, $tipo, $id);
+    if ($origem === null) { return false; }
+    $ext = strtolower(pathinfo($origem, PATHINFO_EXTENSION));
+
+    // Tira o ativo atual (qualquer extensão) e põe este no lugar. A cópia do
+    // histórico permanece: é ela que permite voltar depois.
+    foreach (['jpg', 'png'] as $e) {
+        @unlink(midia_base($roteador, $tipo) . '.' . $e);
+        // O derivado para a flash também sai: a versão reduzida é do arquivo
+        // antigo e ficaria valendo por ser mais nova que o novo ativo.
+        @unlink(midia_base($roteador, $tipo) . '.flash.' . $e);
+    }
+    if (!@copy($origem, midia_base($roteador, $tipo) . '.' . $ext)) { return false; }
+    @chmod(midia_base($roteador, $tipo) . '.' . $ext, 0644);
+    return true;
+}
+
+// Qual item do histórico está no ar agora (pelo conteúdo, não pelo nome).
+function midia_hist_ativo(string $roteador, string $tipo): ?string
+{
+    $atual = midia_atual($roteador, $tipo);
+    return $atual !== null ? substr(sha1_file($atual) ?: '', 0, 16) : null;
+}
+
 // --- Página-ponte do Instagram, personalizada por roteador ---
 //
 // Por que a ponte existe: destino direto no instagram.com NÃO funciona no CNA

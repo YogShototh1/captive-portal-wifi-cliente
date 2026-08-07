@@ -83,10 +83,18 @@ if (!is_dir($dir)) {
 foreach (['jpg', 'png'] as $e) {
     @unlink(anuncio_base($roteador) . '.' . $e);
 }
+// O derivado reduzido do anúncio anterior sai junto: ele é mais novo que o
+// arquivo que vai entrar e continuaria valendo como cache.
+foreach (['jpg', 'png'] as $e) {
+    @unlink(anuncio_base($roteador) . '.flash.' . $e);
+}
 $dest = anuncio_base($roteador) . '.' . $ext;
 if (!move_uploaded_file($f['tmp_name'], $dest)) {
     voltar_msg($voltar, 'anuncio_erro', 'Não foi possível salvar a imagem.');
 }
 @chmod($dest, 0644);
+// Guarda no histórico: o comprador pode voltar a este anúncio depois sem ter
+// que achar o arquivo de novo no computador.
+midia_hist_add($roteador, 'anuncio', $dest, (string) ($f['name'] ?? ''));
 
 voltar_msg($voltar, 'anuncio_ok', 'Anúncio atualizado! Já vale para as próximas conexões.');

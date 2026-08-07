@@ -452,6 +452,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                                     </label>
                                     <button type="submit" class="pc-btn-primary">Enviar anúncio</button>
                                 </form>
+                                <?php $mhTipo = 'anuncio'; $mhClienteId = (int) $id; require __DIR__ . '/inc/midia_hist_tela.php'; ?>
                             </div>
                         </div>
                     </div>
@@ -498,6 +499,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                                     </div>
                                     <button type="submit" class="pc-btn-primary">Salvar</button>
                                 </form>
+                                <?php $mhTipo = 'logo'; $mhClienteId = (int) $id; require __DIR__ . '/inc/midia_hist_tela.php'; ?>
                             </div>
                         </div>
                     </div>

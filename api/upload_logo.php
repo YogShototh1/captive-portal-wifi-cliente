@@ -77,12 +77,17 @@ if (!is_dir($dir)) {
 }
 foreach (['jpg', 'png'] as $e) {
     @unlink(logo_base($roteador) . '.' . $e);
+    // O derivado reduzido da logo anterior sai junto: ele é mais novo que o
+    // arquivo que vai entrar e continuaria valendo como cache.
+    @unlink(logo_base($roteador) . '.flash.' . $e);
 }
 $dest = logo_base($roteador) . '.' . $ext;
 if (!move_uploaded_file($f['tmp_name'], $dest)) {
     voltar_msg($voltar, 'logo_erro', 'Não foi possível salvar a imagem.');
 }
 @chmod($dest, 0644);
+// Guarda no histórico: dá para voltar a uma logo anterior sem reenviar nada.
+midia_hist_add($roteador, 'logo', $dest, (string) ($f['name'] ?? ''));
 
 // Forma escolhida no dropdown (quadrado/arredondado/redondo).
 logo_forma_set($roteador, (string) ($_POST['forma'] ?? 'quadrado'));
