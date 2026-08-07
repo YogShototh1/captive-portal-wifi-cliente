@@ -560,11 +560,27 @@ function portal_versao(string $roteador): string
 function semana_reparte(array $sessoes, array $lim): array
 {
     $dias = [0, 0, 0, 0, 0, 0, 0];
+    foreach (intervalos_juntar($sessoes, $lim[0], $lim[7]) as $x) {
+        for ($k = 0; $k < 7; $k++) {
+            $a = max($x[0], $lim[$k]);
+            $b = min($x[1], $lim[$k + 1]);
+            if ($b > $a) { $dias[$k] += $b - $a; }
+        }
+    }
+    return $dias;
+}
+
+// Corta as sessoes na janela [$ini, $fim] e funde as que se sobrepoem, para que
+// tempo simultaneo conte uma vez so (dois aparelhos no mesmo numero no ar ao
+// mesmo tempo = um periodo conectado, nao o dobro).
+// $sessoes: lista de [inicio, fim] em timestamp. Devolve a lista sem sobreposicao.
+function intervalos_juntar(array $sessoes, int $ini, int $fim): array
+{
     $iv = [];
     foreach ($sessoes as $s) {
-        $ini = max((int) $s[0], $lim[0]);
-        $fim = min((int) $s[1], $lim[7]);
-        if ($fim > $ini) { $iv[] = [$ini, $fim]; }
+        $a = max((int) $s[0], $ini);
+        $b = min((int) $s[1], $fim);
+        if ($b > $a) { $iv[] = [$a, $b]; }
     }
     usort($iv, function ($a, $b) { return $a[0] <=> $b[0]; });
     $juntos = [];
@@ -576,14 +592,78 @@ function semana_reparte(array $sessoes, array $lim): array
             $juntos[] = $x;
         }
     }
-    foreach ($juntos as $x) {
-        for ($k = 0; $k < 7; $k++) {
-            $a = max($x[0], $lim[$k]);
-            $b = min($x[1], $lim[$k + 1]);
-            if ($b > $a) { $dias[$k] += $b - $a; }
-        }
+    return $juntos;
+}
+
+// Segundos conectados dentro da janela, ja com as sobreposicoes fundidas.
+function intervalos_total(array $sessoes, int $ini, int $fim): int
+{
+    $t = 0;
+    foreach (intervalos_juntar($sessoes, $ini, $fim) as $x) { $t += $x[1] - $x[0]; }
+    return $t;
+}
+
+// Sessoes de `conexoes` que ENCOSTAM na janela [$iniTs, $fimTs) — nao so as que
+// COMECAM nela: uma sessao de segunda a quarta pertence aos tres dias. Quem
+// recorta e quem chama (intervalos_juntar / semana_reparte).
+//
+// O fim de cada linha e o instante gravado (conectado_em + segundos) ou, se a
+// sessao segue aberta, o ultimo instante CONFIRMADO pelo roteador (visto_em).
+// Nunca NOW(): conexao que o polling jamais viu fica com os dois campos nulos
+// para sempre, e trata-la como "ate agora" enchia o relatorio de sessoes
+// eternas. Sem os dois campos a duracao e desconhecida e o WHERE ja a descarta,
+// porque comparacao com NULL nao e verdadeira.
+function sessoes_janela(array $roteadores, int $iniTs, int $fimTs): array
+{
+    if (!$roteadores) { return []; }
+    $ph  = implode(',', array_fill(0, count($roteadores), '?'));
+    $sqlFim = 'COALESCE(DATE_ADD(c.conectado_em, INTERVAL c.segundos SECOND), c.visto_em)';
+    $sel = "SELECT c.lead_id, l.telefone, l.nome, c.conectado_em, $sqlFim AS fim
+              FROM conexoes c JOIN leads l ON l.id = c.lead_id
+             WHERE l.roteador IN ($ph)
+               AND c.conectado_em < ? AND $sqlFim >= ?";
+    $arg = array_merge($roteadores, [date('Y-m-d H:i:s', $fimTs), date('Y-m-d H:i:s', $iniTs)]);
+    try {
+        $q = db()->prepare($sel);
+        $q->execute($arg);
+    } catch (Throwable $e) {
+        // Banco antigo, sem conexoes.visto_em (o status.php cria na 1a rodada):
+        // so as sessoes ja fechadas entram.
+        $q = db()->prepare(str_replace(', c.visto_em', '', $sel));
+        $q->execute($arg);
     }
-    return $dias;
+    return $q->fetchAll();
+}
+
+// Data do marco de N meses, sem escorregar de mes.
+//
+// strtotime("2025-08-31 +3 month") devolve 2025-12-01, porque novembro nao tem
+// dia 31 e o PHP transborda para o mes seguinte. Aqui o mes e avancado a partir
+// do dia 1 (que existe sempre) e o dia so entao e grampeado no ultimo dia do
+// mes de destino: 31/08 +3m = 30/11, 30/11 +3m = 28/02.
+function marco_mes(string $ymd, int $meses): string
+{
+    $dia  = (int) substr($ymd, 8, 2);
+    $alvo = strtotime(substr($ymd, 0, 7) . '-01 +' . $meses . ' month');
+    return date('Y-m-', $alvo) . str_pad((string) min($dia, (int) date('t', $alvo)), 2, '0', STR_PAD_LEFT);
+}
+
+// Quantas vezes cada dia da semana cai no periodo (chaves 1..7 = DAYOFWEEK do
+// MySQL, 1 = domingo).
+//
+// Sem isso o grafico por dia da semana mente em periodo que nao e multiplo de
+// 7: num periodo de 8 dias uma segunda aparece duas vezes e os outros dias uma,
+// e a barra de segunda sai com o dobro sem que o movimento tenha mudado.
+function ocorrencias_dow(string $inicio, string $fim): array
+{
+    $occ = array_fill(1, 7, 0);
+    $t   = strtotime($inicio . ' 00:00:00');
+    $ate = strtotime($fim . ' 00:00:00');
+    while ($t <= $ate) {
+        $occ[(int) date('w', $t) + 1]++;
+        $t = strtotime('+1 day', $t);
+    }
+    return $occ;
 }
 
 // Intervalo [inicio, fim] de UMA linha de `conexoes`, em timestamp, ou null
@@ -668,4 +748,34 @@ function alertas_set(int $compradorId, array $marcadas): void
         @mkdir($dir, 0755, true);
     }
     @file_put_contents(alertas_file($compradorId), json_encode($out));
+}
+
+// --- O que o roteador informa sobre si mesmo (versao do RouterOS e modelo) ---
+// O leadsync manda isso junto do heartbeat. Serve para saber com o que se esta
+// lidando sem ir ate o equipamento — decisivo, por exemplo, para responder se
+// da para usar WireGuard (so existe do RouterOS 7 em diante).
+function mikrotik_info_file(string $roteador): string
+{
+    return anuncio_base($roteador) . '.info';
+}
+
+function mikrotik_info_set(string $roteador, string $versao, string $board): void
+{
+    $versao = substr(preg_replace('/[^0-9A-Za-z._-]/', '', $versao), 0, 32);
+    $board  = substr(preg_replace('/[^0-9A-Za-z._\- ]/', '', $board), 0, 48);
+    if ($versao === '' && $board === '') {
+        return;
+    }
+    $dir = ads_dir();
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0755, true);
+    }
+    @file_put_contents(mikrotik_info_file($roteador),
+        json_encode(['ros' => $versao, 'board' => $board, 'visto' => date('c')]));
+}
+
+function mikrotik_info_get(string $roteador): ?array
+{
+    $j = json_decode((string) @file_get_contents(mikrotik_info_file($roteador)), true);
+    return is_array($j) ? $j : null;
 }

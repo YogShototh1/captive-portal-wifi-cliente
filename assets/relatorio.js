@@ -164,7 +164,8 @@
         grafico.innerHTML = html;
     }
 
-    // Clientes mais frequentes: top 20 por acessos no período.
+    // Clientes mais frequentes: top 20 por dias de visita no período (dia
+    // distinto, não conexão — reconectar não é voltar).
     function renderRanking(d) {
         if (!d.lista || !d.lista.length) return vazio();
         var max = d.lista[0].valor || 1;
@@ -172,7 +173,7 @@
         for (var i = 0; i < d.lista.length; i++) {
             var it = d.lista[i];
             html += linhaHTML((i + 1) + 'º ' + waLink(it.telefone, it.nome),
-                it.valor + (it.valor === 1 ? ' acesso' : ' acessos'),
+                it.valor + (it.valor === 1 ? ' dia' : ' dias'),
                 'últ. ' + fmtD(it.ultima),
                 it.valor * 100 / max, true);
         }
@@ -243,19 +244,31 @@
     function renderMapa(d) {
         if (!d.total) return vazio();
         var DIAS_MAPA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']; // DAYOFWEEK 1..7
-        var max = 0, k;
-        for (k in d.grade) { if (d.grade[k] > max) max = d.grade[k]; }
+        var occ = d.ocorrencias || {};
+        // Calor = média por ocorrência daquele dia da semana, não o total: num
+        // período de 8 dias a linha de segunda somaria duas segundas contra uma
+        // dos outros dias e ficaria quente à toa. Múltiplo de 7 → sem diferença.
+        function media(dw, h) {
+            var n = d.grade[dw + '-' + h] || 0, o = occ[dw] || 0;
+            return o ? n / o : n;
+        }
+        var max = 0, dw, h;
+        for (dw = 1; dw <= 7; dw++) for (h = 0; h < 24; h++) max = Math.max(max, media(dw, h));
         var html = resumoHTML(d, d.total + ' acesso(s)') + '<div class="rel-mapa-wrap"><div class="rel-mapa">';
         html += '<span class="rm-rot"></span>';
-        for (var h = 0; h < 24; h++) html += '<span class="rm-hora">' + (h % 3 === 0 ? h : '') + '</span>';
-        for (var dw = 1; dw <= 7; dw++) {
+        for (h = 0; h < 24; h++) html += '<span class="rm-hora">' + (h % 3 === 0 ? h : '') + '</span>';
+        for (dw = 1; dw <= 7; dw++) {
             html += '<span class="rm-rot">' + DIAS_MAPA[dw - 1] + '</span>';
             for (h = 0; h < 24; h++) {
                 var n = d.grade[dw + '-' + h] || 0;
-                var a = n ? (0.15 + 0.85 * n / max) : 0;
+                var m = media(dw, h);
+                var a = m ? (0.15 + 0.85 * m / max) : 0;
+                var det = (occ[dw] || 0) > 1
+                    ? n + ' acesso(s) em ' + occ[dw] + ' — média ' + (Math.round(m * 10) / 10)
+                    : n + ' acesso(s)';
                 html += '<span class="rm-cel"' +
-                    (n ? ' style="background:rgba(34,211,238,' + a.toFixed(2) + ')"' : '') +
-                    ' title="' + DIAS_MAPA[dw - 1] + ' ' + (h < 10 ? '0' : '') + h + 'h — ' + n + ' acesso(s)"></span>';
+                    (m ? ' style="background:rgba(34,211,238,' + a.toFixed(2) + ')"' : '') +
+                    ' title="' + DIAS_MAPA[dw - 1] + ' ' + (h < 10 ? '0' : '') + h + 'h — ' + det + '"></span>';
             }
         }
         grafico.innerHTML = html + '</div></div>';
@@ -353,13 +366,29 @@
             return;
         }
         var vals = chaves.map(function (k) { return d.buckets[k] || 0; });
-        var max = Math.max.apply(null, vals);
-        var ps = pcts1(vals); // % do total, soma 100 (zeros dão 0%)
+        // Média por ocorrência do dia da semana. Num período de 8 dias a segunda
+        // acontece 2x e os outros dias 1x — comparar os totais faria a barra de
+        // segunda sair com o dobro sem que o movimento tivesse mudado. Quando o
+        // período é múltiplo de 7 as ocorrências são iguais, a média é
+        // proporcional ao total e nada muda na tela.
+        var occ = d.ocorrencias, desigual = false;
+        var med = vals;
+        if (occ) {
+            med = vals.map(function (n, i) { var o = occ[chaves[i]] || 0; return o ? n / o : 0; });
+            for (var q = 1; q < chaves.length; q++) {
+                if ((occ[chaves[q]] || 0) !== (occ[chaves[0]] || 0)) { desigual = true; break; }
+            }
+        }
+        var ps = pcts1(med); // % da média, soma 100 (zeros dão 0%)
         var html = resumoHTML(d, d.total + ' acesso(s)');
         for (var k = 0; k < chaves.length; k++) {
             var n = vals[k];
             if (!n) continue; // oculta horários/dias zerados
-            html += linhaHTML(rotulo(chaves[k]), fmtNum(n), fmtPct(ps[k]), ps[k]); // barra = a própria %
+            // Período desigual: mostra a média (o número comparável) e o total
+            // ao lado, para o número real não sumir da tela.
+            var valTxt = desigual ? fmtNum(Math.round(med[k] * 10) / 10) : fmtNum(n);
+            var detTxt = desigual ? fmtNum(n) + ' no total · ' + fmtPct(ps[k]) : fmtPct(ps[k]);
+            html += linhaHTML(rotulo(chaves[k]), valTxt, detTxt, ps[k]); // barra = a própria %
         }
         grafico.innerHTML = html;
     }

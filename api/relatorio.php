@@ -46,19 +46,15 @@ if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $inicio)) { $inicio = date('Y-m-d', str
 if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fim))    { $fim = $hoje; }
 if ($inicio > $fim) { $t = $inicio; $inicio = $fim; $fim = $t; }
 
-// Relatórios por CLIENTE (lista, não gráfico de baldes): um item por lead com
-//   clientes_dias  -> em quantos dias distintos do período o número conectou
-//   clientes_tempo -> soma do tempo (segundos) de todas as sessões do período
-if ($tipo === 'clientes_dias' || $tipo === 'clientes_tempo') {
+// Dias de visita por cliente: em quantos dias distintos do período o número
+// conectou. Um item por lead.
+if ($tipo === 'clientes_dias') {
     $itens = [];
     if ($lista) {
         try {
-            $agg = $tipo === 'clientes_dias'
-                ? 'COUNT(DISTINCT DATE(c.conectado_em))'
-                : 'COALESCE(SUM(c.segundos), 0)';
             $ph = implode(',', array_fill(0, count($lista), '?'));
             $q = db()->prepare(
-                "SELECT l.telefone, l.nome, $agg AS v
+                "SELECT l.telefone, l.nome, COUNT(DISTINCT DATE(c.conectado_em)) AS v
                    FROM conexoes c JOIN leads l ON l.id = c.lead_id
                   WHERE l.roteador IN ($ph)
                     AND c.conectado_em >= ? AND c.conectado_em < DATE_ADD(?, INTERVAL 1 DAY)
@@ -89,6 +85,63 @@ if ($tipo === 'clientes_dias' || $tipo === 'clientes_tempo') {
     ]));
 }
 
+// Tempo de conexão por cliente: segundos conectados DENTRO do período.
+//
+// Antes era SUM(c.segundos) filtrando por conectado_em, e errava dos dois
+// lados: `segundos` fica NULL enquanto a sessão está aberta (só o status.php
+// preenche, ao fechar) e SUM descarta NULL, então quem está conectado agora
+// aparecia com zero; e a sessão que começa 23h do último dia entrava INTEIRA,
+// jogando para dentro do período horas que aconteceram fora dele.
+// Agora usa o mesmo recorte da grade semanal: pega as sessões que encostam no
+// período, corta nas bordas e funde as sobreposições.
+if ($tipo === 'clientes_tempo') {
+    $pIni  = strtotime($inicio . ' 00:00:00');
+    $pFim  = strtotime($fim . ' +1 day 00:00:00');
+    $agora = strtotime(db_now());
+    $itens = [];
+    if ($lista) {
+        try {
+            $porLead = [];
+            foreach (sessoes_janela($lista, $pIni, $pFim) as $r) {
+                $iv = conexao_intervalo($r['conectado_em'], $r['fim'], $agora);
+                if ($iv === null) { continue; }   // duração desconhecida: fora
+                $id = (int) $r['lead_id'];
+                if (!isset($porLead[$id])) {
+                    $porLead[$id] = [
+                        'telefone' => (string) $r['telefone'],
+                        'nome'     => ($r['nome'] !== null && $r['nome'] !== '') ? (string) $r['nome'] : null,
+                        'valor'    => 0,
+                        'iv'       => [],
+                    ];
+                }
+                $porLead[$id]['iv'][] = $iv;
+            }
+            foreach ($porLead as &$le) {
+                $le['valor'] = intervalos_total($le['iv'], $pIni, $pFim);
+                unset($le['iv']);
+            }
+            unset($le);
+            // Zero fora: a sessão pode encostar na borda do período sem ter um
+            // segundo dentro dele, e o painel já esconde a linha — só o total
+            // ficaria contando um cliente que ninguém vê.
+            $porLead = array_filter($porLead, function ($x) { return $x['valor'] > 0; });
+            usort($porLead, function ($a, $b) { return $b['valor'] <=> $a['valor']; });
+            $itens = array_slice($porLead, 0, 500);
+        } catch (Throwable $e) {
+            http_response_code(500);
+            exit(json_encode(['ok' => false, 'erro' => 'falha ao gerar o relatorio']));
+        }
+    }
+    exit(json_encode([
+        'ok'     => true,
+        'tipo'   => $tipo,
+        'inicio' => $inicio,
+        'fim'    => $fim,
+        'total'  => count($itens),
+        'lista'  => array_values($itens),
+    ]));
+}
+
 $ph  = $lista ? implode(',', array_fill(0, count($lista), '?')) : '';
 $sai = function (array $extra) use ($tipo, $inicio, $fim) {
     exit(json_encode(['ok' => true, 'tipo' => $tipo, 'inicio' => $inicio, 'fim' => $fim] + $extra));
@@ -116,43 +169,20 @@ if ($tipo === 'grade_semana') {
     $primeira = null;
     if ($lista) {
         try {
-            // Sessoes que ENCOSTAM na semana (nao so as que comecam nela): uma
-            // sessao de segunda a quarta precisa entrar na conta dos tres dias.
-            //
-            // O fim e o instante gravado (conectado_em + segundos) ou, se a
-            // sessao segue aberta, o ultimo instante CONFIRMADO pelo roteador
-            // (visto_em). Nunca NOW(): o lead.php abre a conexao com segundos e
-            // visto_em nulos e o status.php so fecha as que ja foram vistas no
-            // polling, entao conexao que nunca apareceu em /ip/hotspot/active
-            // fica orfa para sempre — com NOW() cada orfa virava "conectado
-            // desde o login ate agora" e enchia a semana inteira de 24h.
-            // Sem os dois campos a duracao e desconhecida: o proprio WHERE a
-            // descarta, porque comparacao com NULL nao e verdadeira.
-            $sqlFim = "COALESCE(DATE_ADD(c.conectado_em, INTERVAL c.segundos SECOND), c.visto_em)";
-            $sel = "SELECT c.lead_id, l.telefone, l.nome, c.conectado_em, $sqlFim AS fim
-                      FROM conexoes c JOIN leads l ON l.id = c.lead_id
-                     WHERE l.roteador IN ($ph)
-                       AND c.conectado_em < ? AND $sqlFim >= ?";
-            try {
-                $q = db()->prepare($sel);
-                $q->execute(array_merge($lista, [date('Y-m-d H:i:s', $semFim), date('Y-m-d H:i:s', $semIni)]));
-            } catch (Throwable $e) {
-                // Banco antigo, sem conexoes.visto_em (o status.php cria na 1a
-                // rodada): so as sessoes ja fechadas entram.
-                $q = db()->prepare(str_replace(', c.visto_em', '', $sel));
-                $q->execute(array_merge($lista, [date('Y-m-d H:i:s', $semFim), date('Y-m-d H:i:s', $semIni)]));
-            }
-
             // 1) Recorta cada sessao na semana e guarda os intervalos por cliente.
+            //    sessoes_janela (inc/util.php) traz as que ENCOSTAM na semana,
+            //    nao so as que comecam nela.
             $porLead = [];
-            foreach ($q->fetchAll() as $r) {
+            foreach (sessoes_janela($lista, $semIni, $semFim) as $r) {
                 // conexao_intervalo devolve null quando a duracao e desconhecida
                 // (conexao que o polling nunca viu) — ver inc/util.php.
                 $iv = conexao_intervalo($r['conectado_em'], $r['fim'], $agora);
                 if ($iv === null) { continue; }
-                $ini = max($iv[0], $semIni);
-                $fim = min($iv[1], $semFim);
-                if ($fim <= $ini) { continue; }
+                // Nomes proprios: $fim aqui e a data do periodo global, e
+                // sobrescreve-la deixava uma armadilha para quem mexesse depois.
+                $ivIni = max($iv[0], $semIni);
+                $ivFim = min($iv[1], $semFim);
+                if ($ivFim <= $ivIni) { continue; }
                 $id = (int) $r['lead_id'];
                 if (!isset($porLead[$id])) {
                     $porLead[$id] = [
@@ -163,7 +193,7 @@ if ($tipo === 'grade_semana') {
                         'iv'       => [],
                     ];
                 }
-                $porLead[$id]['iv'][] = [$ini, $fim];
+                $porLead[$id]['iv'][] = [$ivIni, $ivFim];
             }
 
             // 2) Junta o que se sobrepoe e reparte pelos dias (semana_reparte,
@@ -207,7 +237,13 @@ if ($tipo === 'grade_semana') {
 }
 
 // --- Clientes sem retorno: sem datas — "sem vir há N+ dias" e "mínimo de M visitas".
-//     valor = dias sem vir (até hoje). ---
+//     valor = dias sem vir (até hoje).
+//
+//     VISITA = dia distinto, não linha de `conexoes`. Com COUNT(c.id) uma única
+//     tarde em que o cliente reconectou 3x (sessão expirada, troca de aparelho,
+//     sinal oscilando) passava no filtro "mínimo de 3 visitas" — a lista de
+//     reconquista enchia de quem nunca foi recorrente. É também o critério que o
+//     api/alertas.php já usava, então os dois discordavam sobre os mesmos dados. ---
 if ($tipo === 'sumidos') {
     $diasMin = max(1, (int) ($_GET['dias'] ?? 7));
     $visMin  = max(1, (int) ($_GET['visitas'] ?? 3));
@@ -215,11 +251,13 @@ if ($tipo === 'sumidos') {
     if ($lista) {
         try {
             $q = db()->prepare(
-                "SELECT l.telefone, l.nome, COUNT(c.id) AS visitas, MAX(c.conectado_em) AS ultima
+                "SELECT l.telefone, l.nome,
+                        COUNT(DISTINCT DATE(c.conectado_em)) AS visitas,
+                        MAX(c.conectado_em) AS ultima
                    FROM leads l JOIN conexoes c ON c.lead_id = l.id
                   WHERE l.roteador IN ($ph)
                   GROUP BY l.id, l.telefone, l.nome
-                 HAVING COUNT(c.id) >= ?
+                 HAVING COUNT(DISTINCT DATE(c.conectado_em)) >= ?
                     AND MAX(c.conectado_em) < DATE_SUB(NOW(), INTERVAL ? DAY)
                   ORDER BY ultima ASC
                   LIMIT 500"
@@ -242,13 +280,19 @@ if ($tipo === 'sumidos') {
     $sai(['total' => count($itens), 'lista' => $itens, 'dias' => $diasMin, 'visitas' => $visMin]);
 }
 
-// --- Clientes mais frequentes: top 20 por acessos (conexões) no período. ---
+// --- Clientes mais frequentes: top 20 por DIAS de visita no período.
+//     Contava COUNT(*) de conexões, e quem tinha aparelho de sinal instável
+//     subia no ranking só por reconectar — frequência é voltar mais vezes, não
+//     reconectar mais vezes. Mesmo critério de "Dias de visita por cliente",
+//     para os dois relatórios concordarem. ---
 if ($tipo === 'ranking') {
     $itens = [];
     if ($lista) {
         try {
             $q = db()->prepare(
-                "SELECT l.telefone, l.nome, COUNT(*) AS v, MAX(c.conectado_em) AS ultima
+                "SELECT l.telefone, l.nome,
+                        COUNT(DISTINCT DATE(c.conectado_em)) AS v,
+                        MAX(c.conectado_em) AS ultima
                    FROM conexoes c JOIN leads l ON l.id = c.lead_id
                   WHERE l.roteador IN ($ph)
                     AND c.conectado_em >= ? AND c.conectado_em < DATE_ADD(?, INTERVAL 1 DAY)
@@ -296,7 +340,13 @@ if ($tipo === 'mapa') {
             exit(json_encode(['ok' => false, 'erro' => 'falha ao gerar o relatorio']));
         }
     }
-    $sai(['total' => $total, 'grade' => $grade]);
+    // ocorrencias: quantas vezes cada dia da semana caiu no período. Sem isso a
+    // grade mente quando o período não é múltiplo de 7 — num período de 8 dias
+    // a linha de segunda soma duas segundas contra uma dos outros dias, e sai
+    // com o dobro de calor sem que o movimento tenha mudado. Quem divide é o
+    // relatorio.js, que assim mostra a média por dia e mantém o total no
+    // tooltip.
+    $sai(['total' => $total, 'grade' => $grade, 'ocorrencias' => ocorrencias_dow($inicio, $fim)]);
 }
 
 // --- Marcos de relacionamento: 3/6/12 meses da 1ª conexão nos PRÓXIMOS N dias
@@ -318,7 +368,10 @@ if ($tipo === 'aniversario') {
                 if ($r['p'] === null) { continue; }
                 $p = substr((string) $r['p'], 0, 10);
                 foreach ([3, 6, 12] as $m) {
-                    $marco = date('Y-m-d', strtotime($p . " +$m month"));
+                    // marco_mes, e nao strtotime("+N month"): o PHP transborda
+                    // quando o dia nao existe no mes de destino (31/08 +3m
+                    // virava 01/12 em vez de 30/11) — ver inc/util.php.
+                    $marco = marco_mes($p, $m);
                     if ($marco >= $inicio && $marco <= $fim) {
                         $itens[] = [
                             'telefone' => (string) $r['telefone'],
@@ -373,14 +426,12 @@ if ($tipo === 'intervalo') {
                 if (count($dias) < 2) {
                     // Sem retorno: veio 1 dia só e nunca voltou.
                     $faixas[6]++;
-                    if (count($clientes[6]) < 200) {
-                        $clientes[6][] = [
-                            'telefone' => $le['telefone'],
-                            'nome'     => $le['nome'],
-                            'media'    => null,
-                            'data'     => date('Y-m-d', $dias[0]),
-                        ];
-                    }
+                    $clientes[6][] = [
+                        'telefone' => $le['telefone'],
+                        'nome'     => $le['nome'],
+                        'media'    => null,
+                        'data'     => date('Y-m-d', $dias[0]),
+                    ];
                     continue;
                 }
                 $soma = 0;
@@ -396,14 +447,15 @@ if ($tipo === 'intervalo') {
                 elseif ($media <= 30) { $fx = 4; }
                 else                  { $fx = 5; }
                 $faixas[$fx]++;
-                if (count($clientes[$fx]) < 200) {
-                    $clientes[$fx][] = [
-                        'telefone' => $le['telefone'],
-                        'nome'     => $le['nome'],
-                        'media'    => round($media, 1),
-                    ];
-                }
+                $clientes[$fx][] = [
+                    'telefone' => $le['telefone'],
+                    'nome'     => $le['nome'],
+                    'media'    => round($media, 1),
+                ];
             }
+            // Ordena PRIMEIRO, corta depois. Ao contrário — como era — os 200
+            // guardados eram os de menor lead_id (os mais antigos cadastrados),
+            // uma amostra arbitrária que a ordenação só arrumava entre si.
             foreach ($clientes as $fx => &$cf) {
                 if ($fx === 6) {
                     // Sem retorno: visita única mais recente primeiro.
@@ -411,6 +463,7 @@ if ($tipo === 'intervalo') {
                 } else {
                     usort($cf, function ($a, $b) { return $a['media'] <=> $b['media']; });
                 }
+                $cf = array_slice($cf, 0, 200);
             }
             unset($cf);
         } catch (Throwable $e) {
@@ -452,11 +505,19 @@ if ($lista) {
 }
 
 // buckets: semana = chaves 1..7 (1=domingo, padrão do MySQL); hora = 0..23.
-echo json_encode([
+//
+// ocorrencias só no relatório por dia da semana: cada hora do dia acontece uma
+// vez por dia em qualquer período, então "hora" não tem viés a corrigir — já os
+// dias da semana só se repetem por igual quando o período é múltiplo de 7.
+$saida = [
     'ok'      => true,
     'tipo'    => $tipo,
     'inicio'  => $inicio,
     'fim'     => $fim,
     'total'   => $total,
     'buckets' => $buckets,
-]);
+];
+if ($tipo === 'semana') {
+    $saida['ocorrencias'] = ocorrencias_dow($inicio, $fim);
+}
+echo json_encode($saida);
