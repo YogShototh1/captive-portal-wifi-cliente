@@ -1290,28 +1290,55 @@ html[data-tema="claro"] .painel-cliente input[type="date"].rel-data::-webkit-cal
 .est-filtro:hover, .est-serie:hover { border-color: #22d3ee; color: #fff; }
 .est-filtro.atual, .est-serie.atual { background: #0891b2; border-color: #0891b2; color: #fff; }
 
-/* O grafico ganha painel proprio, escuro nos dois temas: vela verde/vermelha
-   so tem contraste sobre fundo escuro. */
+/* O grafico ganha painel proprio, escuro nos dois temas: o traco em degrade e
+   o brilho atras dele so tem contraste sobre fundo escuro. */
 .est-wrap {
-    position: relative; margin-top: 14px; padding: 6px 4px 0;
-    background: #0b0f16; border: 1px solid rgba(255,255,255,.08); border-radius: 4px;
+    position: relative; margin-top: 14px; padding: 10px 8px 2px; overflow: hidden;
+    background:
+        radial-gradient(120% 90% at 15% 0%, rgba(249,115,22,0.13) 0%, rgba(249,115,22,0) 55%),
+        radial-gradient(110% 90% at 95% 10%, rgba(236,72,153,0.15) 0%, rgba(236,72,153,0) 55%),
+        linear-gradient(160deg, #241c46 0%, #1a1533 55%, #131024 100%);
+    border: 1px solid rgba(255,255,255,.08); border-radius: 14px;
 }
 .est-svg { display: block; width: 100%; height: auto; }
-.est-grid { stroke: rgba(255, 255, 255, 0.06); stroke-width: 1; shape-rendering: crispEdges; }
-.est-base { stroke: rgba(255, 255, 255, 0.14); }
+.est-grid { stroke: rgba(255, 255, 255, 0.07); stroke-width: 1; shape-rendering: crispEdges; }
+.est-base { stroke: rgba(255, 255, 255, 0.16); }
+.est-grid-v { stroke: rgba(255, 255, 255, 0.045); stroke-width: 1; shape-rendering: crispEdges; }
 .est-txt { fill: rgba(255, 255, 255, 0.45); font-size: 9.5px; font-family: inherit; }
-.est-txt-x { fill: rgba(255, 255, 255, 0.38); }
+.est-txt-x { fill: rgba(255, 255, 255, 0.42); }
 
-/* Velas: corpo entre abertura e fechamento, pavio da minima a maxima.
-   Tom mais fechado que o verde/vermelho puro — em tela escura o berrante cansa. */
-.est-corpo.est-alta  { fill: #26a69a; }
-.est-corpo.est-baixa { fill: #ef5350; }
-.est-pavio { stroke-width: 1; shape-rendering: crispEdges; }
-.est-pavio.est-alta  { stroke: #26a69a; }
-.est-pavio.est-baixa { stroke: #ef5350; }
+/* Paradas dos gradientes do SVG (stop-color é propriedade CSS, então o tema
+   manda no degradê sem o JS precisar saber de cor nenhuma). */
+.est-c1 { stop-color: #fbbf24; }
+.est-c2 { stop-color: #f97316; }
+.est-c3 { stop-color: #ec4899; }
+.est-a1 { stop-color: #f97316; stop-opacity: .28; }
+.est-a2 { stop-color: #f97316; stop-opacity: 0; }
 
-.est-cursor { stroke: rgba(255, 255, 255, 0.35); stroke-width: 1; stroke-dasharray: 3 3; }
+/* Barras do total ao fundo: textura do movimento, sem disputar com a linha. */
+.est-barras rect { fill: rgba(255, 255, 255, 0.07); }
+
+.est-area  { fill: url(#est-g-area); }
+.est-linha {
+    fill: none; stroke: url(#est-g-traco); stroke-width: 2.6;
+    stroke-linecap: round; stroke-linejoin: round;
+}
+/* O mesmo caminho, borrado e por baixo: é daqui que vem o brilho da curva. */
+.est-linha-brilho {
+    fill: none; stroke: url(#est-g-traco); stroke-width: 5;
+    stroke-linecap: round; stroke-linejoin: round; opacity: .5;
+}
+
+.est-ponto-halo { fill: #ec4899; opacity: .25; }
+.est-ponto      { fill: #fff; stroke: #ec4899; stroke-width: 2; }
+.est-valor {
+    fill: #fff; font-size: 15px; font-weight: 700; font-family: inherit;
+    paint-order: stroke; stroke: rgba(19,16,36,.75); stroke-width: 3px;
+}
+
+.est-cursor { stroke: rgba(255, 255, 255, 0.3); stroke-width: 1; stroke-dasharray: 3 3; }
 .est-realce { fill: rgba(255, 255, 255, 0.05); }
+.est-marca  { fill: #fff; stroke: #f97316; stroke-width: 2; }
 
 .est-tooltip {
     position: absolute; display: none; pointer-events: none; z-index: 5;

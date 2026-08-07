@@ -105,7 +105,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Leads</title>
     <link rel="icon" href="assets/logo-icone.png?v=1" type="image/png">
-    <link rel="stylesheet" href="assets/style.css?v=110">
+    <link rel="stylesheet" href="assets/style.css?v=111">
 </head>
 <body class="painel-cliente">
     <div class="pc-bg-gradient"></div>
@@ -625,7 +625,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                     <div class="glow-body">
                         <div class="pc-dst" id="estatisticas-box" data-endpoint="api/estatisticas.php?roteador=<?= urlencode((string) $rotAtivo) ?>">
                             <h2 class="pc-anuncio-title">Estatísticas</h2>
-                            <p class="pc-anuncio-desc">Movimento do Wi-Fi em velas: cada uma abre, sobe, cai e fecha conforme as conexões dentro do período. Verde fechou acima da abertura, vermelho abaixo. Passe o mouse para ver os números da vela.</p>
+                            <p class="pc-anuncio-desc">Movimento do Wi-Fi ao longo do período: a curva acompanha a intensidade das conexões e as barras ao fundo mostram o total de cada ponto. Passe o mouse para ver os números.</p>
                             <div class="est-barra">
                                 <div class="est-filtros">
                                     <button type="button" class="est-filtro atual" data-filtro="hoje">Hoje</button>
@@ -702,7 +702,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <script src="assets/alertas.js?v=3"></script>
     <script src="assets/dashboard.js?v=10"></script>
     <script src="assets/dashgeral.js?v=14"></script>
-    <script src="assets/estatisticas.js?v=6"></script>
+    <script src="assets/estatisticas.js?v=7"></script>
     <script src="assets/leads-live.js?v=27"></script>
     <?php require __DIR__ . '/inc/tema.php'; ?>
 </body>
