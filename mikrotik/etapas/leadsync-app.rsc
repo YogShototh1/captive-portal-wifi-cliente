@@ -276,3 +276,48 @@
         http-data=("token=$token&roteador=$ident&map=$amap&conns=$aconns") output=none
   } on-error={}
 }
+
+# ============================================================
+#  Teste de velocidade da internet da LOJA (sob demanda)
+#  O comprador pede pelo painel; aqui so se pergunta "tem teste?" a cada
+#  rodada — uma resposta de 1 byte, barata.
+#
+#  Quem cronometra o download e o SERVIDOR, nao este script: ele mede quanto
+#  tempo levou para empurrar os bytes ate aqui. Assim nao dependemos do relogio
+#  do RouterOS, e nada e gravado na flash (output=none descarta os dados) — a
+#  flash do hEX Gr3 tem 16 MB e vive cheia.
+#
+#  O ping e a unica parte que o servidor nao consegue medir de la; esse vai
+#  daqui, depois do download.
+# ============================================================
+:do {
+  :local pedido "0"
+  :do {
+    :local pr [/tool fetch url=("https://captivedata.com.br/api/speed_rt.php?token=$token&roteador=$ident&f=req") \
+        check-certificate=no output=user as-value]
+    :set pedido ($pr->"data")
+  } on-error={ :set pedido "0" }
+
+  :if ([:len $pedido] > 0 && $pedido != "0") do={
+    # Download: output=none = nao guarda nada, so puxa. Quem cronometra e o
+    # servidor, entao aqui nao se calcula velocidade nenhuma.
+    :local erro ""
+    :do {
+      /tool fetch url=("https://captivedata.com.br/api/speed_rt.php?token=$token&roteador=$ident&f=down&mb=$pedido") \
+          check-certificate=no output=none
+    } on-error={ :set erro "download" }
+
+    # Ping ate um destino externo: mede a latencia da internet da loja, nao a
+    # do caminho ate o painel.
+    :local rtt ""
+    :do {
+      :local pg [/ping 8.8.8.8 count=3 as-value]
+      :set rtt ($pg->"avg-rtt")
+    } on-error={ :set rtt "" }
+
+    :do {
+      /tool fetch url=("https://captivedata.com.br/api/speed_rt.php?token=$token&roteador=$ident&f=res&ping=$rtt&erro=$erro") \
+          check-certificate=no output=none
+    } on-error={}
+  }
+} on-error={}

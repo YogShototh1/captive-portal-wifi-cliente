@@ -108,7 +108,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Leads — <?= h($cliente['nome'] ?: $cliente['email']) ?></title>
     <link rel="icon" href="assets/logo-icone.png?v=1" type="image/png">
-    <link rel="stylesheet" href="assets/style.css?v=118">
+    <link rel="stylesheet" href="assets/style.css?v=119">
 </head>
 <body class="painel-cliente">
     <!-- Camadas de fundo (decorativas) -->
@@ -676,7 +676,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
             </section>
 
             <!-- ============ ABA: TESTE DE VELOCIDADE ============ -->
-            <?php require __DIR__ . '/inc/speedtest_tela.php'; ?>
+            <?php $spClienteId = (int) $id; require __DIR__ . '/inc/speedtest_tela.php'; ?>
 
             <!-- ============ ABA: LOG DE ACESSOS (só admin) ============ -->
             <section class="pc-tela" data-tela="log">
@@ -768,7 +768,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <script src="assets/dashgeral.js?v=14"></script>
     <script src="assets/acessolog.js?v=3"></script>
     <script src="assets/estatisticas.js?v=8"></script>
-    <script src="assets/speedtest.js?v=1"></script>
+    <script src="assets/speedtest.js?v=2"></script>
     <script src="assets/leads-live.js?v=30"></script>
     <?php require __DIR__ . '/inc/tema.php'; ?>
 </body>

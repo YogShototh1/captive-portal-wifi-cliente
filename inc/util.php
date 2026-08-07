@@ -281,6 +281,93 @@ function estilo_set(string $roteador, array $marcadas): void
     @file_put_contents($dir . '/estilo_' . sha1(trim($roteador)) . '.json', json_encode($out));
 }
 
+// --- Teste de velocidade DO ROTEADOR ---
+//
+// O comprador pede pelo painel, o MikroTik executa na rodada seguinte do
+// leadsync e o resultado volta para cá. Serve para responder "a internet da
+// loja está boa?" sem ninguém ir até lá.
+//
+// Guardado em ads/, como o resto do estado: um arquivo com o pedido em aberto
+// e outro com as últimas medições.
+const SPEED_HIST_MAX = 20;
+
+function speed_pedido_file(string $roteador): string { return anuncio_base($roteador) . '.speedreq'; }
+function speed_hist_file(string $roteador): string   { return anuncio_base($roteador) . '.speed.json'; }
+
+// Pede um teste. $mb é o tamanho do download; o teto existe para um clique
+// não torrar a franquia da loja.
+function speed_pedir(string $roteador, int $mb = 6): bool
+{
+    $dir = ads_dir();
+    if (!is_dir($dir)) { @mkdir($dir, 0755, true); }
+    return @file_put_contents(speed_pedido_file($roteador), (string) max(1, min(24, $mb))) !== false;
+}
+
+// Há teste pedido? Devolve os MB e CONSOME o pedido (ver o porquê no
+// api/speed_rt.php). Pedido velho é ignorado: se o roteador estava fora e
+// voltou horas depois, ninguém está mais olhando o resultado.
+function speed_pedido_ler(string $roteador): int
+{
+    $f = speed_pedido_file($roteador);
+    if (!is_file($f)) { return 0; }
+    $mb = (int) trim((string) @file_get_contents($f));
+    $velho = (time() - (int) @filemtime($f)) > 600;   // 10 min
+    @unlink($f);
+    return $velho ? 0 : max(1, min(24, $mb));
+}
+
+// Um teste está em andamento (pedido feito e ainda não consumido)?
+function speed_pendente(string $roteador): bool
+{
+    $f = speed_pedido_file($roteador);
+    return is_file($f) && (time() - (int) @filemtime($f)) <= 600;
+}
+
+function speed_hist(string $roteador): array
+{
+    $j = json_decode((string) @file_get_contents(speed_hist_file($roteador)), true);
+    return is_array($j) ? $j : [];
+}
+
+// Grava os pedaços conforme chegam: o download vem do próprio servidor, o ping
+// vem depois, do roteador. Os dois entram na MESMA medição enquanto ela for
+// recente — senão o ping de um teste cairia no resultado do anterior.
+function speed_gravar(string $roteador, array $dados): void
+{
+    $h = speed_hist($roteador);
+    try { $agora = db_now(); } catch (Throwable $e) { $agora = date('Y-m-d H:i:s'); }
+
+    $recente = $h && (time() - strtotime((string) ($h[0]['em'] ?? '')) ) < 120;
+    if ($recente) {
+        $h[0] = array_merge($h[0], $dados, ['em' => $agora]);
+    } else {
+        array_unshift($h, array_merge(['down' => null, 'ping' => null], $dados, ['em' => $agora]));
+    }
+
+    $dir = ads_dir();
+    if (!is_dir($dir)) { @mkdir($dir, 0755, true); }
+    @file_put_contents(speed_hist_file($roteador),
+        json_encode(array_slice($h, 0, SPEED_HIST_MAX), JSON_UNESCAPED_UNICODE), LOCK_EX);
+}
+
+// O avg-rtt do RouterOS não vem em milissegundos puros: pode ser "12ms300us",
+// "1s200ms" ou já um número. Converte tudo para ms, ou null se não der.
+function speed_rtt_ms(string $v): ?float
+{
+    $v = strtolower(trim($v));
+    if ($v === '') { return null; }
+    if (is_numeric($v)) { return round((float) $v, 1); }
+
+    $ms = 0.0;
+    $achou = false;
+    // Ordem importa: "ms" antes de "s", senão o "s" de "ms" casaria sozinho.
+    foreach ([['/(\d+(?:\.\d+)?)\s*us/', 0.001], ['/(\d+(?:\.\d+)?)\s*ms/', 1],
+              ['/(?<![m u])(\d+(?:\.\d+)?)\s*s(?![a-z])/', 1000]] as [$re, $mult]) {
+        if (preg_match($re, $v, $m)) { $ms += ((float) $m[1]) * $mult; $achou = true; }
+    }
+    return $achou ? round($ms, 1) : null;
+}
+
 // --- Imagem enxuta para o roteador guardar na flash ---
 //
 // O hEX Gr3 tem 16 MB de flash NO TOTAL, e o RouterOS 7 já come quase tudo. Um
