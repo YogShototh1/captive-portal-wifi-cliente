@@ -449,6 +449,13 @@
             render();
 
             pop.addEventListener('click', function (e) {
+                // Clique DENTRO do calendário nunca pode chegar ao listener de
+                // "clique fora" lá embaixo. Sem isto, trocar de mês fechava o
+                // calendário: o render() refaz o innerHTML e destrói o botão
+                // clicado, então, quando o evento borbulhava até o document, o
+                // teste `calAberto.contains(e.target)` olhava um elemento que
+                // já não estava no DOM, dava false, e o popup se fechava.
+                e.stopPropagation();
                 var nav = e.target.closest ? e.target.closest('.cal-nav') : null;
                 if (nav) {
                     mes += parseInt(nav.getAttribute('data-d'), 10);
