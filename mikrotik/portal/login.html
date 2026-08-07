@@ -113,8 +113,11 @@
 
     <!-- Página intermediária de anúncio (exibida após o clique em "Liberar WiFi" e antes da autenticação do MikroTik) -->
     <div class="ad-page" id="ad-page" aria-hidden="true">
-        <!-- Banner/imagem ocupando a tela inteira. Aceita anuncio.jpg, anuncio.jpeg ou anuncio.png
-             (o arquivo deve ficar na mesma pasta do login.html no roteador). -->
+        <!-- Banner/imagem ocupando a tela inteira. Vem de ad.img, que o leadsync
+             mantém na flash a partir do que o comprador enviou no painel (e já
+             reduzido para caber na flash de 16 MB do roteador). Se o arquivo
+             local faltar, cai no ad.php do painel; faltando os dois, fica o
+             "Seu anúncio aqui". -->
         <div class="ad-banner" id="ad-banner">
             <img id="ad-banner-img" class="ad-banner-img" alt="Anúncio" style="display:none">
             <span class="ad-banner-placeholder" id="ad-banner-placeholder">Seu anúncio aqui</span>

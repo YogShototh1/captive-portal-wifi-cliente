@@ -100,8 +100,25 @@ if ($f === 'ig') {
     exit;
 }
 
-// Imagens: entregues como estão, com o content-type real do arquivo.
-$alvo = $f === 'logo' ? $logo : ($f === 'ad' ? $anun : null);
+// Imagens: entregues REDUZIDAS, não como o comprador enviou.
+//
+// O que vai para cá é gravado na flash do roteador, e o hEX Gr3 tem 16 MB no
+// total — um anúncio de 2,5 MB (foto de celular, tamanho normal) come 15% do
+// disco do equipamento sozinho. Como a imagem aparece na tela de um telefone,
+// 1080px de largura já é mais do que se enxerga; a logo, menor ainda.
+// A conversão é feita uma vez e guardada (ver imagem_flash em inc/util.php).
+//
+// Isso NÃO muda o que o painel mostra: quem serve a prévia e a tela do
+// comprador é o ad.php/logo.php, que continuam entregando o original.
+$alvo = null;
+if ($f === 'logo' && $logo !== null) {
+    // A logo pode ter fundo transparente e aparece sobre o cartão — mantém PNG.
+    $alvo = imagem_flash($logo, 320, true);
+} elseif ($f === 'ad' && $anun !== null) {
+    // O anúncio ocupa a tela inteira: alpha não serve, e forçar JPEG é o que
+    // tira um PNG fotográfico de 2,5 MB da flash.
+    $alvo = imagem_flash($anun, 1080, false);
+}
 if ($alvo === null || !is_file($alvo)) {
     http_response_code(404);
     exit('');

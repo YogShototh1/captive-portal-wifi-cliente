@@ -281,6 +281,75 @@ function estilo_set(string $roteador, array $marcadas): void
     @file_put_contents($dir . '/estilo_' . sha1(trim($roteador)) . '.json', json_encode($out));
 }
 
+// --- Imagem enxuta para o roteador guardar na flash ---
+//
+// O hEX Gr3 tem 16 MB de flash NO TOTAL, e o RouterOS 7 já come quase tudo. Um
+// anúncio de 2,5 MB — tamanho normal para uma foto de celular — sozinho ocupa
+// 15% do disco do equipamento. E não adianta: a imagem é exibida na tela de um
+// telefone, onde 1080px de largura já é mais do que se enxerga.
+//
+// Reduz uma vez e guarda ao lado do original (<base>.flash.<ext>), refazendo só
+// quando o original muda. Devolve o caminho do arquivo pronto — ou o próprio
+// original, se não der para converter (sem GD, formato estranho, imagem que já
+// é pequena). Nunca falha de um jeito que impeça a entrega.
+// $comAlpha: só a LOGO precisa de fundo transparente. O anúncio ocupa a tela
+// inteira, então alpha ali não serve para nada — e manter um PNG fotográfico
+// como PNG é o que fazia um anúncio de 1024x1536 pesar 2,5 MB. Em JPEG a mesma
+// imagem cai para pouco mais de 100 KB.
+function imagem_flash(string $origem, int $maxLado, bool $comAlpha = false, int $qualidade = 82): string
+{
+    if (!is_file($origem) || !function_exists('imagecreatefromstring')) {
+        return $origem;
+    }
+    $tam = @getimagesize($origem);
+    if ($tam === false) {
+        return $origem;
+    }
+    $temAlpha = $comAlpha && ($tam[2] === IMAGETYPE_PNG);
+    $destino  = preg_replace('/\.[^.]+$/', '', $origem) . '.flash.' . ($temAlpha ? 'png' : 'jpg');
+
+    // Já convertida e ainda válida? Devolve o cache.
+    if (is_file($destino) && @filemtime($destino) >= @filemtime($origem)) {
+        return $destino;
+    }
+    // Já é pequena o bastante e não vale mexer.
+    if ($tam[0] <= $maxLado && @filesize($origem) <= 120 * 1024) {
+        return $origem;
+    }
+
+    $img = @imagecreatefromstring((string) @file_get_contents($origem));
+    if ($img === false) {
+        return $origem;
+    }
+    $l = imagesx($img);
+    $a = imagesy($img);
+    $escala = min(1, $maxLado / max($l, $a));
+    $nl = max(1, (int) round($l * $escala));
+    $na = max(1, (int) round($a * $escala));
+
+    $novo = imagecreatetruecolor($nl, $na);
+    if ($temAlpha) {
+        imagealphablending($novo, false);
+        imagesavealpha($novo, true);
+    } else {
+        // PNG achatado em JPEG: o que era transparente viraria preto, então
+        // pinta o fundo de branco antes de copiar.
+        imagefilledrectangle($novo, 0, 0, $nl, $na, imagecolorallocate($novo, 255, 255, 255));
+    }
+    imagecopyresampled($novo, $img, 0, 0, 0, 0, $nl, $na, $l, $a);
+
+    $ok = $temAlpha ? @imagepng($novo, $destino, 8) : @imagejpeg($novo, $destino, $qualidade);
+    imagedestroy($img);
+    imagedestroy($novo);
+
+    if (!$ok || !is_file($destino)) {
+        return $origem;
+    }
+    @chmod($destino, 0644);
+    // Converteu e ficou MAIOR? Acontece com imagem já otimizada — fica o original.
+    return @filesize($destino) < @filesize($origem) ? $destino : $origem;
+}
+
 // --- Página-ponte do Instagram, personalizada por roteador ---
 //
 // Por que a ponte existe: destino direto no instagram.com NÃO funciona no CNA
