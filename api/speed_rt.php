@@ -2,23 +2,23 @@
 // Teste de velocidade DO ROTEADOR: mede a internet que chega no MikroTik do
 // cliente, sem ninguém ir até a loja.
 //
-// Quem mede é o SERVIDOR, não o RouterOS. O roteador só pede o download; este
-// arquivo cronometra quanto tempo levou para empurrar os bytes até ele e faz a
-// conta. Três motivos:
-//   - não depende do relógio do RouterOS nem de ele saber reportar a duração;
-//   - não grava nada na flash do roteador (a do hEX Gr3 tem 16 MB e vive cheia);
-//   - o resultado chega ao painel mesmo se o roteador cair no meio do teste.
+// Este arquivo NÃO serve o download nem cronometra nada. Quem faz as duas
+// coisas é o próprio MikroTik, baixando de speed.cloudflare.com — um endpoint
+// público de teste de velocidade, servido pelo PoP mais próximo. Duas tentativas
+// anteriores mostraram por que não pode ser daqui:
+//   - servindo da hospedagem, o teto medido era o da banda de saída dela, que é
+//     compartilhada, e não o do link da loja;
+//   - cronometrando deste lado, o Cloudflare que está na frente da hospedagem
+//     engolia a resposta inteira depressa e o tempo medido virava o do trecho
+//     até ele.
 //
-// O ping é a única parte que o servidor não consegue medir sozinho: esse o
-// roteador manda depois, junto com o "acabou".
+// Aqui só se guarda o pedido, se recebe o resultado e se faz a conta.
 //
 //   ?f=req    o roteador pergunta se há teste pedido (e o pedido é consumido)
-//   ?f=down   o roteador baixa; aqui se mede o tempo e se grava o resultado
-//   ?f=res    o roteador reporta o ping e o que o RouterOS achou da duração
+//   ?f=res    o roteador reporta bytes, duração, custo de setup e ping
 //
 // Auth: token = admin_token (igual ao status.php/tema.php).
 ini_set('display_errors', '0');
-set_time_limit(120);
 
 require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../inc/util.php';
@@ -37,11 +37,7 @@ if ($roteador === '') {
 
 mikrotik_tocar($roteador);
 header('X-Content-Type-Options: nosniff');
-// no-transform: o Cloudflare está na frente e, sem isto, ele comprime a
-// resposta e troca o Content-Length por Transfer-Encoding: chunked. Os dois
-// atrapalham — o /tool fetch do RouterOS abortava o download, e o gzip sobre
-// bytes aleatórios ainda INFLA o corpo (mediria compressão, não banda).
-header('Cache-Control: no-store, no-transform');
+header('Cache-Control: no-store');
 
 $f = (string) ($_REQUEST['f'] ?? '');
 
@@ -55,58 +51,32 @@ if ($f === 'req') {
     exit($mb > 0 ? (string) $mb : '0');
 }
 
-// --- O download cronometrado --------------------------------------------
-if ($f === 'down') {
-    $mb = max(1, min(24, (int) ($_REQUEST['mb'] ?? 6)));
-
-    header('Content-Type: application/octet-stream');
-    header('Content-Length: ' . ($mb * 1024 * 1024));
-    // Nada de Content-Encoding aqui: declarar "identity" fazia o Cloudflare
-    // acrescentar um segundo cabeçalho ("gzip") e a resposta chegava com dois,
-    // que é inválido. Quem resolve isso é o no-transform, lá em cima.
-
-    // Bytes aleatórios: com zeros, qualquer compressão no caminho inflaria o
-    // número — mediria compressão, não banda.
-    $bloco = random_bytes(65536);
-    while (@ob_get_level() > 0) { @ob_end_clean(); }
-
-    // O cronômetro começa DEPOIS do primeiro bloco: o primeiro carrega o
-    // aperto de mão TLS e o tempo de resposta, que não são velocidade.
-    echo $bloco;
-    flush();
-    $t0 = microtime(true);
-    $enviados = 0;
-    $vezes = $mb * 16 - 1;                       // 16 blocos de 64 KB = 1 MB
-    for ($i = 0; $i < $vezes; $i++) {
-        echo $bloco;
-        $enviados += 65536;
-        if ($i % 8 === 0) { flush(); }
-        if (connection_aborted()) { break; }     // o roteador desistiu
-    }
-    flush();
-    // NÃO se calcula velocidade aqui. Há um Cloudflare na frente da hospedagem:
-    // ele engole a resposta inteira depressa e só então a repassa ao roteador,
-    // então o que se cronometra deste lado é o trecho servidor->Cloudflare, e
-    // não o que chega na loja. Quem mede é o RouterOS, que reporta no f=res.
-    // O tempo daqui fica só como registro, para comparar se um dia divergir.
-    speed_gravar($roteador, ['mb' => $mb, 'srv' => round(microtime(true) - $t0, 3)]);
-    exit;
-}
-
 // --- O roteador conta o resto --------------------------------------------
 if ($f === 'res') {
     header('Content-Type: text/plain; charset=utf-8');
     $extra = [];
 
     // A VELOCIDADE vem daqui: o /tool fetch devolve quantos bytes baixou e em
-    // quanto tempo, medidos no próprio roteador. É o único número que reflete o
-    // que chega na loja — ver o comentário do f=down sobre o Cloudflare.
+    // quanto tempo, medidos no próprio roteador contra o speed.cloudflare.com.
+    // É o único número que reflete o que chega na loja (ver o cabeçalho).
     $bytes = (float) ($_REQUEST['bytes'] ?? 0);
     $dur   = speed_dur_seg((string) ($_REQUEST['dur'] ?? ''));
+    // Custo de abrir a conexão (DNS + TCP + TLS), medido pelo roteador com um
+    // download de tamanho zero. Descontar isso é o que faz um link rápido
+    // aparecer como rápido: sem o desconto, o setup domina o tempo total e o
+    // resultado empaca perto de 16 Mbps, seja qual for o link.
+    $over  = speed_dur_seg((string) ($_REQUEST['over'] ?? ''));
     if ($bytes > 0 && $dur !== null && $dur > 0) {
-        $extra['down']  = round($bytes * 8 / $dur / 1e6, 2);
+        $liq = $dur;
+        // Só desconta se sobrar tempo de verdade: overhead maior que o download
+        // significa medição estranha, e aí o número cheio é menos errado.
+        if ($over !== null && $over > 0 && $over < $dur * 0.8) {
+            $liq = $dur - $over;
+        }
+        $extra['down']  = round($bytes * 8 / $liq / 1e6, 2);
         $extra['bytes'] = (int) $bytes;
-        $extra['seg']   = $dur;
+        $extra['seg']   = round($liq, 3);
+        if ($over !== null) { $extra['setup'] = round($over, 3); }
     }
 
     // avg-rtt do RouterOS: vem como "12ms300us", "1s200ms" ou já um número.

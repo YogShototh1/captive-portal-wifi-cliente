@@ -296,7 +296,10 @@ function speed_hist_file(string $roteador): string   { return anuncio_base($rote
 
 // Pede um teste. $mb é o tamanho do download; o teto existe para um clique
 // não torrar a franquia da loja.
-function speed_pedir(string $roteador, int $mb = 6): bool
+//
+// 10 MB é o padrão: com 6 MB, um link de 100 Mbps termina o download em meio
+// segundo e o custo de abrir a conexão passa a pesar mais que o download em si.
+function speed_pedir(string $roteador, int $mb = 10): bool
 {
     $dir = ads_dir();
     if (!is_dir($dir)) { @mkdir($dir, 0755, true); }

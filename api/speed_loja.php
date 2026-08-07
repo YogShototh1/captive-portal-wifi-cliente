@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!mikrotik_online($roteador)) {
         exit(json_encode(['ok' => false, 'erro' => 'O MikroTik está fora do ar. O teste roda quando ele voltar.']));
     }
-    speed_pedir($roteador, 6);
+    speed_pedir($roteador, 10);
 }
 
 echo json_encode([

@@ -154,11 +154,15 @@
                         if (!d.ok) return;
                         var m = (d.medicoes && d.medicoes[0]) || null;
                         var marca = m ? m.em : null;
-                        // Chegou medição nova (carimbo diferente do de antes)?
-                        if (marca && marca !== marcaAnterior) {
+                        // Só para quando o resultado ESTÁ FECHADO: com número ou
+                        // com erro. O carimbo sozinho não serve — o teste grava
+                        // em duas etapas, e parar na primeira mostrava "sem
+                        // resultado" no primeiro clique de cada sessão, com o
+                        // número certo aparecendo só na tentativa seguinte.
+                        if (marca && marca !== marcaAnterior && (m.down != null || m.erro)) {
                             parar();
                             mostrar(d);
-                            fase(m.erro ? 'O roteador não conseguiu completar o teste.' : 'Pronto');
+                            fase(m.down != null ? 'Pronto' : 'O roteador não conseguiu completar o teste.');
                             return;
                         }
                         if (!d.pendente && tentativas > 3) {

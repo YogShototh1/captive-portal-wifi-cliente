@@ -301,23 +301,38 @@
   } on-error={ :set pedido "0" }
 
   :if ([:len $pedido] > 0 && $pedido != "0") do={
-    # O tempo e cronometrado AQUI, com :timestamp. O as-value do fetch devolvia
-    # "downloaded" e "duration" vazios quando output=none — o ping chegava ao
-    # painel e a velocidade nao, entao o resultado saia sempre "sem resultado".
-    # Marcar o relogio antes e depois nao depende do que o fetch resolve
-    # devolver, e o numero de bytes ja se sabe: e o tamanho que foi pedido.
+    # O download NAO vem do nosso servidor. Duas razoes:
+    #   - a hospedagem e compartilhada e limita a banda de saida, entao o teto
+    #     medido seria o dela, nao o do link da loja;
+    #   - o Cloudflare na frente dela bufferiza, o que ja tinha estragado a
+    #     medicao feita do lado do servidor.
+    # speed.cloudflare.com/__down e um endpoint publico de teste de velocidade,
+    # servido pelo PoP mais proximo (no Brasil), sem compressao e com tamanho
+    # exato. E o que chega perto de "quanto a internet da loja aguenta".
+    :local bytesAlvo ($pedido * 1000000)
     :local erro ""
+
+    # Custo de abrir a conexao (DNS + TCP + TLS), medido com um download de
+    # tamanho zero. Sem descontar isto, um link rapido media errado: 6 MB a 100
+    # Mbps levam 0,5 s, e so o setup ja custa ~0,3 s — o resultado empacava
+    # perto de 16 Mbps por construcao, que foi o que apareceu no painel.
+    :local o0 [:timestamp]
+    :do {
+      /tool fetch url="https://speed.cloudflare.com/__down?bytes=0" check-certificate=no output=none
+    } on-error={}
+    :local over ([:timestamp] - $o0)
+
     :local t0 [:timestamp]
     :do {
-      /tool fetch url=("https://captivedata.com.br/api/speed_rt.php?token=$token&roteador=$ident&f=down&mb=$pedido") \
+      /tool fetch url=("https://speed.cloudflare.com/__down?bytes=$bytesAlvo") \
           check-certificate=no output=none
     } on-error={ :set erro "download" }
     :local dur ([:timestamp] - $t0)
 
-    # Baixou inteiro? Entao sao os MB pedidos. Se deu erro no meio, nao ha
+    # Baixou inteiro? Entao sao os bytes pedidos. Se deu erro no meio, nao ha
     # tamanho confiavel e o painel mostra a falha em vez de um numero inventado.
     :local bytes 0
-    :if ($erro = "") do={ :set bytes ($pedido * 1048576) }
+    :if ($erro = "") do={ :set bytes $bytesAlvo }
 
     # Ping ate um destino externo: mede a latencia da internet da loja, nao a
     # do caminho ate o painel.
@@ -328,7 +343,7 @@
     } on-error={ :set rtt "" }
 
     :do {
-      /tool fetch url=("https://captivedata.com.br/api/speed_rt.php?token=$token&roteador=$ident&f=res&bytes=$bytes&dur=$dur&ping=$rtt&erro=$erro") \
+      /tool fetch url=("https://captivedata.com.br/api/speed_rt.php?token=$token&roteador=$ident&f=res&bytes=$bytes&dur=$dur&over=$over&ping=$rtt&erro=$erro") \
           check-certificate=no output=none
     } on-error={}
   }
