@@ -421,6 +421,7 @@
     :local bytes 0
     :local dur "0"
     :local cpu 0
+    :local cpu1 0
 
     :do {
       # :execute solta cada fetch em segundo plano e devolve o job. So existe no
@@ -440,8 +441,14 @@
       # que o numero medido e o teste chegou ao teto dele. E o mesmo aviso que o
       # /tool speed-test da Mikrotik mostra quando a CPU bate 100%.
       #
-      # Com 4 fluxos a leitura agregada serve: um fluxo so pegaria 1 das 4
-      # threads e marcaria ~25% mesmo saturado.
+      # 11/08/2026: a agregada deu 50% com 4 fluxos. Nao responde sozinha — num
+      # MT7621 (2 nucleos x 2 threads) 50% do TOTAL pode ser 2 threads no talo e
+      # 2 paradas, que e saturacao no unico lugar que importa. Por isso o
+      # $cpu1 tambem: o pico do nucleo MAIS CARREGADO.
+      #   um nucleo em 100% -> gargalo de uma linha de execucao so (o /tool
+      #     fetch chegou ao teto e nao ha ajuste que resolva);
+      #   todos abaixo de ~60% -> nao e o aparelho, e o caminho ate a
+      #     Cloudflare, e vale trocar de origem.
       :local guarda 0
       :while ([:len [/system script job find]] > $base && $guarda < 600) do={
         :delay 100ms
@@ -449,6 +456,10 @@
         :do {
           :local c [/system resource get cpu-load]
           :if ($c > $cpu) do={ :set cpu $c }
+          :foreach nc in=[/system resource cpu find] do={
+            :local l [/system resource cpu get $nc load]
+            :if ($l > $cpu1) do={ :set cpu1 $l }
+          }
         } on-error={}
       }
       :set dur ([:timestamp] - $t0)
@@ -513,12 +524,14 @@
     # tamanho, o teste ainda reporta download e ping, e a tela so fica sem o
     # numero de upload.
     #
-    # 11/08/2026: com 2 MB (64 x 2^15) o upload voltou VAZIO — o bloco caiu no
-    # on-error e ninguem soube por que. Duas mudancas por causa disso:
-    #   - 1 MB (64 x 2^14). Se o limite for do http-data, metade pode passar;
-    #     a 30 Mbps 1 MB ainda leva 0,27 s, o suficiente para medir.
-    #   - $uerro separado, para a falha aparecer no painel em vez de sumir. Sem
-    #     isto nao da para distinguir "o fetch recusou" de "a string nao montou".
+    # 11/08/2026: 2 MB voltou vazio; 1 MB reportou "envio", ou seja a string
+    # MONTOU e quem recusou foi o /tool fetch. Falta saber onde e o corte — e
+    # se ha corte, ja que pode ser o proprio endpoint recusando o POST.
+    #
+    # Escada: monta 1 MB uma vez e vai tentando fatias cada vez menores com
+    # [:pick], parando na primeira que passar. O tamanho que vingou vai no
+    # relatorio. Se nem 8 KB passar, o problema nao e tamanho — e o endpoint, e
+    # a saida seria trocar de destino de upload.
     :local ubytes 0
     :local udur "0"
     :local uerro "montagem"
@@ -526,17 +539,24 @@
       :local pay "0123456789012345678901234567890123456789012345678901234567890123"
       :for i from=1 to=14 do={ :set pay ($pay . $pay) }
       :set uerro "envio"
-      :local u0 [:timestamp]
-      /tool fetch url="https://speed.cloudflare.com/__up" http-method=post \
-          check-certificate=no output=none \
-          http-header-field="Content-Type: text/plain" http-data=$pay
-      :set udur ([:timestamp] - $u0)
-      :set ubytes [:len $pay]
-      :set uerro ""
+      :foreach n in={1048576;262144;65536;8192} do={
+        :if ($ubytes = 0) do={
+          :do {
+            :local parte [:pick $pay 0 $n]
+            :local u0 [:timestamp]
+            /tool fetch url="https://speed.cloudflare.com/__up" http-method=post \
+                check-certificate=no output=none \
+                http-header-field="Content-Type: text/plain" http-data=$parte
+            :set udur ([:timestamp] - $u0)
+            :set ubytes $n
+            :set uerro ""
+          } on-error={}
+        }
+      }
     } on-error={ :set ubytes 0 }
 
     :do {
-      /tool fetch url=("https://captivedata.com.br/api/speed_rt.php?token=$token&roteador=$ident&f=res&bytes=$bytes&dur=$dur&over=$over&ping=$rtt&ubytes=$ubytes&udur=$udur&conex=$ns&cpu=$cpu&uerro=$uerro&erro=$erro") \
+      /tool fetch url=("https://captivedata.com.br/api/speed_rt.php?token=$token&roteador=$ident&f=res&bytes=$bytes&dur=$dur&over=$over&ping=$rtt&ubytes=$ubytes&udur=$udur&conex=$ns&cpu=$cpu&cpu1=$cpu1&uerro=$uerro&erro=$erro") \
           check-certificate=no output=none
     } on-error={}
   }

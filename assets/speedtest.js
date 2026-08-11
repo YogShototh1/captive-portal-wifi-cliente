@@ -106,8 +106,12 @@
         // Roteador no talo durante o download: o numero medido e o teto do
         // APARELHO, nao do link. Sem este aviso o comprador le 31 Mbps e acha
         // que o provedor esta entregando 31.
-        if (m.cpu != null && m.cpu >= 85) {
-            s += (s ? '<br>' : '') + '<em class="sp-teto">CPU do roteador em ' + (m.cpu | 0) +
+        // O que decide e o NUCLEO mais carregado, nao a media: num aparelho de
+        // 4 threads, um nucleo em 100% ja e o teto do teste, e a media mostra
+        // so 25-50% nessa hora.
+        var pico = (m.cpu1 != null) ? m.cpu1 : m.cpu;
+        if (pico != null && pico >= 85) {
+            s += (s ? '<br>' : '') + '<em class="sp-teto">Um núcleo do roteador ficou em ' + (pico | 0) +
                  '% durante o teste: o teto é do aparelho, o link é mais rápido que isto.</em>';
         }
         return s;
@@ -165,7 +169,10 @@
                     // Uma conexao so mede a janela TCP dividida pelo RTT, nao o
                     // link — vale registrar quantos fluxos deram aquele numero.
                     if (x.conex != null) { det.push(x.conex + (x.conex > 1 ? ' conexões' : ' conexão')); }
-                    if (x.cpu != null)   { det.push('CPU em ' + (x.cpu | 0) + '%'); }
+                    if (x.cpu != null) {
+                        det.push('CPU em ' + (x.cpu | 0) + '%' +
+                                 (x.cpu1 != null ? ' (núcleo ' + (x.cpu1 | 0) + '%)' : ''));
+                    }
                     if (x.uerro)         { det.push('upload falhou (' + x.uerro + ')'); }
                     if (x.bytes != null && x.seg != null) {
                         det.push('baixou ' + Math.round(x.bytes / 1e6) + ' MB em ' +

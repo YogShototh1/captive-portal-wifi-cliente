@@ -95,16 +95,27 @@ if ($f === 'res') {
         // mais rápido do que este número consegue mostrar.
         $cpu = (int) ($_REQUEST['cpu'] ?? -1);
         if ($cpu >= 0 && $cpu <= 100) { $extra['cpu'] = $cpu; }
+        // Pico do núcleo MAIS carregado. É este que decide: num MT7621 (2
+        // núcleos x 2 threads) a média pode marcar 50% com duas threads no
+        // talo — saturado no único lugar que importa.
+        $cpu1 = (int) ($_REQUEST['cpu1'] ?? -1);
+        if ($cpu1 >= 0 && $cpu1 <= 100) { $extra['cpu1'] = $cpu1; }
     }
 
     // Upload: o roteador manda um payload de tamanho conhecido para o /__up da
     // Cloudflare e cronometra. Mesma conta do download.
     $ubytes = (float) ($_REQUEST['ubytes'] ?? 0);
     $uliq   = $liquido(speed_dur_seg((string) ($_REQUEST['udur'] ?? '')));
-    if ($ubytes > 0 && $uliq !== null) {
+    // Abaixo de 256 KB o número não significa nada: a 30 Mbps isso passa em
+    // 0,07 s, dentro do próprio ruído do setup da conexão. Nesse caso o
+    // tamanho vira diagnóstico (onde o /tool fetch corta) em vez de virar
+    // uma velocidade inventada.
+    if ($ubytes >= 262144 && $uliq !== null) {
         $extra['up']     = round($ubytes * 8 / $uliq / 1e6, 2);
         $extra['ubytes'] = (int) $ubytes;
         $extra['useg']   = round($uliq, 3);
+    } elseif ($ubytes > 0) {
+        $extra['uerro'] = 'só aceitou ' . (int) $ubytes . ' bytes';
     } elseif (($_REQUEST['uerro'] ?? '') !== '') {
         // Em que passo o upload morreu ("montagem" = a string do payload não
         // foi montada; "envio" = o /tool fetch recusou). Sem isto a falha
