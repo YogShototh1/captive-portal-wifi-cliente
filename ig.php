@@ -146,10 +146,21 @@ h1{font-size:22px;letter-spacing:-.02em;margin-bottom:5px;line-height:1.25}
 .cd-sombra .btn{box-shadow:0 14px 26px -12px color-mix(in srgb,var(--btn) 65%,transparent)}
 html.cd-no-redondo{--raio:4px}
 html.cd-no-cartao .card{display:none}
+/* Só valem na prévia: lá estes três estão sempre no HTML e é a classe que os
+   liga e desliga (ver o comentário no <body>). */
+html.cd-no-logo #cd-logo{display:none}
+html.cd-no-copiar #copiar,html.cd-no-copiar .dica{display:none}
 </style>
 </head>
 <body class="<?= !empty($st['manchas']) ? 'cd-manchas' : '' ?>">
-    <?php if ($temLogo): ?>
+    <?php /* Na PRÉVIA os três blocos condicionais abaixo (logo, "copiar @" e
+             rodapé) são sempre montados, e quem os esconde é o CSS pelas
+             classes cd-no-*. Enquanto o PHP decidia se eles existiam, marcar a
+             opção no painel não fazia nada: o elemento não estava no HTML e
+             não havia o que mostrar — só aparecia depois de salvar, quando a
+             página era montada de novo. Na página real nada muda: o que está
+             desligado continua não indo para o HTML do cliente. */ ?>
+    <?php if ($temLogo || ($previa && $logo !== null)): ?>
     <img class="logo" id="cd-logo" src="<?= $local ? 'logo.img' : 'logo.php?h=' . h($hash) ?>" alt="">
     <?php endif; ?>
 
@@ -167,7 +178,7 @@ html.cd-no-cartao .card{display:none}
         <span id="cd-btn-tx"><?= h($cfg['botao']) ?></span>
     </a>
 
-    <?php if (!empty($st['copiar'])): ?>
+    <?php if (!empty($st['copiar']) || $previa): ?>
     <button type="button" class="btn-2" id="copiar" data-perfil="<?= h($p) ?>">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
         Copiar @<span id="cd-copiar-tx"><?= h($p) ?></span>
@@ -175,8 +186,8 @@ html.cd-no-cartao .card{display:none}
     <p class="dica">No iPhone: toque em <strong>Concluído</strong> no canto da tela, abra o Instagram e cole o perfil na busca.</p>
     <?php endif; ?>
 
-    <?php if (trim($cfg['rodape']) !== ''): ?>
-    <footer class="rodape" id="cd-rodape"><?= h($cfg['rodape']) ?></footer>
+    <?php if (trim($cfg['rodape']) !== '' || $previa): ?>
+    <footer class="rodape" id="cd-rodape"<?= trim($cfg['rodape']) === '' ? ' style="display:none"' : '' ?>><?= h($cfg['rodape']) ?></footer>
     <?php endif; ?>
 
 <script>
@@ -218,8 +229,7 @@ html.cd-no-cartao .card{display:none}
         raiz.classList.toggle('cd-grad',   !!d.estilo.grad);
         raiz.classList.toggle('cd-sombra', !!d.estilo.sombra);
         document.body.classList.toggle('cd-manchas', !!d.estilo.manchas);
-        var logo = document.getElementById('cd-logo');
-        if (logo) { logo.style.display = d.estilo.logo ? '' : 'none'; }
+        // logo e "copiar @" saem pelo cd-no-* do laço acima, como os demais.
 
         function txt(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
         txt('cd-titulo',  d.titulo);

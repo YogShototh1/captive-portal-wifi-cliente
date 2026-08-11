@@ -717,7 +717,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
 
     <script src="assets/abas.js?v=4"></script>
     <script src="assets/cores.js?v=7"></script>
-    <script src="assets/ig.js?v=1"></script>
+    <script src="assets/ig.js?v=2"></script>
     <script src="assets/relatorio.js?v=17"></script>
     <script src="assets/alertas.js?v=3"></script>
     <script src="assets/dashboard.js?v=10"></script>
