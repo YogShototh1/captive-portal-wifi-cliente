@@ -70,7 +70,7 @@
     }
     function enviar() {
         if (!pronto || !frame.contentWindow) return;
-        frame.contentWindow.postMessage(estado(), '*');
+        frame.contentWindow.postMessage(estado(), location.origin);
     }
 
     // --- abrir / fechar ---
@@ -125,6 +125,9 @@
     });
 
     addEventListener('message', function (e) {
+        // Iframe e painel sao sempre da mesma origem (src relativo). Mensagem
+        // de qualquer outra origem nao tem o que fazer aqui.
+        if (e.origin !== location.origin) return;
         var d = e.data;
         if (d && d.tipo === 'ig-pronto') { pronto = true; enviar(); }
     });

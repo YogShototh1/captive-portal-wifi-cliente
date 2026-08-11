@@ -1,0 +1,34 @@
+# A pasta tools/ não é pública.
+#
+# Ficou aberta por descuido — sql/ e ads/ sempre tiveram este bloqueio, tools/
+# não. Os testes respondiam 200 em https://captivedata.com.br/tools/teste_*.php:
+# rodavam sozinhos, sem autenticação, alguns gravando e apagando arquivos em
+# ads/ a cada requisição, e um deles executando eval().
+#
+# O padrão aqui é NEGAR. As exceções abaixo são os scripts operacionais, que
+# são chamados pelo navegador de propósito (estão documentados assim no
+# cabeçalho de cada um) e já exigem o admin_token do config.php:
+#   criar_comprador.php  cria o primeiro admin
+#   limpar_antigos.php   retenção LGPD, agendado no Cron Jobs do cPanel
+#   migrar_bytes.php     migrações pontuais de esquema
+#   migrar_nome.php
+#   gerar_hash.php       (nem chega a subir: o deploy.ps1 o exclui)
+#
+# Os teste_*.php ficam de fora da lista de propósito: só rodam por linha de
+# comando. Cada um também carrega a sua própria guarda de PHP_SAPI, para o
+# bloqueio não depender de o servidor honrar este arquivo.
+
+<IfModule mod_authz_core.c>
+    Require all denied
+    <FilesMatch "^(criar_comprador|limpar_antigos|migrar_bytes|migrar_nome|gerar_hash)\.php$">
+        Require all granted
+    </FilesMatch>
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+    <FilesMatch "^(criar_comprador|limpar_antigos|migrar_bytes|migrar_nome|gerar_hash)\.php$">
+        Order deny,allow
+        Allow from all
+    </FilesMatch>
+</IfModule>

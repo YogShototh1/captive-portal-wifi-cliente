@@ -1,6 +1,12 @@
 <?php
 // Teste de semana_reparte(): os casos que produziam celula de 41h num dia.
 // Rodar:  php tools/teste_semana.php
+// Teste de linha de comando, nunca pela web. O tools/.htaccess ja bloqueia a
+// pasta; esta guarda existe para o bloqueio nao depender de o servidor honrar
+// aquele arquivo. Vale a pena: estes testes rodam sem autenticacao nenhuma, e
+// alguns gravam e apagam arquivos em ads/.
+if (PHP_SAPI !== "cli") { http_response_code(404); exit; }
+
 require_once __DIR__ . '/../inc/util.php';
 
 $DOM = strtotime('2026-07-26 00:00:00');            // domingo

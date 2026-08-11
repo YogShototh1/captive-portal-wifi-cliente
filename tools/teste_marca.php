@@ -8,6 +8,12 @@
 // texto da tela.
 //
 // Rode depois de mexer no painel ou na landing:  php tools/teste_marca.php
+// Teste de linha de comando, nunca pela web. O tools/.htaccess ja bloqueia a
+// pasta; esta guarda existe para o bloqueio nao depender de o servidor honrar
+// aquele arquivo. Vale a pena: estes testes rodam sem autenticacao nenhuma, e
+// alguns gravam e apagam arquivos em ads/.
+if (PHP_SAPI !== "cli") { http_response_code(404); exit; }
+
 $raiz = dirname(__DIR__);
 
 // Onde o cliente le. Nao entra api/ inteiro: la a palavra so aparece em

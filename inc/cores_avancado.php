@@ -64,7 +64,7 @@ $cid = isset($coresClienteId) ? (int) $coresClienteId : null;
                             <div class="cm-btn-lat cm-btn-vol2" aria-hidden="true"></div>
                             <div class="cm-btn-lat cm-btn-pwr" aria-hidden="true"></div>
                             <div class="cm-tela">
-                                <iframe id="cm-frame" src="assets/portal_preview.html?v=4" title="Prévia da tela de login"></iframe>
+                                <iframe id="cm-frame" src="assets/portal_preview.html?v=5" title="Prévia da tela de login"></iframe>
                                 <div class="cm-ilha" aria-hidden="true"></div>
                                 <div class="cm-home" aria-hidden="true"></div>
                             </div>

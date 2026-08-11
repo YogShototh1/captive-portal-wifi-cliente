@@ -82,6 +82,9 @@
   }
 
   addEventListener('message', function (e) {
+    // Iframe e painel sao sempre da mesma origem (src relativo). Mensagem
+    // de qualquer outra origem nao tem o que fazer aqui.
+    if (e.origin !== location.origin) return;
     var d = e.data;
     if (!d || d.tipo !== 'cd-preview') return;
     aplicaCores(d.cores);
@@ -99,17 +102,17 @@
     var z = e.target.closest ? e.target.closest('.cd-zona') : null;
     if (!z) return;
     e.preventDefault();
-    parent.postMessage({ tipo: 'cd-clique', cor: z.getAttribute('data-cor') }, '*');
+    parent.postMessage({ tipo: 'cd-clique', cor: z.getAttribute('data-cor') }, location.origin);
   });
   document.addEventListener('mouseover', function (e) {
     var z = e.target.closest ? e.target.closest('.cd-zona') : null;
-    if (z) parent.postMessage({ tipo: 'cd-hover', cor: z.getAttribute('data-cor') }, '*');
+    if (z) parent.postMessage({ tipo: 'cd-hover', cor: z.getAttribute('data-cor') }, location.origin);
   });
   document.addEventListener('mouseout', function () {
-    parent.postMessage({ tipo: 'cd-hover', cor: null }, '*');
+    parent.postMessage({ tipo: 'cd-hover', cor: null }, location.origin);
   });
 
-  parent.postMessage({ tipo: 'cd-pronto' }, '*');
+  parent.postMessage({ tipo: 'cd-pronto' }, location.origin);
 })();
 </script>
 </body>

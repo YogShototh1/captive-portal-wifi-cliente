@@ -13,6 +13,12 @@
 // Renderiza o ig.php de verdade, sem banco: o require do util sai e as três
 // funções que ele usaria entram como dublê aqui.
 // Rodar:  php tools/teste_ig_previa.php
+// Teste de linha de comando, nunca pela web. O tools/.htaccess ja bloqueia a
+// pasta; esta guarda existe para o bloqueio nao depender de o servidor honrar
+// aquele arquivo. Vale a pena: estes testes rodam sem autenticacao nenhuma, e
+// alguns gravam e apagam arquivos em ads/.
+if (PHP_SAPI !== "cli") { http_response_code(404); exit; }
+
 $raiz = dirname(__DIR__);
 
 $falhas = 0;

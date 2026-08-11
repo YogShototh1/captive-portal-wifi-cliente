@@ -219,6 +219,9 @@ html.cd-no-copiar #copiar,html.cd-no-copiar .dica{display:none}
 (function () {
     var raiz = document.documentElement;
     window.addEventListener('message', function (e) {
+        // Iframe e painel sao sempre da mesma origem (src relativo). Mensagem
+        // de qualquer outra origem nao tem o que fazer aqui.
+        if (e.origin !== location.origin) return;
         var d = e.data;
         if (!d || d.tipo !== 'ig') return;
 
@@ -245,7 +248,7 @@ html.cd-no-copiar #copiar,html.cd-no-copiar .dica{display:none}
         raiz.classList.toggle('cd-realce', !!d.destaque);
     });
     // Avisa o painel que já pode mandar o primeiro estado.
-    if (window.parent !== window) { window.parent.postMessage({ tipo: 'ig-pronto' }, '*'); }
+    if (window.parent !== window) { window.parent.postMessage({ tipo: 'ig-pronto' }, location.origin); }
 })();
 </script>
 <style>

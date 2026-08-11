@@ -1,6 +1,12 @@
 <?php
 // Teste das contas dos relatorios que estavam erradas.
 // Rodar:  php tools/teste_relatorio.php
+// Teste de linha de comando, nunca pela web. O tools/.htaccess ja bloqueia a
+// pasta; esta guarda existe para o bloqueio nao depender de o servidor honrar
+// aquele arquivo. Vale a pena: estes testes rodam sem autenticacao nenhuma, e
+// alguns gravam e apagam arquivos em ads/.
+if (PHP_SAPI !== "cli") { http_response_code(404); exit; }
+
 require_once __DIR__ . '/../inc/util.php';
 
 $falhas = 0;

@@ -17,6 +17,12 @@
 //   3) nenhuma das duas voltou a usar a lista do pop-up de conexoes.
 //
 // Rodar:  php tools/teste_log.php
+// Teste de linha de comando, nunca pela web. O tools/.htaccess ja bloqueia a
+// pasta; esta guarda existe para o bloqueio nao depender de o servidor honrar
+// aquele arquivo. Vale a pena: estes testes rodam sem autenticacao nenhuma, e
+// alguns gravam e apagam arquivos em ads/.
+if (PHP_SAPI !== "cli") { http_response_code(404); exit; }
+
 $raiz = dirname(__DIR__);
 $css  = (string) @file_get_contents($raiz . '/assets/style.css');
 
