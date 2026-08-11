@@ -19,25 +19,17 @@ if (!$comprador || (int) $comprador['is_admin'] !== 1) {
 $roteador = trim((string) ($_GET['roteador'] ?? ''));
 $csv      = (string) ($_GET['f'] ?? '') === 'csv';
 
-// Data no formato do <input type="date">, ou null. Nada de aceitar o que vier:
-// os dois valores entram na consulta.
-function log_data(?string $v): ?string
-{
-    $v = trim((string) $v);
-    return preg_match('/^\d{4}-\d{2}-\d{2}$/', $v) ? $v : null;
-}
+// log_data() e log_periodo_sql() vivem no inc/util.php: o log de um lead (o do
+// botão "!") monta o mesmo recorte, e a leitura de data tem que ser uma só.
 $de  = log_data($_GET['de']  ?? null);
 $ate = log_data($_GET['ate'] ?? null);
-// Invertidas (fim antes do início) devolveriam lista vazia sem explicação.
-if ($de !== null && $ate !== null && $de > $ate) { [$de, $ate] = [$ate, $de]; }
 
 $cond = [];
 $args = [];
 if ($roteador !== '') { $cond[] = 'a.roteador = ?'; $args[] = $roteador; }
-// Comparação por faixa, não DATE(visto_em): assim o índice de visto_em serve.
-// O fim é exclusivo no dia seguinte, que é como se inclui o dia inteiro.
-if ($de !== null)  { $cond[] = 'a.visto_em >= ?'; $args[] = $de . ' 00:00:00'; }
-if ($ate !== null) { $cond[] = 'a.visto_em < ?';  $args[] = date('Y-m-d', strtotime($ate . ' +1 day')) . ' 00:00:00'; }
+[$condData, $argsData] = log_periodo_sql($de, $ate);
+$cond  = array_merge($cond, $condData);
+$args  = array_merge($args, $argsData);
 $where = $cond ? 'WHERE ' . implode(' AND ', $cond) : '';
 
 // A consulta é a mesma da tela e da planilha; só muda o LIMIT.

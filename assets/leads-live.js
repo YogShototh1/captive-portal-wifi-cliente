@@ -271,28 +271,71 @@
     var aLista = document.getElementById('acessos-lista');
     var aNav   = document.getElementById('acessos-nav');
     var aLead  = null;
+    // Recorte por data, igual ao da aba "Log de acessos" — aqui limitado ao
+    // lead aberto, que ja e o que o endpoint faz.
+    var aDe   = document.getElementById('acessos-de');
+    var aAte  = document.getElementById('acessos-ate');
+    var aFil  = document.getElementById('acessos-filtrar');
+    var aTudo = document.getElementById('acessos-tudo');
+    var aExp  = document.getElementById('acessos-exportar');
+    var aPrimeira = null;
+
+    function hojeISO() {
+        var d = new Date();
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+    function aPeriodo() {
+        var q = '';
+        if (aDe && aDe.value)  { q += '&de='  + encodeURIComponent(aDe.value); }
+        if (aAte && aAte.value) { q += '&ate=' + encodeURIComponent(aAte.value); }
+        return q;
+    }
     function fecharAcessos() { if (aModal) { aModal.classList.remove('aberto'); aModal.setAttribute('aria-hidden', 'true'); } }
     function abrirAcessos(leadId, pagina) {
         if (!aModal || !EP_ACESSOS) return;
+        // Lead diferente = periodo diferente: limpa para os campos serem
+        // preenchidos de novo com o primeiro acesso DESTE lead.
+        if (String(aLead) !== String(leadId)) {
+            aPrimeira = null;
+            if (aDe)  { aDe.value = ''; }
+            if (aAte) { aAte.value = ''; }
+        }
         aLead = leadId;
         aLista.innerHTML = '<p class="pc-modal-info">Carregando…</p>';
         if (aNav) aNav.innerHTML = '';
         aModal.classList.add('aberto');
         aModal.setAttribute('aria-hidden', 'false');
-        fetch(EP_ACESSOS + '?lead_id=' + encodeURIComponent(leadId) + '&pagina=' + (pagina || 1) + '&por_pagina=' + conexoesPorPagina(), { credentials: 'same-origin' })
+        fetch(EP_ACESSOS + '?lead_id=' + encodeURIComponent(leadId) + '&pagina=' + (pagina || 1) + '&por_pagina=' + conexoesPorPagina() + aPeriodo(), { credentials: 'same-origin' })
             .then(function (r) { return r.json(); })
             .then(function (d) {
                 if (!d || !d.ok) { aLista.innerHTML = '<p class="pc-modal-info">' + esc((d && d.erro) || 'Erro ao carregar.') + '</p>'; return; }
                 if (aTel) aTel.textContent = (d.nome || d.telefone) || '';
-                if (!d.acessos || !d.acessos.length) { aLista.innerHTML = '<p class="pc-modal-info">Nenhum acesso registrado ainda.</p>'; return; }
-                var html = '<div class="pc-conex-head pc-acesso-head"><span>Data e hora</span><span>IP cliente</span><span>Destino</span><span>Serviço</span><span>Aparelho</span></div><ul class="pc-conex-list">';
+
+                // Primeira resposta manda a data do acesso mais antigo: preenche
+                // os campos so desta vez, para nao desfazer o que o admin
+                // escolher depois.
+                if (aPrimeira === null && d.primeira) {
+                    aPrimeira = d.primeira;
+                    if (aDe  && !aDe.value)  { aDe.value  = d.primeira; aDe.min  = d.primeira; }
+                    if (aAte && !aAte.value) { aAte.value = hojeISO();  aAte.max = hojeISO(); }
+                }
+
+                if (!d.acessos || !d.acessos.length) {
+                    aLista.innerHTML = '<p class="pc-modal-info">' +
+                        (aPeriodo() ? 'Nenhum acesso neste período.' : 'Nenhum acesso registrado ainda.') + '</p>';
+                    if (aExp) { aExp.disabled = true; }
+                    return;
+                }
+                if (aExp) { aExp.disabled = false; }
+
+                var html = '<div class="pc-log-head"><span>Data e hora</span><span>IP cliente</span><span>Destino</span><span>Serviço</span><span>Aparelho</span></div><ul class="pc-log-list">';
                 d.acessos.forEach(function (a) {
                     var destino = (a.host && a.host !== '') ? esc(a.host) : esc(a.ip_destino);
-                    html += '<li class="pc-acesso-row"><span class="pc-conex-data">' + esc(fmtData(a.visto_em)) + '</span>' +
-                            '<span class="pc-conex-ap">' + esc(a.ip_cliente || '—') + '</span>' +
+                    html += '<li class="pc-log-row pc-acesso-row"><span class="pc-conex-data">' + esc(fmtData(a.visto_em)) + '</span>' +
+                            '<span class="pc-log-ip">' + esc(a.ip_cliente || '—') + '</span>' +
                             '<span class="pc-acesso-dst-cel"><span class="pc-acesso-dst" title="' + esc(a.ip_destino) + '">' + destino + '</span>' + COPIA_BTN + '</span>' +
                             '<span class="pc-acesso-org">' + esc(a.org || '—') + '</span>' +
-                            '<span class="pc-conex-ap">' + esc(a.dispositivo || '—') + '</span></li>';
+                            '<span class="pc-log-ap">' + esc(a.dispositivo || '—') + '</span></li>';
                 });
                 aLista.innerHTML = html + '</ul>';
                 if (aNav) {
@@ -313,6 +356,19 @@
         if (aNav) aNav.addEventListener('click', function (e) {
             var s = e.target.closest ? e.target.closest('.pc-conex-seta') : null;
             if (s && aLead != null) abrirAcessos(aLead, parseInt(s.getAttribute('data-apag'), 10) || 1);
+        });
+        if (aFil)  aFil.addEventListener('click', function () { if (aLead != null) abrirAcessos(aLead, 1); });
+        if (aTudo) aTudo.addEventListener('click', function () {
+            if (aDe)  { aDe.value  = aPrimeira || ''; }
+            if (aAte) { aAte.value = hojeISO(); }
+            if (aLead != null) abrirAcessos(aLead, 1);
+        });
+        // Baixa o MESMO recorte que esta na tela, so deste lead, sem paginacao.
+        // Navegacao direta em vez de fetch: o navegador cuida do download e do
+        // nome do arquivo, que e o que o Content-Disposition manda.
+        if (aExp) aExp.addEventListener('click', function () {
+            if (aLead == null) return;
+            location.href = EP_ACESSOS + '?f=csv&lead_id=' + encodeURIComponent(aLead) + aPeriodo();
         });
         if (aLista) aLista.addEventListener('click', function (e) {
             var c = e.target.closest ? e.target.closest('.pc-copia') : null;

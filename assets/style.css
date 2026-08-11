@@ -1932,16 +1932,22 @@ html[data-tema="claro"] .dg-var-ruim { color: #dc2626; }
 /* Modal mais largo p/ os IPs de destino aparecerem inteiros; colunas balanceadas
    e todas alinhadas a esquerda (batendo com o titulo). Em tela estreita a fonte
    encolhe (media abaixo) em vez de cortar. */
-#acessos-modal .pc-modal-card { max-width: 680px; }
-.pc-acesso-head, .pc-acesso-row { grid-template-columns: 1.3fr 0.95fr 1.5fr 1.15fr 0.8fr; }
-.pc-acesso-head span, .pc-acesso-row .pc-conex-ap, .pc-acesso-head span:last-child { text-align: left; }
+/* Mais largo que os outros pop-ups: sao 5 colunas de log, e apertadas elas
+   viravam \"...\" ou quebravam em duas linhas. */
+#acessos-modal .pc-modal-card { max-width: 1040px; }
+/* A grade vem da .pc-log-row (a mesma da aba Log); aqui so se troca a
+   quantidade de colunas, que la sao 6 e aqui 5 (nao ha coluna Cliente: o
+   pop-up ja e de UM cliente). O ID garante a especificidade sobre a regra de
+   6 colunas, em vez de repetir display:grid e paddings. */
+#acessos-modal .pc-log-head, #acessos-modal .pc-log-row { grid-template-columns: 1.3fr 0.95fr 1.5fr 1.15fr 0.8fr; }
+#acessos-modal .pc-log-head span { text-align: left; }
 /* Coluna Serviço: rotulo resolvido (WhatsApp/Google/CDN/ASN). */
 .pc-acesso-org { color: #c4b5fd; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 html[data-tema="claro"] .pc-acesso-org { color: #7c3aed; }
 @media (max-width: 600px) {
-    #acessos-modal .pc-acesso-head { font-size: 8px; padding: 10px 12px 8px; gap: 5px; }
-    #acessos-modal .pc-acesso-row  { font-size: 9px; padding: 11px 12px; gap: 5px; }
-    #acessos-modal .pc-acesso-head, #acessos-modal .pc-acesso-row { grid-template-columns: 1.5fr 0.85fr 1.4fr 1.1fr 0.65fr; }
+    #acessos-modal .pc-log-head { font-size: 8px; padding: 10px 12px 8px; gap: 5px; }
+    #acessos-modal .pc-log-row  { font-size: 9px; padding: 11px 12px; gap: 5px; }
+    #acessos-modal .pc-log-head, #acessos-modal .pc-log-row { grid-template-columns: 1.5fr 0.85fr 1.4fr 1.1fr 0.65fr; }
 }
 /* A lista do log tem grade PROPRIA (.pc-log-list), nao a .pc-conex-list do
    pop-up de conexoes. Enquanto compartilharam a lista, ".pc-conex-list li"
@@ -2767,3 +2773,7 @@ html[data-tema] .painel-cliente .am-msg.err { color: #dc2626; }
 
 html[data-tema] .painel-cliente .pc-hs-estado { color: var(--t-fg); }
 html[data-tema] .painel-cliente .pc-hs-srv { color: var(--t-fg3); }
+
+/* Recorte por data dentro do pop-up de acessos de um lead */
+.pc-log-filtro-modal { padding: 0 22px; margin: 12px 0 0; }
+@media (max-width: 600px) { .pc-log-filtro-modal { padding: 0 12px; } }

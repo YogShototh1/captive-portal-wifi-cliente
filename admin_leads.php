@@ -108,7 +108,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Leads — <?= h($cliente['nome'] ?: $cliente['email']) ?></title>
     <link rel="icon" href="assets/logo-icone.png?v=1" type="image/png">
-    <link rel="stylesheet" href="assets/style.css?v=122">
+    <link rel="stylesheet" href="assets/style.css?v=123">
 </head>
 <body class="painel-cliente">
     <!-- Camadas de fundo (decorativas) -->
@@ -713,6 +713,13 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                     <h3 class="pc-modal-title">Acessos de <span id="acessos-tel"></span></h3>
                     <button type="button" class="pc-modal-x" data-close aria-label="Fechar">&times;</button>
                 </div>
+                <div class="pc-log-filtro pc-log-filtro-modal">
+                    <label>De <input type="date" id="acessos-de"></label>
+                    <label>Até <input type="date" id="acessos-ate"></label>
+                    <button type="button" class="pc-btn" id="acessos-filtrar">Filtrar</button>
+                    <button type="button" class="pc-btn" id="acessos-tudo">Todo o período</button>
+                    <button type="button" class="pc-btn pc-log-exp" id="acessos-exportar">Exportar para Excel</button>
+                </div>
                 <div class="pc-modal-body" id="acessos-lista"></div>
                 <div id="acessos-nav"></div>
             </div>
@@ -777,7 +784,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <script src="assets/acessolog.js?v=4"></script>
     <script src="assets/estatisticas.js?v=8"></script>
     <script src="assets/speedtest.js?v=6"></script>
-    <script src="assets/leads-live.js?v=30"></script>
+    <script src="assets/leads-live.js?v=31"></script>
     <?php require __DIR__ . '/inc/tema.php'; ?>
 </body>
 </html>

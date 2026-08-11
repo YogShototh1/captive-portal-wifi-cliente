@@ -281,6 +281,35 @@ function estilo_set(string $roteador, array $marcadas): void
     @file_put_contents($dir . '/estilo_' . sha1(trim($roteador)) . '.json', json_encode($out));
 }
 
+// --- Recorte por data do log de acessos ---
+//
+// Valida o que vem do <input type="date">. Usada pelo log geral e pelo log de
+// um lead (o do botão "!"): os dois endpoints montam a MESMA condição de data,
+// então a leitura mora num lugar só.
+//
+// Devolve 'YYYY-MM-DD' ou null. Nada de aceitar o que vier — o valor entra na
+// consulta.
+function log_data($v): ?string
+{
+    $v = trim((string) $v);
+    return preg_match('/^\d{4}-\d{2}-\d{2}$/', $v) ? $v : null;
+}
+
+// Condição SQL do recorte, já com os valores. Comparação por faixa, não
+// DATE(visto_em): assim o índice de visto_em continua servindo. O fim é
+// exclusivo no dia seguinte, que é como se inclui o dia inteiro.
+// Devolve [pedaços de WHERE, valores].
+function log_periodo_sql(?string $de, ?string $ate, string $col = 'a.visto_em'): array
+{
+    // Invertidas (fim antes do início) devolveriam lista vazia sem explicação.
+    if ($de !== null && $ate !== null && $de > $ate) { [$de, $ate] = [$ate, $de]; }
+    $cond = [];
+    $args = [];
+    if ($de !== null)  { $cond[] = "$col >= ?"; $args[] = $de . ' 00:00:00'; }
+    if ($ate !== null) { $cond[] = "$col < ?";  $args[] = date('Y-m-d', strtotime($ate . ' +1 day')) . ' 00:00:00'; }
+    return [$cond, $args];
+}
+
 // --- Liga/desliga do hotspot, à distância ---
 //
 // Quando o portal quebra, a saída é desligar o hotspot: o Wi-Fi da loja volta a
