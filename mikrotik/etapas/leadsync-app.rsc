@@ -180,14 +180,6 @@
   :do {
     /tool fetch url=("https://captivedata.com.br/api/tema.php?token=$token&roteador=$ident&f=ad")         check-certificate=no dst-path="flash/hostsv7/ad.img"
   } on-error={}
-  # Pagina-ponte do Instagram, para o cliente NAO precisar buscar do painel ao
-  # sair do anuncio: com a internet do estabelecimento estrangulada, a pagina
-  # servida daqui abre na hora. 404 quando o comprador nao montou a dele (ou
-  # trocou o destino) — nao e falha, e o login.html so usa o arquivo depois de
-  # testar se ele responde.
-  :do {
-    /tool fetch url=("https://captivedata.com.br/api/tema.php?token=$token&roteador=$ident&f=ig")         check-certificate=no dst-path="flash/hostsv7/ig.html"
-  } on-error={}
   # So marca a versao quando o tema.js (o essencial) desceu inteiro.
   :if ($tok = 1) do={ :set cdTemaVer $tver }
 }
@@ -337,17 +329,30 @@
     # Ping ate um destino externo: mede a latencia da internet da loja, nao a
     # do caminho ate o painel.
     #
-    # O as-value do /ping NAO devolve avg-rtt — devolve uma LISTA, um item por
-    # pacote, cada um com o seu "time". Pedir o avg-rtt trazia vazio, e por isso
-    # o painel nunca mostrava o ping. Aqui os tempos sao colhidos um a um e a
-    # media e feita no servidor, que ja sabe converter "12ms300us" em numero.
+    # Duas tentativas ja falharam aqui. Primeiro pedindo ($pg->"avg-rtt"), que o
+    # as-value do /ping nao devolve. Depois lendo ($r->"time") de cada pacote,
+    # que tambem veio vazio. Como nao da para inspecionar o roteador daqui, esta
+    # versao nao aposta em nome de campo nenhum: converte o retorno inteiro em
+    # texto e manda para o servidor, que garimpa os tempos com expressao
+    # regular. Qualquer que seja o formato, os "12ms300us" estao la dentro.
+    #
+    # Dois destinos porque ha provedor que bloqueia um deles.
     :local rtt ""
-    :do {
-      :foreach r in=[/ping 8.8.8.8 count=3 as-value] do={
-        :local t ($r->"time")
-        :if ([:typeof $t] != "nothing") do={ :set rtt ($rtt . $t . ",") }
-      }
-    } on-error={ :set rtt "" }
+    :do { :set rtt [:tostr [/ping 1.1.1.1 count=3 as-value]] } on-error={ :set rtt "" }
+    :if ([:len $rtt] < 5) do={
+      :do { :set rtt [:tostr [/ping 8.8.8.8 count=3 as-value]] } on-error={ :set rtt "" }
+    }
+    # Os separadores do :tostr (; = { }) quebrariam a query string; viram espaco.
+    :local plimpo ""
+    :local n [:len $rtt]
+    :if ($n > 400) do={ :set n 400 }
+    :for i from=0 to=($n - 1) do={
+      :local c [:pick $rtt $i ($i + 1)]
+      :if ($c = ";" || $c = "=" || $c = "{" || $c = "}" || $c = "&" || $c = "+" || $c = "%") do={
+        :set plimpo ($plimpo . " ")
+      } else={ :set plimpo ($plimpo . $c) }
+    }
+    :set rtt $plimpo
 
     :do {
       /tool fetch url=("https://captivedata.com.br/api/speed_rt.php?token=$token&roteador=$ident&f=res&bytes=$bytes&dur=$dur&over=$over&ping=$rtt&erro=$erro") \
