@@ -255,7 +255,18 @@
 }
 
 # ============================================================
-#  Leads presos no roteador (fila)
+#  Leads presos no roteador (fila)  — INERTE desde 11/08/2026
+#
+#  ponytail: este bloco depende de o username da sessao ser "T-<mac>-<telefone>",
+#  e o portal voltou a mandar so "T-<mac>" — o RouterOS recusa qualquer outro
+#  nome num login por trial, e era essa a causa do ciclo infinito na loja. Sem o
+#  telefone no username, o :find abaixo nunca casa e nada e enviado.
+#
+#  Fica por enquanto porque as sessoes abertas HOJE ainda tem o formato antigo e
+#  merecem ser drenadas. Passado o keepalive de todas elas, este bloco pode sair
+#  inteiro. Para o numero voltar a sobreviver com a internet da loja fora,
+#  precisa de outro carregador que nao seja o username (o RouterOS nao guarda
+#  campo livre na sessao) — a alternativa e a fila ficar no proprio navegador.
 #  O login.html manda o telefone junto no username da sessao
 #  (T-<mac>-<telefone>). Quando a internet do estabelecimento esta fora, o
 #  NAVEGADOR do cliente nao alcanca o painel e o lead se perderia — mas o

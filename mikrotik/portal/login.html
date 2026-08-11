@@ -291,20 +291,28 @@
         // do teclado e link) passam por aqui.
         // Requisito no roteador: "trial" no login-by do perfil do hotspot.
         function runAuthentication() {
-            // O telefone vai junto no username do hotspot. Parece um detalhe, mas
-            // e o que garante o lead quando a internet do estabelecimento esta
-            // fora: o navegador do cliente nao alcanca o painel, mas o ROTEADOR
-            // fica com o numero na sessao e o leadsync o envia quando a linha
-            // voltar. Formato: T-<mac>-<telefone> (sem telefone fica so T-<mac>,
-            // que e o caso da revisita, identificada pelo MAC).
-            var tel = "";
-            try {
-                var el = document.getElementById('celular');
-                tel = el ? el.value.replace(/\D/g, '') : "";
-            } catch (e) { tel = ""; }
-            var user = "T-$(mac-esc)" + (tel ? "-" + tel : "");
+            // O username do trial e "T-<mac>" e NADA MAIS.
+            //
+            // Nao e escolha nossa: e a convencao do proprio RouterOS. O link de
+            // fabrica logo acima nesta pagina usa exatamente isso
+            // (username=T-$(mac-esc)), e o roteador recusa qualquer outro nome
+            // num login por trial.
+            //
+            // Em 05/08/2026 (commit 2520074) foi grudado "-<telefone>" no fim,
+            // para o roteador guardar o numero na sessao e o leadsync manda-lo
+            // quando a internet da loja voltasse. O efeito colateral foi o
+            // proprio bug que o trial tinha resolvido: quem digitava o numero
+            // mandava "T-<mac>-48999999999", o roteador recusava e devolvia a
+            // tela de login — numero -> anuncio -> numero, sem fim. Quem NAO
+            // digitava (revisita pelo MAC) continuava entrando, o que fez o
+            // defeito parecer intermitente.
+            //
+            // O numero segue indo para o painel pelo fetch do /api/lead logo
+            // acima. O que se perdeu foi so a fila para o caso de a internet do
+            // estabelecimento estar fora na hora — e um Wi-Fi que nao conecta
+            // custa mais caro que um lead perdido nesse cenario.
             window.location.href = "$(link-login-only)?dst=" +
-                encodeURIComponent(portalDst()) + "&username=" + encodeURIComponent(user);
+                encodeURIComponent(portalDst()) + "&username=T-$(mac-esc)";
         }
 
         // === Integração com a API central (hospedagem) ===
