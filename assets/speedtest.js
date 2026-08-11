@@ -102,7 +102,15 @@
         var p = [];
         if (m.down != null) { p.push('<b>' + num(m.down) + ' Mbps</b> de download'); }
         if (m.up   != null) { p.push('<b>' + num(m.up)   + ' Mbps</b> de upload'); }
-        return p.length ? 'Banda da internet: ' + p.join(' &middot; ') : '';
+        var s = p.length ? 'Banda da internet: ' + p.join(' &middot; ') : '';
+        // Roteador no talo durante o download: o numero medido e o teto do
+        // APARELHO, nao do link. Sem este aviso o comprador le 31 Mbps e acha
+        // que o provedor esta entregando 31.
+        if (m.cpu != null && m.cpu >= 85) {
+            s += (s ? '<br>' : '') + '<em class="sp-teto">CPU do roteador em ' + (m.cpu | 0) +
+                 '% durante o teste: o teto é do aparelho, o link é mais rápido que isto.</em>';
+        }
+        return s;
     }
     function qs(base, q) { return base + (base.indexOf('?') >= 0 ? '&' : '?') + q; }
     function esc(s) {
@@ -157,6 +165,8 @@
                     // Uma conexao so mede a janela TCP dividida pelo RTT, nao o
                     // link — vale registrar quantos fluxos deram aquele numero.
                     if (x.conex != null) { det.push(x.conex + (x.conex > 1 ? ' conexões' : ' conexão')); }
+                    if (x.cpu != null)   { det.push('CPU em ' + (x.cpu | 0) + '%'); }
+                    if (x.uerro)         { det.push('upload falhou (' + x.uerro + ')'); }
                     if (x.bytes != null && x.seg != null) {
                         det.push('baixou ' + Math.round(x.bytes / 1e6) + ' MB em ' +
                                  x.seg.toFixed(1).replace('.', ',') + ' s');

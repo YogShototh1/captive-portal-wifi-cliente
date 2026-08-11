@@ -89,6 +89,12 @@ if ($f === 'res') {
         // RouterOS 6 (sem :execute) ou o paralelo falhou e caiu no fallback.
         $conex = (int) ($_REQUEST['conex'] ?? 0);
         if ($conex > 0) { $extra['conex'] = $conex; }
+
+        // Pico de CPU do roteador durante o download. É o que separa "o link é
+        // lento" de "o teste chegou ao teto do aparelho": saturou, o link é
+        // mais rápido do que este número consegue mostrar.
+        $cpu = (int) ($_REQUEST['cpu'] ?? -1);
+        if ($cpu >= 0 && $cpu <= 100) { $extra['cpu'] = $cpu; }
     }
 
     // Upload: o roteador manda um payload de tamanho conhecido para o /__up da
@@ -99,6 +105,11 @@ if ($f === 'res') {
         $extra['up']     = round($ubytes * 8 / $uliq / 1e6, 2);
         $extra['ubytes'] = (int) $ubytes;
         $extra['useg']   = round($uliq, 3);
+    } elseif (($_REQUEST['uerro'] ?? '') !== '') {
+        // Em que passo o upload morreu ("montagem" = a string do payload não
+        // foi montada; "envio" = o /tool fetch recusou). Sem isto a falha
+        // sumia dentro do on-error e o painel só mostrava um traço.
+        $extra['uerro'] = mb_substr((string) $_REQUEST['uerro'], 0, 20);
     }
 
     // O ping vem como os tempos de cada pacote separados por vírgula, do jeito

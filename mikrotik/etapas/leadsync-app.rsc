@@ -410,16 +410,17 @@
     #   2) o /tool fetch e uma linha de execucao so, e o TLS e feito em
     #      software. Um fluxo nao usa os 4 threads do aparelho.
     #
-    # Varias conexoes atacam os dois: somam janelas e espalham o TLS pelos
-    # nucleos. Se o resultado subir mais ou menos na proporcao das conexoes, o
-    # limite era a janela; se empacar, era CPU — e o proximo passo seria o
-    # /tool speed-test contra um RouterOS nosso, que e multi-conexao nativo.
+    # MEDIDO EM 11/08/2026: quatro conexoes deram 40 MB em 10,3 s = 31 Mbps,
+    # contra 26 Mbps de uma conexao so. Quadruplicar os fluxos rendeu 18%.
+    # Portanto NAO era a janela TCP: e teto de CPU deste aparelho fazendo TLS em
+    # software. Por isso o $cpu abaixo — sem ele a conversa vira chute.
     #
     # $pedido e o tamanho de CADA fluxo, entao o total baixado e ns x pedido.
     # A conta continua a mesma no servidor: ele recebe o total em $bytes.
     :local ns 4
     :local bytes 0
     :local dur "0"
+    :local cpu 0
 
     :do {
       # :execute solta cada fetch em segundo plano e devolve o job. So existe no
@@ -432,10 +433,23 @@
       }
       # Espera os jobs acabarem. O teto de 60 s existe para um fetch pendurado
       # nao segurar a rodada inteira do leadsync.
+      #
+      # E de graca aproveitar esta espera para amostrar a CPU: como os fetch
+      # rodam em segundo plano, este laco esta livre. O maximo visto responde a
+      # unica pergunta que importa — se o aparelho saturou, o link e mais rapido
+      # que o numero medido e o teste chegou ao teto dele. E o mesmo aviso que o
+      # /tool speed-test da Mikrotik mostra quando a CPU bate 100%.
+      #
+      # Com 4 fluxos a leitura agregada serve: um fluxo so pegaria 1 das 4
+      # threads e marcaria ~25% mesmo saturado.
       :local guarda 0
       :while ([:len [/system script job find]] > $base && $guarda < 600) do={
         :delay 100ms
         :set guarda ($guarda + 1)
+        :do {
+          :local c [/system resource get cpu-load]
+          :if ($c > $cpu) do={ :set cpu $c }
+        } on-error={}
       }
       :set dur ([:timestamp] - $t0)
       # Bateu no teto = algum fluxo nao terminou, entao o total baixado e
@@ -497,22 +511,32 @@
     #
     # Bloco proprio com on-error: se o /tool fetch recusar um http-data desse
     # tamanho, o teste ainda reporta download e ping, e a tela so fica sem o
-    # numero de upload. Nao dobrar o tamanho sem medir a RAM livre do modelo.
+    # numero de upload.
+    #
+    # 11/08/2026: com 2 MB (64 x 2^15) o upload voltou VAZIO — o bloco caiu no
+    # on-error e ninguem soube por que. Duas mudancas por causa disso:
+    #   - 1 MB (64 x 2^14). Se o limite for do http-data, metade pode passar;
+    #     a 30 Mbps 1 MB ainda leva 0,27 s, o suficiente para medir.
+    #   - $uerro separado, para a falha aparecer no painel em vez de sumir. Sem
+    #     isto nao da para distinguir "o fetch recusou" de "a string nao montou".
     :local ubytes 0
     :local udur "0"
+    :local uerro "montagem"
     :do {
       :local pay "0123456789012345678901234567890123456789012345678901234567890123"
-      :for i from=1 to=15 do={ :set pay ($pay . $pay) }
+      :for i from=1 to=14 do={ :set pay ($pay . $pay) }
+      :set uerro "envio"
       :local u0 [:timestamp]
       /tool fetch url="https://speed.cloudflare.com/__up" http-method=post \
           check-certificate=no output=none \
           http-header-field="Content-Type: text/plain" http-data=$pay
       :set udur ([:timestamp] - $u0)
       :set ubytes [:len $pay]
+      :set uerro ""
     } on-error={ :set ubytes 0 }
 
     :do {
-      /tool fetch url=("https://captivedata.com.br/api/speed_rt.php?token=$token&roteador=$ident&f=res&bytes=$bytes&dur=$dur&over=$over&ping=$rtt&ubytes=$ubytes&udur=$udur&conex=$ns&erro=$erro") \
+      /tool fetch url=("https://captivedata.com.br/api/speed_rt.php?token=$token&roteador=$ident&f=res&bytes=$bytes&dur=$dur&over=$over&ping=$rtt&ubytes=$ubytes&udur=$udur&conex=$ns&cpu=$cpu&uerro=$uerro&erro=$erro") \
           check-certificate=no output=none
     } on-error={}
   }
