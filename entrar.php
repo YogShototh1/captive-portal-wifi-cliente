@@ -16,15 +16,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Força bruta: muitas falhas deste IP na última janela.
         $erro = 'Muitas tentativas. Aguarde alguns minutos e tente de novo.';
     } else {
-        $email = trim($_POST['email'] ?? '');
-        $senha = (string) ($_POST['senha'] ?? '');
-        if (tentar_login($email, $senha)) {
+        // Aceita e-mail OU nome no mesmo campo (ver tentar_login).
+        $usuario = trim($_POST['usuario'] ?? $_POST['email'] ?? '');
+        $senha   = (string) ($_POST['senha'] ?? '');
+        if (tentar_login($usuario, $senha)) {
             login_limpar_falhas($ipLogin);
             header('Location: ' . (is_admin() ? 'admin.php' : 'painel.php'));
             exit;
         }
         login_registrar_falha($ipLogin);
-        $erro = 'E-mail ou senha inválidos.';
+        $erro = 'Usuário ou senha inválidos.';
     }
 }
 $csrf = csrf_token();
@@ -70,8 +71,11 @@ $csrf = csrf_token();
                     <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
 
                     <div class="lp-field">
-                        <svg class="lp-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-                        <input type="email" name="email" required placeholder="E-mail" aria-label="E-mail">
+                        <svg class="lp-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        <?php /* type="text", não "email": o navegador recusaria um
+                                 nome sem "@" antes de o formulário sair daqui. */ ?>
+                        <input type="text" name="usuario" required placeholder="E-mail ou nome"
+                               aria-label="E-mail ou nome" autocomplete="username" spellcheck="false">
                     </div>
 
                     <div class="lp-field">
@@ -89,14 +93,14 @@ $csrf = csrf_token();
     </main>
 
     <script>
-    // Foco no e-mail SEM rolar: o atributo autofocus fazia o navegador rolar o
-    // documento (dentro do iframe da casca) antes da centralização assentar, e
-    // o cartão aparecia deslocado para cima. preventScroll evita; e zeramos
-    // qualquer rolagem residual do carregamento.
+    // Foco no primeiro campo SEM rolar: o atributo autofocus fazia o navegador
+    // rolar o documento (dentro do iframe da casca) antes da centralização
+    // assentar, e o cartão aparecia deslocado para cima. preventScroll evita; e
+    // zeramos qualquer rolagem residual do carregamento.
     (function () {
         window.scrollTo(0, 0);
-        var email = document.querySelector('input[name="email"]');
-        if (email) { try { email.focus({ preventScroll: true }); } catch (e) {} }
+        var usuario = document.querySelector('input[name="usuario"]');
+        if (usuario) { try { usuario.focus({ preventScroll: true }); } catch (e) {} }
     })();
     </script>
     <?php require __DIR__ . '/inc/tema.php'; ?>

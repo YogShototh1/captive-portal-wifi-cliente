@@ -66,23 +66,73 @@ function exigir_login(): array
     return $c;
 }
 
-function tentar_login(string $email, string $senha): bool
+// De uma lista de contas candidatas (mesmo nome, ou nome de uma batendo com o
+// e-mail de outra), a que a senha abre. Fora do tentar_login por ser a única
+// parte que dá para testar sem banco — é ela que decide quem entra.
+//
+// A ordem da lista importa e vem do ORDER BY da consulta: dono do e-mail
+// primeiro. Duas contas só empatariam aqui se tivessem a MESMA senha, e nesse
+// caso não existe resposta certa; o que não pode é ser aleatório.
+function escolher_conta(array $rows, string $senha): ?array
 {
-    $q = db()->prepare('SELECT id, senha_hash FROM compradores WHERE email = ?');
-    $q->execute([$email]);
-    $row = $q->fetch();
-    // Sempre verifica um hash (dummy quando o e-mail não existe): o tempo de
-    // resposta fica igual e não dá para descobrir quais e-mails têm conta.
-    $hash = $row ? (string) $row['senha_hash']
-                 : '$2y$10$usesomesillystringfore7hnbRJHxXVLeakoG8K30oukPsA.ztMG';
-    $ok = password_verify($senha, $hash);
-    if (!$row || !$ok) {
+    foreach ($rows as $r) {
+        if (isset($r['senha_hash']) && password_verify($senha, (string) $r['senha_hash'])) {
+            return $r;
+        }
+    }
+    return null;
+}
+
+// Login por e-mail OU nome.
+//
+// O nome NÃO é único na tabela (só o e-mail é), então a busca pode devolver
+// mais de uma conta. Por isso não se escolhe "a primeira": testa-se a senha em
+// cada candidata e entra quem casar. Duas contas de mesmo nome só colidiriam de
+// verdade se tivessem também a mesma senha — e aí não há resposta certa mesmo.
+//
+// O e-mail vem antes no ORDER BY: se alguém tiver como NOME o e-mail de outra
+// conta, quem é dono do e-mail ganha.
+function tentar_login(string $login, string $senha): bool
+{
+    $login = trim($login);
+    if ($login === '' || $senha === '') {
         return false;
     }
+
+    $rows = [];
+    try {
+        // LIMIT 5: um nome repetido cinco vezes já é caso para o admin
+        // arrumar, e o teto impede que um nome comum vire trabalho de verificar
+        // dezenas de hashes (bcrypt é caro de propósito).
+        $q = db()->prepare(
+            'SELECT id, senha_hash FROM compradores
+              WHERE email = ? OR nome = ?
+              ORDER BY (email = ?) DESC, id ASC
+              LIMIT 5'
+        );
+        $q->execute([$login, $login, $login]);
+        $rows = $q->fetchAll();
+    } catch (Throwable $e) {
+        $rows = [];
+    }
+
+    // Sempre verifica pelo menos um hash (dummy quando não há candidata): o
+    // tempo de resposta fica igual e não dá para descobrir quais e-mails ou
+    // nomes têm conta.
+    if (!$rows) {
+        password_verify($senha, '$2y$10$usesomesillystringfore7hnbRJHxXVLeakoG8K30oukPsA.ztMG');
+        return false;
+    }
+
+    $achou = escolher_conta($rows, $senha);
+    if (!$achou) {
+        return false;
+    }
+
     sessao_iniciar();
     session_regenerate_id(true);
     unset($_SESSION['csrf']); // novo token CSRF para a sessão autenticada
-    $_SESSION['comprador_id'] = (int) $row['id'];
+    $_SESSION['comprador_id'] = (int) $achou['id'];
     return true;
 }
 
