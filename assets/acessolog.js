@@ -44,25 +44,66 @@
         if (d) copiarTexto(d.textContent, c);
     });
 
-    var carregou = false;
+    // --- Recorte por data ---------------------------------------------------
+    // Ao abrir: "de" na data do registro mais antigo e "até" hoje, ou seja, o
+    // período inteiro já preenchido. O servidor manda a data mais antiga junto
+    // com a primeira página (campo `primeira`), porque só ele sabe qual é.
+    var elDe  = document.getElementById('log-de');
+    var elAte = document.getElementById('log-ate');
+    var elFil = document.getElementById('log-filtrar');
+    var elTudo = document.getElementById('log-tudo');
+    var elExp = document.getElementById('log-exportar');
+    var primeira = null;
+
+    function hoje() {
+        var d = new Date();
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+    function periodo() {
+        var q = '';
+        if (elDe && elDe.value)  { q += '&de='  + encodeURIComponent(elDe.value); }
+        if (elAte && elAte.value) { q += '&ate=' + encodeURIComponent(elAte.value); }
+        return q;
+    }
+
     function carregar(pagina) {
         out.innerHTML = '<p class="pc-anuncio-desc">Carregando…</p>';
         if (nav) nav.innerHTML = '';
-        fetch(EP + (EP.indexOf('?') >= 0 ? '&' : '?') + 'pagina=' + (pagina || 1) + '&por_pagina=50',
+        fetch(EP + (EP.indexOf('?') >= 0 ? '&' : '?') + 'pagina=' + (pagina || 1) + '&por_pagina=50' + periodo(),
               { credentials: 'same-origin', cache: 'no-store' })
             .then(function (r) { return r.json(); })
             .then(function (d) {
                 if (!d || !d.ok) { out.innerHTML = '<p class="pc-anuncio-desc">Erro ao carregar o log.</p>'; return; }
-                if (!d.log || !d.log.length) { out.innerHTML = '<p class="pc-anuncio-desc">Nenhum acesso registrado ainda. (o roteador precisa estar com o leadsync novo e ter tráfego)</p>'; return; }
-                var html = '<div class="pc-conex-head pc-log-head"><span>Data e hora</span><span>Cliente</span><span>IP</span><span>Destino</span><span>Serviço</span><span>Aparelho</span></div><ul class="pc-conex-list">';
+
+                // Primeira resposta manda a data mais antiga: preenche os campos
+                // só desta vez, para não desfazer o que o admin escolher depois.
+                if (primeira === null && d.primeira) {
+                    primeira = d.primeira;
+                    if (elDe  && !elDe.value)  { elDe.value  = d.primeira; }
+                    if (elAte && !elAte.value) { elAte.value = hoje(); }
+                    if (elDe)  { elDe.min  = d.primeira; }
+                    if (elAte) { elAte.max = hoje(); }
+                }
+
+                if (!d.log || !d.log.length) {
+                    out.innerHTML = '<p class="pc-anuncio-desc">' +
+                        (periodo() ? 'Nenhum acesso neste período.'
+                                   : 'Nenhum acesso registrado ainda. (o roteador precisa estar com o leadsync novo e ter tráfego)') +
+                        '</p>';
+                    if (elExp) { elExp.disabled = true; }
+                    return;
+                }
+                if (elExp) { elExp.disabled = false; }
+
+                var html = '<div class="pc-log-head"><span>Data e hora</span><span>Cliente</span><span>IP</span><span>Destino</span><span>Serviço</span><span>Aparelho</span></div><ul class="pc-log-list">';
                 d.log.forEach(function (a) {
                     var destino = (a.host && a.host !== '') ? esc(a.host) : esc(a.ip_destino);
                     html += '<li class="pc-log-row"><span class="pc-conex-data">' + fmtData(a.visto_em) + '</span>' +
                             '<span class="pc-log-cli">' + waLabel(a.telefone, a.nome) + '</span>' +
-                            '<span class="pc-conex-ap">' + esc(a.ip_cliente || '—') + '</span>' +
+                            '<span class="pc-log-ip">' + esc(a.ip_cliente || '—') + '</span>' +
                             '<span class="pc-acesso-dst-cel"><span class="pc-acesso-dst" title="' + esc(a.ip_destino) + '">' + destino + '</span>' + COPIA_BTN + '</span>' +
                             '<span class="pc-acesso-org">' + esc(a.org || '—') + '</span>' +
-                            '<span class="pc-conex-ap">' + esc(a.dispositivo || '—') + '</span></li>';
+                            '<span class="pc-log-ap">' + esc(a.dispositivo || '—') + '</span></li>';
                 });
                 out.innerHTML = html + '</ul>';
                 if (nav && d.paginas > 1) {
@@ -74,6 +115,23 @@
                 }
             })
             .catch(function () { out.innerHTML = '<p class="pc-anuncio-desc">Erro ao carregar o log.</p>'; });
+    }
+
+    if (elFil)  { elFil.addEventListener('click', function () { carregar(1); }); }
+    if (elTudo) {
+        elTudo.addEventListener('click', function () {
+            if (elDe)  { elDe.value  = primeira || ''; }
+            if (elAte) { elAte.value = hoje(); }
+            carregar(1);
+        });
+    }
+    if (elExp) {
+        // Baixa o MESMO recorte que está na tela, sem paginação. Navegação
+        // direta em vez de fetch: assim o navegador cuida do download e do nome
+        // do arquivo, que é o que o Content-Disposition manda.
+        elExp.addEventListener('click', function () {
+            location.href = EP + (EP.indexOf('?') >= 0 ? '&' : '?') + 'f=csv' + periodo();
+        });
     }
 
     if (nav) {
@@ -88,7 +146,6 @@
     function abrir() {
         if (RES) { fetch(RES, { credentials: 'same-origin' }).then(function () { carregar(1); }).catch(function () { carregar(1); }); }
         else carregar(1);
-        carregou = true;
     }
     var item = document.querySelector('.pc-side-item[data-aba="log"]');
     if (item) item.addEventListener('click', abrir);

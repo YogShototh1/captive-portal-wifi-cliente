@@ -108,7 +108,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Leads — <?= h($cliente['nome'] ?: $cliente['email']) ?></title>
     <link rel="icon" href="assets/logo-icone.png?v=1" type="image/png">
-    <link rel="stylesheet" href="assets/style.css?v=121">
+    <link rel="stylesheet" href="assets/style.css?v=122">
 </head>
 <body class="painel-cliente">
     <!-- Camadas de fundo (decorativas) -->
@@ -687,6 +687,13 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                         <div class="pc-dst" id="acessolog-box" data-endpoint="api/acessos_log.php?<?= $rotAtivo !== null ? 'roteador=' . urlencode($rotAtivo) : '' ?>" data-resolver="api/resolver.php">
                             <h2 class="pc-anuncio-title">Log de acessos</h2>
                             <p class="pc-anuncio-desc">Destinos (IP) acessados por cada aparelho, do mais recente para o mais antigo. Uso interno / forense — o comprador não vê isto. Domínio por reverse-DNS quando disponível.</p>
+                            <div class="pc-log-filtro">
+                                <label>De <input type="date" id="log-de"></label>
+                                <label>Até <input type="date" id="log-ate"></label>
+                                <button type="button" class="pc-btn" id="log-filtrar">Filtrar</button>
+                                <button type="button" class="pc-btn" id="log-tudo">Todo o período</button>
+                                <button type="button" class="pc-btn pc-log-exp" id="log-exportar">Exportar para Excel</button>
+                            </div>
                             <div class="pc-acesso-list" id="acessolog-lista"></div>
                             <div id="acessolog-nav"></div>
                         </div>
@@ -767,7 +774,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <script src="assets/alertas.js?v=3"></script>
     <script src="assets/dashboard.js?v=10"></script>
     <script src="assets/dashgeral.js?v=14"></script>
-    <script src="assets/acessolog.js?v=3"></script>
+    <script src="assets/acessolog.js?v=4"></script>
     <script src="assets/estatisticas.js?v=8"></script>
     <script src="assets/speedtest.js?v=6"></script>
     <script src="assets/leads-live.js?v=30"></script>
