@@ -804,6 +804,8 @@ a.pc-pag-btn:hover { background: rgba(34,211,238, 0.2); border-color: #22d3ee; c
 }
 .painel-cliente .sp-unidade { fill: rgba(255,255,255,.5); font-size: 12px; font-weight: 600; font-family: inherit; }
 
+.painel-cliente .sp-nota { font-size: 12.5px; opacity: .78; margin-top: -4px; }
+
 /* Banda contratada, logo abaixo do ponteiro: o mesmo resultado em bits, que é
    a unidade em que a operadora vende o link. */
 .painel-cliente .sp-banda {

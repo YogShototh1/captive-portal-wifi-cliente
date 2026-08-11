@@ -131,6 +131,18 @@ $up = round(2097152 * 8 / 1.6 / 1e6, 2);
 $ok(abs($up - 10.49) < 0.05, '2 MB em 1,6s = 10,49 Mbps de upload', $up);
 
 // ---------------------------------------------------------------
+// Varias conexoes em paralelo: o roteador manda o TOTAL baixado (ns x pedido),
+// entao a conta e a mesma. O que muda e o teto que da para enxergar — um fluxo
+// so nao passa de janela_TCP / RTT, e era isso que travava em ~40 Mbps.
+echo "\nconexoes em paralelo\n";
+$ns = 4;
+$total = $ns * 10e6;                       // 4 fluxos de 10 MB = 40 MB
+$mbps  = round($total * 8 / 8.1 / 1e6, 2); // mesmos 8,1 s do teste de 1 fluxo
+$ok(abs($mbps - 39.51) < 0.05, '4 x 10 MB em 8,1s = 39,51 Mbps (link saturado)', $mbps);
+$mbps = round($total * 8 / 2.02 / 1e6, 2);
+$ok(abs($mbps - 158.42) < 0.05, 'e em 2,02s = 158,42 Mbps (era a janela, nao o link)', $mbps);
+
+// ---------------------------------------------------------------
 // O /ping do RouterOS NAO devolve avg-rtt no as-value: devolve uma lista, um
 // item por pacote. A media e feita aqui.
 echo "\nmedia dos tempos de cada pacote\n";

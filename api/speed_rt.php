@@ -84,6 +84,11 @@ if ($f === 'res') {
         $extra['bytes'] = (int) $bytes;
         $extra['seg']   = round($liq, 3);
         if ($over !== null) { $extra['setup'] = round($over, 3); }
+        // Quantos fluxos rodaram em paralelo. Importa na leitura: um fluxo só
+        // mede a janela TCP dividida pelo RTT, não o link. 1 = o roteador é
+        // RouterOS 6 (sem :execute) ou o paralelo falhou e caiu no fallback.
+        $conex = (int) ($_REQUEST['conex'] ?? 0);
+        if ($conex > 0) { $extra['conex'] = $conex; }
     }
 
     // Upload: o roteador manda um payload de tamanho conhecido para o /__up da

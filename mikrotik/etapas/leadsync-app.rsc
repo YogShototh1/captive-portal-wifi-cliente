@@ -395,17 +395,67 @@
     } on-error={}
     :local over ([:timestamp] - $o0)
 
-    :local t0 [:timestamp]
-    :do {
-      /tool fetch url=("https://speed.cloudflare.com/__down?bytes=$bytesAlvo") \
-          check-certificate=no output=none
-    } on-error={ :set erro "download" }
-    :local dur ([:timestamp] - $t0)
-
-    # Baixou inteiro? Entao sao os bytes pedidos. Se deu erro no meio, nao ha
-    # tamanho confiavel e o painel mostra a falha em vez de um numero inventado.
+    # ---- Por que VARIAS conexoes ao mesmo tempo ----------------------------
+    #
+    # Uma conexao so media ~40 Mbps num link de 400 (medido com o Ookla, pelo
+    # PC, atras deste mesmo roteador). Nao e o roteador que limita: o hEX Gr3
+    # (MT7621A, 880 MHz, 2 nucleos / 4 threads) roteia 1802 Mbps de fast path.
+    # O que limita e ESTE teste, por dois motivos que somam:
+    #
+    #   1) janela TCP x distancia. Um unico fluxo TCP nao passa de
+    #      janela / RTT. Com ~22 ms ate o PoP da Cloudflare e a janela padrao,
+    #      da algo perto de 40 Mbps — que foi exatamente o que apareceu. O
+    #      Ookla escolhe um servidor do proprio provedor (RTT de poucos ms) E
+    #      abre varios fluxos; por isso ele ve 409.
+    #   2) o /tool fetch e uma linha de execucao so, e o TLS e feito em
+    #      software. Um fluxo nao usa os 4 threads do aparelho.
+    #
+    # Varias conexoes atacam os dois: somam janelas e espalham o TLS pelos
+    # nucleos. Se o resultado subir mais ou menos na proporcao das conexoes, o
+    # limite era a janela; se empacar, era CPU — e o proximo passo seria o
+    # /tool speed-test contra um RouterOS nosso, que e multi-conexao nativo.
+    #
+    # $pedido e o tamanho de CADA fluxo, entao o total baixado e ns x pedido.
+    # A conta continua a mesma no servidor: ele recebe o total em $bytes.
+    :local ns 4
     :local bytes 0
-    :if ($erro = "") do={ :set bytes $bytesAlvo }
+    :local dur "0"
+
+    :do {
+      # :execute solta cada fetch em segundo plano e devolve o job. So existe no
+      # RouterOS 7; no 6 isto levanta erro e cai no caminho de uma conexao so,
+      # logo abaixo.
+      :local base [:len [/system script job find]]
+      :local t0 [:timestamp]
+      :for i from=1 to=$ns do={
+        :execute script=(":do { /tool fetch url=\"https://speed.cloudflare.com/__down?bytes=$bytesAlvo\" check-certificate=no output=none } on-error={}")
+      }
+      # Espera os jobs acabarem. O teto de 60 s existe para um fetch pendurado
+      # nao segurar a rodada inteira do leadsync.
+      :local guarda 0
+      :while ([:len [/system script job find]] > $base && $guarda < 600) do={
+        :delay 100ms
+        :set guarda ($guarda + 1)
+      }
+      :set dur ([:timestamp] - $t0)
+      # Bateu no teto = algum fluxo nao terminou, entao o total baixado e
+      # desconhecido e o numero seria inventado.
+      :if ($guarda < 600) do={ :set bytes ($ns * $bytesAlvo) }
+    } on-error={ :set bytes 0 }
+
+    # Caminho antigo, de uma conexao so: RouterOS 6, ou o paralelo falhou.
+    # Melhor um numero baixo que numero nenhum.
+    :if ($bytes = 0) do={
+      :set ns 1
+      :set erro ""
+      :local t1 [:timestamp]
+      :do {
+        /tool fetch url=("https://speed.cloudflare.com/__down?bytes=$bytesAlvo") \
+            check-certificate=no output=none
+      } on-error={ :set erro "download" }
+      :set dur ([:timestamp] - $t1)
+      :if ($erro = "") do={ :set bytes $bytesAlvo }
+    }
 
     # Ping ate um destino externo: mede a latencia da internet da loja, nao a
     # do caminho ate o painel.
@@ -462,7 +512,7 @@
     } on-error={ :set ubytes 0 }
 
     :do {
-      /tool fetch url=("https://captivedata.com.br/api/speed_rt.php?token=$token&roteador=$ident&f=res&bytes=$bytes&dur=$dur&over=$over&ping=$rtt&ubytes=$ubytes&udur=$udur&erro=$erro") \
+      /tool fetch url=("https://captivedata.com.br/api/speed_rt.php?token=$token&roteador=$ident&f=res&bytes=$bytes&dur=$dur&over=$over&ping=$rtt&ubytes=$ubytes&udur=$udur&conex=$ns&erro=$erro") \
           check-certificate=no output=none
     } on-error={}
   }

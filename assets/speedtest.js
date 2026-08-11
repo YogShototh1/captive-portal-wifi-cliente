@@ -154,6 +154,9 @@
                     if (x.down != null)  { det.push(num(x.down) + ' Mbps de banda'); }
                     if (x.up != null)    { det.push('subiu a ' + num(mbs(x.up)) + ' MB/s (' + num(x.up) + ' Mbps)'); }
                     if (x.ping != null)  { det.push(Math.round(x.ping) + ' ms de ping'); }
+                    // Uma conexao so mede a janela TCP dividida pelo RTT, nao o
+                    // link — vale registrar quantos fluxos deram aquele numero.
+                    if (x.conex != null) { det.push(x.conex + (x.conex > 1 ? ' conexões' : ' conexão')); }
                     if (x.bytes != null && x.seg != null) {
                         det.push('baixou ' + Math.round(x.bytes / 1e6) + ' MB em ' +
                                  x.seg.toFixed(1).replace('.', ',') + ' s');
