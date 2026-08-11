@@ -249,6 +249,9 @@
             .then(function (d) {
                 if (!d || !d.ok) { erro((d && d.erro) || 'Erro ao consultar.'); return; }
                 render(d);
+                // Deu certo: sai da escolha e mostra os hábitos. Erro fica na
+                // tela de escolha, junto do campo que o cliente acabou de usar.
+                mostrarResultado(true);
             })
             .catch(function () { erro('Erro ao consultar. Tente de novo.'); })
             .then(function () { btn.disabled = false; btn.textContent = txt; });
@@ -256,6 +259,129 @@
 
     btn.addEventListener('click', consultar);
     inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); consultar(); } });
+
+    // ================= Grade de contatos =================
+    // Um "aparelho" por contato, 30 por página. A moldura é a mesma do modal de
+    // personalização (.cm-fone e companhia), só que pequena e sem iframe: aqui
+    // dentro da tela vai o nome/número, não uma página.
+    var escolha = document.getElementById('dash-escolha');
+    var painel  = document.getElementById('dash-painel');
+    var grade   = document.getElementById('dash-grade');
+    var nav     = document.getElementById('dash-nav');
+    var voltar  = document.getElementById('dash-voltar');
+    var pagAtual = 1, filtroAtual = '', carregou = false;
+
+    function mostrarResultado(sim) {
+        if (!escolha || !painel) return;
+        escolha.hidden = !!sim;
+        painel.hidden  = !sim;
+    }
+
+    function fmtData(s) {
+        var m = String(s == null ? '' : s).match(/^(\d{4})-(\d{2})-(\d{2})/);
+        return m ? m[3] + '/' + m[2] + '/' + m[1] : '';
+    }
+
+    function fone(l) {
+        var nome = (l.nome != null && l.nome !== '') ? String(l.nome) : '';
+        var data = fmtData(l.ultima);
+        // Com nome: nome em cima, número menor, data menor. Sem nome: número em
+        // cima e a data menor embaixo.
+        var dentro = nome
+            ? '<span class="fone-nome">' + esc(nome) + '</span>'
+              + '<span class="fone-tel">' + esc(l.telefone) + '</span>'
+              + (data ? '<span class="fone-data">' + data + '</span>' : '')
+            : '<span class="fone-nome">' + esc(l.telefone) + '</span>'
+              + (data ? '<span class="fone-data">' + data + '</span>' : '');
+        return '<button type="button" class="pc-fone-card" data-tel="' + esc(l.telefone) + '"'
+             + ' title="' + esc(nome ? nome + ' — ' + l.telefone : l.telefone) + '">'
+             + '<span class="cm-fone">'
+             +   '<span class="cm-btn-lat cm-btn-sil"></span>'
+             +   '<span class="cm-btn-lat cm-btn-vol1"></span>'
+             +   '<span class="cm-btn-lat cm-btn-vol2"></span>'
+             +   '<span class="cm-btn-lat cm-btn-pwr"></span>'
+             +   '<span class="cm-tela"><span class="cm-ilha"></span>'
+             +     '<span class="fone-txt">' + dentro + '</span>'
+             +     '<span class="cm-home"></span></span>'
+             + '</span></button>';
+    }
+
+    function carregarGrade(pagina) {
+        if (!grade) return;
+        pagAtual = pagina || 1;
+        grade.innerHTML = '<p class="pc-anuncio-desc">Carregando…</p>';
+        if (nav) nav.innerHTML = '';
+        var q = EP + (EP.indexOf('?') >= 0 ? '&' : '?') + 'f=lista&pagina=' + pagAtual
+              + (filtroAtual ? '&q=' + encodeURIComponent(filtroAtual) : '');
+        fetch(q, { credentials: 'same-origin', cache: 'no-store' })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                if (!d || !d.ok) { grade.innerHTML = '<p class="pc-anuncio-desc">Erro ao carregar os contatos.</p>'; return; }
+                if (!d.leads || !d.leads.length) {
+                    grade.innerHTML = '<p class="pc-anuncio-desc">'
+                        + (filtroAtual ? 'Nenhum contato com esse número ou nome.' : 'Nenhum lead ainda.')
+                        + '</p>';
+                    return;
+                }
+                grade.innerHTML = d.leads.map(fone).join('');
+                if (nav && d.paginas > 1) {
+                    nav.innerHTML = '<div class="pc-conex-nav">'
+                        + (d.pagina > 1 ? '<button type="button" class="pc-conex-seta" data-pag="' + (d.pagina - 1) + '" aria-label="Página anterior">&lsaquo;</button>' : '')
+                        + '<span class="pc-pag-gap">' + d.pagina + '/' + d.paginas + '</span>'
+                        + (d.pagina < d.paginas ? '<button type="button" class="pc-conex-seta" data-pag="' + (d.pagina + 1) + '" aria-label="Próxima página">&rsaquo;</button>' : '')
+                        + '</div>';
+                }
+            })
+            .catch(function () { grade.innerHTML = '<p class="pc-anuncio-desc">Erro ao carregar os contatos.</p>'; });
+    }
+
+    if (grade) {
+        grade.addEventListener('click', function (e) {
+            var c = e.target.closest ? e.target.closest('.pc-fone-card') : null;
+            if (!c) return;
+            inp.value = c.getAttribute('data-tel') || '';
+            consultar();
+        });
+    }
+    if (nav) {
+        nav.addEventListener('click', function (e) {
+            var s = e.target.closest ? e.target.closest('.pc-conex-seta') : null;
+            if (s) carregarGrade(parseInt(s.getAttribute('data-pag'), 10) || 1);
+        });
+    }
+    if (voltar) {
+        voltar.addEventListener('click', function () {
+            mostrarResultado(false);
+            erro(null);
+            res.innerHTML = '';
+        });
+    }
+
+    // Filtro: o servidor é que filtra (a grade mostra 30 de cada vez, então
+    // peneirar só a página aberta esconderia quem está nas outras). Espera a
+    // digitação parar para não disparar a cada tecla.
+    var tFiltro = null;
+    inp.addEventListener('input', function () {
+        if (!painel.hidden) return;   // resultado aberto: o campo não filtra nada
+        clearTimeout(tFiltro);
+        tFiltro = setTimeout(function () {
+            var v = (inp.value || '').trim();
+            if (v === filtroAtual) return;
+            filtroAtual = v;
+            carregarGrade(1);
+        }, 300);
+    });
+
+    // Carrega na 1ª vez que a aba abre (e recarrega a cada clique nela: leads
+    // novos entram sem recarregar a página).
+    function abrir() {
+        mostrarResultado(false);
+        carregarGrade(carregou ? pagAtual : 1);
+        carregou = true;
+    }
+    var item = document.querySelector('.pc-side-item[data-aba="informacoes"]');
+    if (item) item.addEventListener('click', abrir);
+    if ((location.hash || '').replace('#', '') === 'informacoes') abrir();
 
     // Chamado pela opção "Informações" do menu de contexto da tabela de leads.
     window.cdDashboardConsultar = function (tel) {

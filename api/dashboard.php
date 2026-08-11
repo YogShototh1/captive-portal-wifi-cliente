@@ -30,6 +30,61 @@ if ($isAdmin) {
     }
 }
 
+// --- Lista de leads para a grade de escolha (?f=lista) -------------------
+//
+// Mesma autenticação e o mesmo isolamento do resto do arquivo — por isso mora
+// aqui em vez de num endpoint novo: o bloco acima é tudo de que a lista
+// precisa.
+//
+// Agrupado por TELEFONE: o mesmo número pode ter um lead por roteador numa
+// conta com vários, e na tela é uma pessoa só (é assim que a consulta abaixo
+// também trata). 30 por página, que é o que a grade mostra.
+if ((string) ($_GET['f'] ?? '') === 'lista') {
+    if (!$lista) {
+        exit(json_encode(['ok' => true, 'leads' => [], 'pagina' => 1, 'paginas' => 1, 'total' => 0]));
+    }
+    $POR_PAG = 30;
+    $pagina  = max(1, (int) ($_GET['pagina'] ?? 1));
+    $ph      = implode(',', array_fill(0, count($lista), '?'));
+
+    // Busca por número OU nome. Escapa % e _ para o que o admin digita não
+    // virar curinga sem ele pedir.
+    $q    = trim((string) ($_GET['q'] ?? ''));
+    $cond = '';
+    $args = $lista;
+    if ($q !== '') {
+        $like = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\%', '\_'], mb_substr($q, 0, 40)) . '%';
+        $cond = ' AND (telefone LIKE ? OR nome LIKE ?)';
+        $args = array_merge($args, [$like, $like]);
+    }
+
+    try {
+        $qt = db()->prepare("SELECT COUNT(DISTINCT telefone) FROM leads WHERE roteador IN ($ph)$cond");
+        $qt->execute($args);
+        $total   = (int) $qt->fetchColumn();
+        $paginas = max(1, (int) ceil($total / $POR_PAG));
+        $pagina  = min($paginas, $pagina);
+
+        // MAX(nome): numa conta com vários roteadores só um dos registros costuma
+        // ter o apelido; MAX ignora NULL e traz o que existir.
+        $ql = db()->prepare(
+            "SELECT telefone, MAX(nome) AS nome, MAX(conectado_em) AS ultima
+               FROM leads WHERE roteador IN ($ph)$cond
+              GROUP BY telefone
+              ORDER BY ultima DESC
+              LIMIT $POR_PAG OFFSET " . (($pagina - 1) * $POR_PAG)
+        );
+        $ql->execute($args);
+        $leads = $ql->fetchAll();
+    } catch (Throwable $e) {
+        exit(json_encode(['ok' => true, 'leads' => [], 'pagina' => 1, 'paginas' => 1, 'total' => 0]));
+    }
+    exit(json_encode([
+        'ok' => true, 'leads' => $leads,
+        'pagina' => $pagina, 'paginas' => $paginas, 'total' => $total,
+    ]));
+}
+
 $tel = preg_replace('/\D+/', '', (string) ($_GET['telefone'] ?? ''));
 if (!$lista || strlen($tel) < 10) {
     http_response_code(422);

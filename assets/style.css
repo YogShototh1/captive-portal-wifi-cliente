@@ -2785,3 +2785,71 @@ html[data-tema] .painel-cliente .pc-hs-srv { color: var(--t-fg3); }
 #hs-prof code { font-size: 12px; padding: 1px 5px; border-radius: 4px; background: rgba(255,255,255,0.08); }
 html[data-tema="claro"] .pc-hs-alerta { color: #dc2626; }
 html[data-tema="claro"] #hs-prof code { background: rgba(15,23,42,0.07); }
+
+/* ── Grade de contatos da aba Informacoes ─────────────────────────────────── */
+/* A moldura e a mesma do modal de personalizacao (.cm-fone e companhia), mas
+   aqui em miniatura e SEM iframe: dentro da tela vai o nome/numero, nao uma
+   pagina. Por isso as medidas sao redeclaradas em vez de reaproveitar as de la,
+   que sao fixas em 414x868 e escaladas por JS. */
+.pc-info-desc { margin-bottom: 12px; }
+.pc-info-form { max-width: 520px; }
+.pc-info-voltar { margin-bottom: 18px; display: inline-flex; align-items: center; gap: 8px; }
+.pc-info-voltar svg { width: 15px; height: 15px; }
+
+/* 4 por linha, exatamente. Colunas do tamanho do aparelho (nao 1fr): com
+   auto-fill/1fr a grade enchia a largura e cabiam 7 por linha numa tela de
+   1280px. Em telas estreitas cai para 3 e depois 2. */
+.pc-fones {
+    display: grid; gap: 18px; margin-top: 16px;
+    grid-template-columns: repeat(4, 132px);
+    justify-content: start;
+}
+@media (max-width: 900px) { .pc-fones { grid-template-columns: repeat(3, 132px); } }
+@media (max-width: 620px) { .pc-fones { grid-template-columns: repeat(2, 132px); gap: 14px; } }
+.pc-fone-card {
+    padding: 0; border: none; background: none; cursor: pointer;
+    transition: transform .15s ease;
+}
+.pc-fone-card:hover { transform: translateY(-3px); }
+.pc-fone-card:focus-visible { outline: 2px solid #67e8f9; outline-offset: 6px; border-radius: 22px; }
+
+.pc-fones .cm-fone {
+    display: block; position: relative; width: 132px; height: 268px;
+    background: linear-gradient(160deg, #3a3d42, #17181b 42%, #26282c);
+    border-radius: 22px; padding: 5px;
+    box-shadow: 0 12px 26px -12px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,255,255,.14);
+}
+.pc-fones .cm-tela {
+    display: flex; align-items: center; justify-content: center;
+    position: relative; width: 122px; height: 258px;
+    border-radius: 18px; overflow: hidden;
+    background: linear-gradient(165deg, #f4f7fb, #dde5ef);
+}
+.pc-fones .cm-ilha {
+    position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
+    width: 40px; height: 11px; border-radius: 100px; background: #000;
+}
+.pc-fones .cm-home {
+    position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%);
+    width: 46px; height: 3px; border-radius: 100px; background: rgba(0,0,0,.3);
+}
+.pc-fones .cm-btn-lat { position: absolute; background: #2c2f34; border-radius: 2px; }
+.pc-fones .cm-btn-sil  { left: -1px; top: 38px;  width: 2px; height: 10px; }
+.pc-fones .cm-btn-vol1 { left: -1px; top: 55px;  width: 2px; height: 19px; }
+.pc-fones .cm-btn-vol2 { left: -1px; top: 78px;  width: 2px; height: 19px; }
+.pc-fones .cm-btn-pwr  { right: -1px; top: 64px; width: 2px; height: 30px; }
+
+/* O conteudo: sempre inteiro na tela, nunca cortado. O numero tem 11 digitos e
+   o nome pode ser longo, entao a quebra e por palavra e o nome limita em 3
+   linhas — cortar no meio de um numero seria pior que reduzir a fonte. */
+.pc-fones .fone-txt {
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
+    padding: 26px 8px 16px; text-align: center; width: 100%;
+}
+.pc-fones .fone-nome {
+    font-size: 13px; font-weight: 700; line-height: 1.25; color: #0f172a;
+    overflow-wrap: anywhere;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.pc-fones .fone-tel  { font-size: 11.5px; color: #475569; font-variant-numeric: tabular-nums; }
+.pc-fones .fone-data { font-size: 10.5px; color: #64748b; }

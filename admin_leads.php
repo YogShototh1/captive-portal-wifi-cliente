@@ -108,7 +108,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Leads — <?= h($cliente['nome'] ?: $cliente['email']) ?></title>
     <link rel="icon" href="assets/logo-icone.png?v=1" type="image/png">
-    <link rel="stylesheet" href="assets/style.css?v=124">
+    <link rel="stylesheet" href="assets/style.css?v=125">
 </head>
 <body class="painel-cliente">
     <!-- Camadas de fundo (decorativas) -->
@@ -362,16 +362,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                 <div class="glow-card pc-dst-card">
                     <span class="glow-fx" aria-hidden="true"></span>
                     <div class="glow-body">
-                        <div class="pc-dst" id="dashboard-box" data-endpoint="api/dashboard.php?<?= $rotAtivo !== null ? 'roteador=' . urlencode($rotAtivo) : 'cliente_id=' . (int) $id ?>">
-                            <h2 class="pc-anuncio-title">Informações do lead</h2>
-                            <p class="pc-anuncio-desc">Digite o número de um lead para ver os hábitos de visita dele — ou clique com o botão direito num lead na aba Painel e escolha "Informações".</p>
-                            <div class="pc-dst-form">
-                                <input type="tel" id="dash-tel" class="pc-dst-input" inputmode="numeric" placeholder="48999999999" aria-label="Número do lead">
-                                <button type="button" class="pc-btn-primary" id="dash-consultar">Consultar</button>
-                            </div>
-                            <p class="pc-anuncio-msg err" id="dash-erro" style="display:none"></p>
-                            <div id="dash-resultado"></div>
-                        </div>
+                        <?php $infoEndpoint = 'api/dashboard.php?' . ($rotAtivo !== null ? 'roteador=' . urlencode($rotAtivo) : 'cliente_id=' . (int) $id) . ''; require __DIR__ . '/inc/info_tela.php'; ?>
                     </div>
                 </div>
             </section>
@@ -779,7 +770,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <script src="assets/ig.js?v=3"></script>
     <script src="assets/relatorio.js?v=17"></script>
     <script src="assets/alertas.js?v=3"></script>
-    <script src="assets/dashboard.js?v=10"></script>
+    <script src="assets/dashboard.js?v=11"></script>
     <script src="assets/dashgeral.js?v=14"></script>
     <script src="assets/acessolog.js?v=4"></script>
     <script src="assets/estatisticas.js?v=8"></script>
