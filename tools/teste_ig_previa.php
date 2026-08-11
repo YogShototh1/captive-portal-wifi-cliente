@@ -37,7 +37,7 @@ $CFG = [
     'cores'  => ['bg'=>'#fff','card'=>'#fff','fg'=>'#000','fg2'=>'#666',
                  'btn'=>'#c13584','btn2'=>'#833ab4','btnfg'=>'#fff','border'=>'#eee'],
     // logo e copiar DESLIGADOS: e assim que o elemento sumia do HTML
-    'estilo' => ['logo'=>0,'cartao'=>1,'sombra'=>1,'manchas'=>1,'grad'=>1,'redondo'=>1,'copiar'=>0],
+    'estilo' => ['logo'=>0,'logoredonda'=>0,'cartao'=>1,'sombra'=>1,'manchas'=>1,'grad'=>1,'redondo'=>1,'copiar'=>0],
 ];
 function h($s) { return htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8'); }
 function ig_get_hash($h) { global $CFG; return $CFG; }
@@ -89,6 +89,43 @@ foreach (['id="cd-logo"' => 'logo', 'id="copiar"' => 'botao copiar @', 'id="cd-r
     $ok(strpos($real2, $alvo) !== false, "$nome ligado chega ao cliente");
 }
 $ok(strpos($real2, 'MINHA LOJA') !== false, 'o texto do rodape chega ao cliente');
+
+// ---------------------------------------------------------------
+// O <html> da pagina REAL tem que sair com as mesmas classes que a previa
+// aplica por postMessage. Sem isto, degrade e sombra existiam so no modal.
+echo "\nas classes cd-* saem no <html> da pagina real\n";
+$ok(strpos($real2, 'cd-grad') !== false,   'degrade ligado vira cd-grad');
+$ok(strpos($real2, 'cd-sombra') !== false, 'sombra ligada vira cd-sombra');
+$CFG['estilo']['grad'] = 0;
+$CFG['estilo']['redondo'] = 0;
+$semGrad = render($src, ['r' => $hash]);
+$ok(strpos($semGrad, 'cd-no-grad') !== false,    'degrade desligado vira cd-no-grad');
+$ok(strpos($semGrad, ' cd-grad') === false && strpos($semGrad, '"cd-grad') === false,
+    'e cd-grad nao sobra junto');
+$ok(strpos($semGrad, 'cd-no-redondo') !== false, 'cantos retos viram cd-no-redondo');
+$CFG['estilo']['grad'] = 1;
+$CFG['estilo']['redondo'] = 1;
+
+// ---------------------------------------------------------------
+// Logo redonda: unica flag que nasce DESLIGADA, entao o CSS esta escrito no
+// negativo (:not). Ligar tem que TIRAR a classe, nao por.
+echo "\nlogo redonda\n";
+// Olhar so o class= do <html>: o nome cd-no-logoredonda tambem aparece dentro
+// do CSS (no :not), e procurar na pagina inteira daria falso positivo.
+$classeHtml = function (string $html): string {
+    preg_match('/<html[^>]*class="([^"]*)"/', $html, $m);
+    return $m[1] ?? '';
+};
+$comRedonda = render($src, ['r' => $hash]);
+$ok(strpos($classeHtml($comRedonda), 'cd-no-logoredonda') !== false,
+    'desligada, a classe esta no <html> (logo inteira)', $classeHtml($comRedonda));
+$ok(strpos($comRedonda, 'html:not(.cd-no-logoredonda) #cd-logo{border-radius:50%') !== false,
+    'e o CSS do recorte circular esta na pagina');
+$CFG['estilo']['logoredonda'] = 1;
+$ligada = render($src, ['r' => $hash]);
+$ok(strpos($classeHtml($ligada), 'cd-no-logoredonda') === false,
+    'ligada, a classe SAI do <html> e o :not passa a valer', $classeHtml($ligada));
+$ok(strpos($ligada, 'id="cd-logo"') !== false, 'e a logo continua no HTML');
 
 echo "\n" . ($falhas ? "$falhas FALHA(S)\n" : "tudo certo\n");
 exit($falhas ? 1 : 0);

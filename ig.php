@@ -71,10 +71,23 @@ $destino = $p !== ''
     ? 'https://www.instagram.com/' . $p . '/?ig_mid=' . $mid . '&utm_source=igweb'
     : '#';
 
+// Cada flag DESLIGADA vira uma classe cd-no-<flag> no <html> — a mesma
+// convenção do laço da prévia (o postMessage lá embaixo faz exatamente isto).
+// Faltava aqui: sem estas classes, degradê, sombra, cantos retos e "sem cartão"
+// só funcionavam dentro do modal, e a página que o cliente recebia saía sempre
+// com o padrão do CSS. A prévia é para mostrar a página real; então tem que ser
+// o mesmo estado nos dois lados.
+$clsHtml = [];
+foreach ($st as $fk => $fv) {
+    if (empty($fv)) { $clsHtml[] = 'cd-no-' . $fk; }
+}
+if (!empty($st['grad']))   { $clsHtml[] = 'cd-grad'; }
+if (!empty($st['sombra'])) { $clsHtml[] = 'cd-sombra'; }
+
 $IG_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>';
 ?>
 <!doctype html>
-<html lang="pt-br"<?= $previa ? ' data-previa="1"' : '' ?>>
+<html lang="pt-br" class="<?= h(implode(' ', $clsHtml)) ?>"<?= $previa ? ' data-previa="1"' : '' ?>>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -146,10 +159,14 @@ h1{font-size:22px;letter-spacing:-.02em;margin-bottom:5px;line-height:1.25}
 .cd-sombra .btn{box-shadow:0 14px 26px -12px color-mix(in srgb,var(--btn) 65%,transparent)}
 html.cd-no-redondo{--raio:4px}
 html.cd-no-cartao .card{display:none}
-/* Só valem na prévia: lá estes três estão sempre no HTML e é a classe que os
-   liga e desliga (ver o comentário no <body>). */
+/* Na prévia estes dois estão sempre no HTML e é a classe que os liga e desliga
+   (ver o comentário no <body>); na página real o PHP nem os monta. */
 html.cd-no-logo #cd-logo{display:none}
 html.cd-no-copiar #copiar,html.cd-no-copiar .dica{display:none}
+/* Logo redonda. Escrita no negativo (:not) porque a convenção só emite a classe
+   da flag DESLIGADA — e esta nasce desligada, ao contrário das outras.
+   object-fit:cover corta no meio; com contain a logo boiaria dentro do círculo. */
+html:not(.cd-no-logoredonda) #cd-logo{border-radius:50%;object-fit:cover}
 </style>
 </head>
 <body class="<?= !empty($st['manchas']) ? 'cd-manchas' : '' ?>">

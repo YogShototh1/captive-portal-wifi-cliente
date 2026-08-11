@@ -823,6 +823,9 @@ function ig_padrao(): array
         ],
         'estilo'  => [
             'logo'    => 1,  // mostra a logo enviada no painel
+            // Nasce DESLIGADA: ligar por padrão recortaria em círculo a logo de
+            // quem já tem a página no ar, sem ele pedir.
+            'logoredonda' => 0,  // recorta a logo em círculo (foto de perfil)
             'cartao'  => 1,  // bloco do perfil (desligado = só título e botão)
             'sombra'  => 1,  // sombra sob o cartão
             'manchas' => 1,  // manchas de luz no fundo

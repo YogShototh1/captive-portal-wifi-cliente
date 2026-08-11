@@ -19,7 +19,8 @@ $igCores = [
     'border' => 'Bordas',
 ];
 $igFlags = [
-    'logo'    => ['Mostrar a logo',        'A mesma logo que você enviou para a tela de login.'],
+    'logo'        => ['Mostrar a logo',    'A mesma logo que você enviou para a tela de login.'],
+    'logoredonda' => ['Logo redonda',      'Recorta a logo em círculo, como foto de perfil. Desligado, ela aparece inteira.'],
     'cartao'  => ['Cartão do perfil',      'Bloco com o ícone e o @. Desligado, fica só o título e o botão.'],
     'sombra'  => ['Sombra',                'Sombra projetada sob o cartão e o botão.'],
     'manchas' => ['Manchas de luz',        'Dois borrões coloridos no fundo, nas cores do botão.'],
@@ -56,7 +57,12 @@ $igHash = ig_hash((string) $rotAtivo);
                             <div class="cm-btn-lat cm-btn-vol2" aria-hidden="true"></div>
                             <div class="cm-btn-lat cm-btn-pwr" aria-hidden="true"></div>
                             <div class="cm-tela">
-                                <iframe id="ig-frame" src="ig.php?previa=1&amp;r=<?= h($igHash) ?>" title="Prévia da página de Instagram"></iframe>
+                                <!-- &v=<mtime do ig.php>: a prévia é a página real, e a
+                                     página real não manda no-store (ela é servida ao
+                                     cliente no captive portal, onde cache é bom). Sem
+                                     isto o iframe ficava com o CSS antigo depois de um
+                                     deploy, e a opção nova parecia não funcionar. -->
+                                <iframe id="ig-frame" src="ig.php?previa=1&amp;r=<?= h($igHash) ?>&amp;v=<?= (int) @filemtime(__DIR__ . '/../ig.php') ?>" title="Prévia da página de Instagram"></iframe>
                                 <div class="cm-ilha" aria-hidden="true"></div>
                                 <div class="cm-home" aria-hidden="true"></div>
                             </div>
