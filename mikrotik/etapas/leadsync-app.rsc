@@ -83,6 +83,51 @@
 }
 
 # ============================================================
+#  Hotspot ligado/desligado, por ordem do painel
+#
+#  Quando o portal quebra, a saida e desligar o hotspot: o Wi-Fi da loja volta
+#  a funcionar sem a tela de login. Isso exigia Winbox e alguem com acesso ao
+#  roteador; agora o admin manda pelo painel e a ordem chega na rodada seguinte.
+#
+#  Uma chamada so: manda o estado de cada servidor ("<nome>:<0|1>,...") e
+#  recebe de volta "on", "off" ou "-" (nada a fazer). Vem CEDO no script de
+#  proposito -- e a alavanca de socorro, entao nao pode depender de os blocos
+#  seguintes terem dado certo.
+#
+#  Liga/desliga TODOS os servidores: o roteador do cliente tem um so, e se
+#  aparecer um segundo por engano o painel lista os nomes para o admin apagar.
+#
+#  ponytail: o nome do servidor vai cru na query. Nome com & ou = quebraria a
+#  leitura no painel (a lista aparece vazia); nome de hotspot no RouterOS e
+#  "hotspot1" e afins. Se um dia isso acontecer, sanear aqui antes de montar.
+# ============================================================
+:do {
+  :local hsids [/ip hotspot find]
+  :local hs ""
+  :foreach i in=$hsids do={
+    :local on "1"
+    :if ([/ip hotspot get $i disabled] = true) do={ :set on "0" }
+    :set hs ($hs . [/ip hotspot get $i name] . ":" . $on . ",")
+  }
+
+  :local ordem "-"
+  :do {
+    :local hr [/tool fetch url="https://captivedata.com.br/api/hotspot_rt.php" \
+        http-method=post check-certificate=no \
+        http-header-field="Content-Type: application/x-www-form-urlencoded" \
+        http-data=("token=$token&roteador=$ident&hs=$hs") \
+        output=user as-value]
+    :set ordem ($hr->"data")
+  } on-error={ :set ordem "-" }
+
+  # Sem servidor nenhum nao ha o que ligar; enable/disable de lista vazia erra.
+  :if ([:len $hsids] > 0) do={
+    :if ($ordem = "on")  do={ /ip hotspot enable $hsids }
+    :if ($ordem = "off") do={ /ip hotspot disable $hsids }
+  }
+} on-error={}
+
+# ============================================================
 #  Pagina de login do hotspot (flash/hostsv7)
 #  O painel guarda o template (HTML/CSS/JS/imagens, com subpastas css/img/xml);
 #  aqui o roteador BAIXA cada arquivo e substitui os de flash/hostsv7. O fetch cria

@@ -281,6 +281,88 @@ function estilo_set(string $roteador, array $marcadas): void
     @file_put_contents($dir . '/estilo_' . sha1(trim($roteador)) . '.json', json_encode($out));
 }
 
+// --- Liga/desliga do hotspot, à distância ---
+//
+// Quando o portal quebra, a saída é desligar o hotspot: o Wi-Fi da loja volta a
+// funcionar sem a tela de login. Só que isso hoje exige Winbox e alguém com
+// acesso ao roteador — foi o que aconteceu na Primix. Aqui o painel manda a
+// ordem e o leadsync executa na rodada seguinte.
+//
+// Dois arquivos em ads/, no mesmo esquema do teste de velocidade: um com o
+// último estado reportado pelo roteador, outro com a ordem em aberto.
+function hotspot_estado_file(string $roteador): string { return anuncio_base($roteador) . '.hs.json'; }
+function hotspot_ordem_file(string $roteador): string  { return anuncio_base($roteador) . '.hsreq'; }
+
+// O roteador manda "<nome>:<0|1>,..." (1 = ligado). Nome de servidor no RouterOS
+// não tem vírgula nem dois-pontos, mas isto é entrada de rede: o que não casa
+// com o formato é descartado, não corrigido.
+function hotspot_estado_set(string $roteador, string $bruto): void
+{
+    $srv = [];
+    foreach (explode(',', $bruto) as $par) {
+        $par = trim($par);
+        if ($par === '' || count($srv) >= 10) { continue; }
+        $i = strrpos($par, ':');
+        if ($i === false) { continue; }
+        $nome = substr($par, 0, $i);
+        $flag = substr($par, $i + 1);
+        if (!preg_match('/^[A-Za-z0-9._-]{1,32}$/', $nome) || ($flag !== '0' && $flag !== '1')) { continue; }
+        $srv[] = ['nome' => $nome, 'ligado' => $flag === '1'];
+    }
+    $dir = ads_dir();
+    if (!is_dir($dir)) { @mkdir($dir, 0755, true); }
+    @file_put_contents(hotspot_estado_file($roteador),
+        json_encode(['servidores' => $srv, 'em' => date('c')]));
+}
+
+// Último estado conhecido, ou null se o roteador nunca reportou.
+//   servidores : [['nome'=>'hotspot1','ligado'=>true], ...]
+//   ligado     : algum servidor ligado? (é o que a tela mostra)
+//   em / idade : quando foi reportado, e há quantos segundos
+function hotspot_estado_get(string $roteador): ?array
+{
+    $j = json_decode((string) @file_get_contents(hotspot_estado_file($roteador)), true);
+    if (!is_array($j) || !isset($j['servidores']) || !is_array($j['servidores'])) { return null; }
+    $ligado = false;
+    foreach ($j['servidores'] as $s) {
+        if (!empty($s['ligado'])) { $ligado = true; }
+    }
+    $ts = strtotime((string) ($j['em'] ?? '')) ?: 0;
+    return [
+        'servidores' => array_values($j['servidores']),
+        'ligado'     => $ligado,
+        'em'         => (string) ($j['em'] ?? ''),
+        'idade'      => $ts ? max(0, time() - $ts) : null,
+    ];
+}
+
+// Ordem em aberto: true = ligar, false = desligar, null = nada pedido.
+// Vale 10 min, como o pedido do teste de velocidade: roteador que ficou fora e
+// voltou horas depois não deve acordar executando uma ordem que ninguém lembra.
+function hotspot_ordem_pedir(string $roteador, bool $ligar): bool
+{
+    $dir = ads_dir();
+    if (!is_dir($dir)) { @mkdir($dir, 0755, true); }
+    return @file_put_contents(hotspot_ordem_file($roteador), $ligar ? 'on' : 'off') !== false;
+}
+
+function hotspot_ordem_pendente(string $roteador): ?bool
+{
+    $f = hotspot_ordem_file($roteador);
+    if (!is_file($f) || (time() - (int) @filemtime($f)) > 600) { return null; }
+    return trim((string) @file_get_contents($f)) === 'on';
+}
+
+// Lê e CONSOME a ordem. Consumir aqui é o que impede o roteador de reaplicar a
+// mesma ordem a cada minuto: se o admin desligar pelo Winbox depois, o painel
+// não desfaz sozinho.
+function hotspot_ordem_ler(string $roteador): ?bool
+{
+    $o = hotspot_ordem_pendente($roteador);
+    @unlink(hotspot_ordem_file($roteador));
+    return $o;
+}
+
 // --- Teste de velocidade DO ROTEADOR ---
 //
 // O comprador pede pelo painel, o MikroTik executa na rodada seguinte do

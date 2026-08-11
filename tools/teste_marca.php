@@ -14,8 +14,8 @@ $raiz = dirname(__DIR__);
 // comentario e em identificador, e as poucas mensagens visiveis estao aqui.
 $arquivos = [
     'painel.php', 'admin_leads.php', 'admin_form.php', 'index.html',
-    'inc/speedtest_tela.php', 'inc/portal_hist_tela.php',
-    'api/alertas.php', 'api/speed_loja.php', 'api/upload_portal.php',
+    'inc/speedtest_tela.php', 'inc/portal_hist_tela.php', 'inc/hotspot_tela.php',
+    'api/alertas.php', 'api/speed_loja.php', 'api/upload_portal.php', 'api/hotspot_cmd.php',
     'assets/leads-live.js', 'assets/speedtest.js',
 ];
 

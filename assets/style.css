@@ -2722,3 +2722,25 @@ html[data-tema] .painel-cliente .am-desc { font-size: 12.5px; color: var(--t-fg3
 html[data-tema] .painel-cliente .am-msg { margin: 12px 0 0; font-size: 13px; min-height: 1px; color: var(--t-fg2); }
 html[data-tema] .painel-cliente .am-msg.err { color: #dc2626; }
 .am-salvar { margin-top: 18px; width: 100%; }
+
+/* ── Liga/desliga do hotspot (aba HTML do roteador, só admin) ────────────── */
+/* Mesmo vocabulário do .mk-status do topo: LED + texto. Aqui o LED tem três
+   estados, não dois — "não reportou ainda" não é o mesmo que "desligado". */
+.pc-hs { margin: 4px 0 16px; }
+.pc-hs-linha { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.pc-hs-luz {
+    flex: 0 0 auto;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #94a3b8;
+    transition: background .3s ease, box-shadow .3s ease;
+}
+.pc-hs-luz.on  { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
+.pc-hs-luz.off { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+.pc-hs-luz.aguardando { background: #f59e0b; box-shadow: 0 0 8px #f59e0b; animation: mk-pulse 1.2s ease-in-out infinite; }
+.pc-hs-estado { font-size: 14px; font-weight: 600; }
+.pc-hs-srv { margin: 8px 0 0; font-size: 12.5px; opacity: .75; }
+.pc-hs #hs-btn { padding: 6px 16px; font-size: 13px; }
+.pc-hs #hs-btn[disabled] { opacity: .5; cursor: not-allowed; }
+
+html[data-tema] .painel-cliente .pc-hs-estado { color: var(--t-fg); }
+html[data-tema] .painel-cliente .pc-hs-srv { color: var(--t-fg3); }
