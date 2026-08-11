@@ -804,6 +804,14 @@ a.pc-pag-btn:hover { background: rgba(34,211,238, 0.2); border-color: #22d3ee; c
 }
 .painel-cliente .sp-unidade { fill: rgba(255,255,255,.5); font-size: 12px; font-weight: 600; font-family: inherit; }
 
+/* Banda contratada, logo abaixo do ponteiro: o mesmo resultado em bits, que é
+   a unidade em que a operadora vende o link. */
+.painel-cliente .sp-banda {
+    text-align: center; font-size: 13px; color: rgba(255,255,255,.55);
+    margin-top: -2px; min-height: 1.3em;
+}
+.painel-cliente .sp-banda b { color: #67e8f9; font-weight: 700; }
+
 .painel-cliente .sp-fase { text-align: center; font-size: 13px; color: rgba(255,255,255,.6); margin-top: 2px; min-height: 1.3em; }
 .painel-cliente .sp-btn {
     display: block; margin: 14px auto 0; padding: 12px 40px; border-radius: 999px; cursor: pointer;
@@ -1812,7 +1820,9 @@ html[data-tema="claro"] .sp-tick-tx { fill: rgba(15,23,42,.45); }
 html[data-tema="claro"] .sp-ponteiro { stroke: var(--g-fg); filter: none; }
 html[data-tema="claro"] .sp-eixo { fill: var(--g-fg); }
 html[data-tema="claro"] .sp-valor { fill: var(--g-fg); }
-html[data-tema="claro"] .sp-unidade, html[data-tema="claro"] .sp-fase { fill: var(--g-fg2); color: var(--g-fg2); }
+html[data-tema="claro"] .sp-unidade, html[data-tema="claro"] .sp-fase,
+html[data-tema="claro"] .sp-banda { fill: var(--g-fg2); color: var(--g-fg2); }
+html[data-tema="claro"] .sp-banda b { color: #0e7490; }
 html[data-tema="claro"] .sp-btn { background: var(--g-fg); color: #fff; }
 
 /* --- Barra de rolagem no tema claro --- */

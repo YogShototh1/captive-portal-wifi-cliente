@@ -9,18 +9,24 @@
 
     // ===== Mostrador: escala + ponteiro =====
     //
+    // O mostrador marca MB/s — a velocidade com que o arquivo desce, que e o
+    // que o cliente ve no gerenciador de downloads. A BANDA (Mbps), que e como
+    // a operadora vende, sai escrita embaixo do velocimetro. Um e oito vezes o
+    // outro; o servidor manda sempre em Mbps e a divisao acontece aqui.
+    //
     // A escala NÃO é linear: cada intervalo entre marcas ocupa a mesma fatia do
-    // arco. É o que dá espaço de sobra ao trecho de 0 a 100, onde quase todo
-    // mundo cai, e amontoa os 250-1000 no fim — igual ao mostrador do Speedtest.
-    var MARCAS = [0, 5, 10, 50, 100, 250, 500, 750, 1000];
+    // arco. É o que dá espaço de sobra ao trecho de 0 a 10, onde quase todo
+    // mundo cai, e amontoa o fim — igual ao mostrador do Speedtest. O teto de
+    // 125 MB/s é 1 Gbps.
+    var MARCAS = [0, 0.5, 1, 5, 10, 25, 50, 100, 125];
     var A0 = 145, VARRE = 250, CX = 160, CY = 150, R = 118;
 
-    function fracao(mbps) {
-        if (mbps <= 0) return 0;
-        if (mbps >= MARCAS[MARCAS.length - 1]) return 1;
+    function fracao(mbs) {
+        if (mbs <= 0) return 0;
+        if (mbs >= MARCAS[MARCAS.length - 1]) return 1;
         for (var i = 0; i < MARCAS.length - 1; i++) {
-            if (mbps <= MARCAS[i + 1]) {
-                return (i + (mbps - MARCAS[i]) / (MARCAS[i + 1] - MARCAS[i])) / (MARCAS.length - 1);
+            if (mbs <= MARCAS[i + 1]) {
+                return (i + (mbs - MARCAS[i]) / (MARCAS[i + 1] - MARCAS[i])) / (MARCAS.length - 1);
             }
         }
         return 1;
@@ -53,7 +59,7 @@
                 s += '<line class="sp-tick" x1="' + p1[0].toFixed(1) + '" y1="' + p1[1].toFixed(1) +
                      '" x2="' + p2[0].toFixed(1) + '" y2="' + p2[1].toFixed(1) + '"/>' +
                      '<text class="sp-tick-tx" x="' + pt[0].toFixed(1) + '" y="' + (pt[1] + 4).toFixed(1) +
-                     '" text-anchor="middle">' + MARCAS[i] + '</text>';
+                     '" text-anchor="middle">' + String(MARCAS[i]).replace('.', ',') + '</text>';
             }
             gMarc.innerHTML = s;
         }
@@ -86,6 +92,18 @@
     }
 
     function fmt(v) { return v >= 100 ? v.toFixed(0) : v.toFixed(2); }
+
+    // O servidor guarda tudo em Mbps (bits por segundo), que e como o link e
+    // vendido. O mostrador fala MB/s (bytes por segundo), que e o que aparece
+    // baixando um arquivo. Oito bits por byte — e so essa divisao.
+    function mbs(mbps) { return mbps / 8; }
+    function num(v) { return fmt(v).replace('.', ','); }
+    function banda(m) {
+        var p = [];
+        if (m.down != null) { p.push('<b>' + num(m.down) + ' Mbps</b> de download'); }
+        if (m.up   != null) { p.push('<b>' + num(m.up)   + ' Mbps</b> de upload'); }
+        return p.length ? 'Banda da internet: ' + p.join(' &middot; ') : '';
+    }
     function qs(base, q) { return base + (base.indexOf('?') >= 0 ? '&' : '?') + q; }
     function esc(s) {
         return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
@@ -103,7 +121,9 @@
         var btn   = document.getElementById('rt-iniciar');
         var elFase = document.getElementById('rt-fase');
         var elD  = document.getElementById('rt-down');
+        var elU  = document.getElementById('rt-up');
         var elP  = document.getElementById('rt-ping');
+        var elB  = document.getElementById('rt-banda');
         var histW = document.getElementById('rt-hist-wrap');
         var histL = document.getElementById('rt-hist');
         var histN = document.getElementById('rt-hist-n');
@@ -116,9 +136,11 @@
         function mostrar(d) {
             var m = (d.medicoes && d.medicoes[0]) || null;
             if (m) {
-                elD.textContent = m.down != null ? fmt(m.down) : '—';
+                elD.textContent = m.down != null ? fmt(mbs(m.down)) : '—';
+                if (elU) elU.textContent = m.up != null ? fmt(mbs(m.up)) : '—';
                 elP.textContent = m.ping != null ? Math.round(m.ping) : '—';
-                med.irPara(m.down != null ? m.down : 0);
+                med.irPara(m.down != null ? mbs(m.down) : 0);
+                if (elB) elB.innerHTML = banda(m);
             }
             var n = (d.medicoes || []).length;
             if (histW) {
@@ -129,6 +151,8 @@
                     // um "bytes=10000000 dur=00:00:04.03…" cru, que era andaime
                     // de depuração e virou lixo na tela do cliente.
                     var det = [];
+                    if (x.down != null)  { det.push(num(x.down) + ' Mbps de banda'); }
+                    if (x.up != null)    { det.push('subiu a ' + num(mbs(x.up)) + ' MB/s (' + num(x.up) + ' Mbps)'); }
                     if (x.ping != null)  { det.push(Math.round(x.ping) + ' ms de ping'); }
                     if (x.bytes != null && x.seg != null) {
                         det.push('baixou ' + Math.round(x.bytes / 1e6) + ' MB em ' +
@@ -136,7 +160,7 @@
                     }
                     det.push((x.em || '').replace(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2}).*$/, '$3/$2 às $4'));
                     return '<li class="pc-hist-item"><span class="pc-hist-nome">' +
-                        (x.down != null ? fmt(x.down) + ' Mbps' : 'sem resultado') +
+                        (x.down != null ? num(mbs(x.down)) + ' MB/s' : 'sem resultado') +
                         (x.down == null && x.erro ? ' <em class="mh-data">' + esc(x.erro) + '</em>' : '') +
                         '</span><span class="pc-hist-meta">' + esc(det.join(' · ')) +
                         '</span></li>';
@@ -217,6 +241,8 @@
             box.classList.add('rodando');
             med.zerar();
             elD.textContent = '—'; elP.textContent = '—';
+            if (elU) elU.textContent = '—';
+            if (elB) elB.innerHTML = '';
             fase('Pedindo o teste ao roteador…');
 
             var corpo = new FormData();

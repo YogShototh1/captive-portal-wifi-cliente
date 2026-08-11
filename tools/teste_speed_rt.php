@@ -107,6 +107,30 @@ $mbps = round($bytes * 8 / speed_dur_seg('500ms') / 1e6, 2);
 $ok(abs($mbps - 100.66) < 0.05, '6 MiB em 0,5s = ~100 Mbps', $mbps);
 
 // ---------------------------------------------------------------
+// MB/s x Mbps: o erro classico desta tela. O mostrador marca MB/s (bytes, o que
+// o cliente ve baixando) e a linha de baixo marca Mbps (bits, como a operadora
+// vende). Sao o MESMO resultado, com 8 de diferenca — nunca dois numeros.
+echo "\nMB/s x Mbps\n";
+$mbps = round(10e6 * 8 / 2.021 / 1e6, 2);
+$ok(abs($mbps - 39.58) < 0.05, '10 MB em 2,021s = 39,58 Mbps de banda', $mbps);
+$ok(abs($mbps / 8 - 4.95) < 0.01, 'e a mesma medida da 4,95 MB/s no ponteiro', $mbps / 8);
+
+// ---------------------------------------------------------------
+// Upload: mesma conta do download, com o payload que o roteador subiu.
+echo "\nupload\n";
+$limpar();
+speed_gravar($R, ['down' => 39.58, 'up' => 9.9]);
+$h = speed_hist($R);
+$ok($h[0]['up'] == 9.9, 'o upload entra na medicao', var_export($h[0]['up'] ?? null, true));
+$limpar();
+speed_gravar($R, ['down' => 1.0]);
+$ok(array_key_exists('up', speed_hist($R)[0]) && speed_hist($R)[0]['up'] === null,
+    'medicao sem upload nasce com up=null (roteador antigo, ou /__up recusado)');
+// 2 MB (64 x 2^15) em 1,6 s liquidos = 10,49 Mbps = 1,31 MB/s
+$up = round(2097152 * 8 / 1.6 / 1e6, 2);
+$ok(abs($up - 10.49) < 0.05, '2 MB em 1,6s = 10,49 Mbps de upload', $up);
+
+// ---------------------------------------------------------------
 // O /ping do RouterOS NAO devolve avg-rtt no as-value: devolve uma lista, um
 // item por pacote. A media e feita aqui.
 echo "\nmedia dos tempos de cada pacote\n";

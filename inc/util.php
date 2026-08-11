@@ -508,7 +508,7 @@ function speed_gravar(string $roteador, array $dados): void
     if ($recente) {
         $h[0] = array_merge($h[0], $dados, ['em' => $agora]);
     } else {
-        array_unshift($h, array_merge(['down' => null, 'ping' => null], $dados, ['em' => $agora]));
+        array_unshift($h, array_merge(['down' => null, 'up' => null, 'ping' => null], $dados, ['em' => $agora]));
     }
 
     $dir = ads_dir();

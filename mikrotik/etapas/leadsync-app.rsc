@@ -439,8 +439,30 @@
       } on-error={ :set rtt "" }
     }
 
+    # Upload: o mesmo servidor da Cloudflare aceita POST em /__up e engole o
+    # corpo sem devolver nada. O payload e montado AQUI NA MEMORIA, dobrando
+    # uma string ate 2 MB (64 x 2^15) — nunca na flash: gravar 2 MB a cada
+    # teste torraria o disco de 16 MB do hEX, que e o motivo de o download usar
+    # output=none.
+    #
+    # Bloco proprio com on-error: se o /tool fetch recusar um http-data desse
+    # tamanho, o teste ainda reporta download e ping, e a tela so fica sem o
+    # numero de upload. Nao dobrar o tamanho sem medir a RAM livre do modelo.
+    :local ubytes 0
+    :local udur "0"
     :do {
-      /tool fetch url=("https://captivedata.com.br/api/speed_rt.php?token=$token&roteador=$ident&f=res&bytes=$bytes&dur=$dur&over=$over&ping=$rtt&erro=$erro") \
+      :local pay "0123456789012345678901234567890123456789012345678901234567890123"
+      :for i from=1 to=15 do={ :set pay ($pay . $pay) }
+      :local u0 [:timestamp]
+      /tool fetch url="https://speed.cloudflare.com/__up" http-method=post \
+          check-certificate=no output=none \
+          http-header-field="Content-Type: text/plain" http-data=$pay
+      :set udur ([:timestamp] - $u0)
+      :set ubytes [:len $pay]
+    } on-error={ :set ubytes 0 }
+
+    :do {
+      /tool fetch url=("https://captivedata.com.br/api/speed_rt.php?token=$token&roteador=$ident&f=res&bytes=$bytes&dur=$dur&over=$over&ping=$rtt&ubytes=$ubytes&udur=$udur&erro=$erro") \
           check-certificate=no output=none
     } on-error={}
   }

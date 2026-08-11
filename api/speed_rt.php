@@ -66,17 +66,34 @@ if ($f === 'res') {
     // aparecer como rápido: sem o desconto, o setup domina o tempo total e o
     // resultado empaca perto de 16 Mbps, seja qual for o link.
     $over  = speed_dur_seg((string) ($_REQUEST['over'] ?? ''));
-    if ($bytes > 0 && $dur !== null && $dur > 0) {
-        $liq = $dur;
-        // Só desconta se sobrar tempo de verdade: overhead maior que o download
-        // significa medição estranha, e aí o número cheio é menos errado.
-        if ($over !== null && $over > 0 && $over < $dur * 0.8) {
-            $liq = $dur - $over;
-        }
+
+    // Mesma conta para os dois sentidos: bits / segundo líquido. O upload usa o
+    // MESMO $over porque bate no mesmo host (speed.cloudflare.com), então o
+    // custo de DNS + TCP + TLS é o mesmo.
+    $liquido = function (?float $seg) use ($over): ?float {
+        if ($seg === null || $seg <= 0) { return null; }
+        // Só desconta se sobrar tempo de verdade: overhead maior que a
+        // transferência significa medição estranha, e aí o número cheio é
+        // menos errado.
+        return ($over !== null && $over > 0 && $over < $seg * 0.8) ? $seg - $over : $seg;
+    };
+
+    $liq = $liquido($dur);
+    if ($bytes > 0 && $liq !== null) {
         $extra['down']  = round($bytes * 8 / $liq / 1e6, 2);
         $extra['bytes'] = (int) $bytes;
         $extra['seg']   = round($liq, 3);
         if ($over !== null) { $extra['setup'] = round($over, 3); }
+    }
+
+    // Upload: o roteador manda um payload de tamanho conhecido para o /__up da
+    // Cloudflare e cronometra. Mesma conta do download.
+    $ubytes = (float) ($_REQUEST['ubytes'] ?? 0);
+    $uliq   = $liquido(speed_dur_seg((string) ($_REQUEST['udur'] ?? '')));
+    if ($ubytes > 0 && $uliq !== null) {
+        $extra['up']     = round($ubytes * 8 / $uliq / 1e6, 2);
+        $extra['ubytes'] = (int) $ubytes;
+        $extra['useg']   = round($uliq, 3);
     }
 
     // O ping vem como os tempos de cada pacote separados por vírgula, do jeito

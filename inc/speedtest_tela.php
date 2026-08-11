@@ -26,7 +26,11 @@ $spCid = isset($spClienteId) ? (int) $spClienteId : null;
                 <div class="sp-topo">
                     <span class="sp-kpi sp-kpi-down">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="m8 12 4 4 4-4"/></svg>
-                        <b id="rt-down">—</b> <i>DOWNLOAD Mbps</i>
+                        <b id="rt-down">—</b> <i>DOWNLOAD MB/s</i>
+                    </span>
+                    <span class="sp-kpi sp-kpi-up">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16V8"/><path d="m8 12 4-4 4 4"/></svg>
+                        <b id="rt-up">—</b> <i>UPLOAD MB/s</i>
                     </span>
                     <span class="sp-kpi sp-kpi-ping">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6v6l4 2"/><circle cx="12" cy="12" r="10"/></svg>
@@ -47,9 +51,15 @@ $spCid = isset($spClienteId) ? (int) $spClienteId : null;
                         <line id="rt-ponteiro" class="sp-ponteiro" x1="160" y1="150" x2="160" y2="150"/>
                         <circle class="sp-eixo" cx="160" cy="150" r="6"/>
                         <text id="rt-valor" class="sp-valor" x="160" y="205" text-anchor="middle">0.00</text>
-                        <text id="rt-unidade" class="sp-unidade" x="160" y="228" text-anchor="middle">Mbps ↓</text>
+                        <text id="rt-unidade" class="sp-unidade" x="160" y="228" text-anchor="middle">MB/s ↓</text>
                     </svg>
                 </div>
+
+                <!-- O ponteiro marca o que o cliente vê baixando (MB/s); a banda
+                     contratada é o mesmo número em bits, que é como a operadora
+                     vende. Um é oito vezes o outro, e trocar os dois de lugar é
+                     o erro clássico dessa tela. -->
+                <p class="sp-banda" id="rt-banda"></p>
 
                 <p class="sp-fase" id="rt-fase">Toque em testar para medir</p>
                 <button type="button" class="sp-btn" id="rt-iniciar">Testar agora</button>
