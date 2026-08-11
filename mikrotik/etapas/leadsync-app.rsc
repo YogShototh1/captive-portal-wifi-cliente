@@ -102,12 +102,17 @@
 #  "hotspot1" e afins. Se um dia isso acontecer, sanear aqui antes de montar.
 # ============================================================
 :do {
+  # "<nome>~<0|1>~<perfil>|" — o PERFIL e o que decide se alguem consegue
+  # entrar. Ter um perfil com trial no roteador nao basta: o que vale e o
+  # perfil que ESTE servidor usa. Sem essa informacao o painel mostrava os
+  # perfis e mesmo assim nao dava para dizer qual estava valendo.
   :local hsids [/ip hotspot find]
   :local hs ""
   :foreach i in=$hsids do={
     :local on "1"
     :if ([/ip hotspot get $i disabled] = true) do={ :set on "0" }
-    :set hs ($hs . [/ip hotspot get $i name] . ":" . $on . ",")
+    :set hs ($hs . [/ip hotspot get $i name] . "~" . $on . "~" . \
+             [/ip hotspot get $i profile] . "|")
   }
 
   # Perfil do hotspot: e o que diz se o cliente CONSEGUE logar.

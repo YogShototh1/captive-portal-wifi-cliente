@@ -26,18 +26,18 @@ $limpar();
 echo "estado reportado pelo roteador\n";
 $ok(hotspot_estado_get($R) === null, 'sem relato, o painel nao inventa estado');
 
-hotspot_estado_set($R, 'hotspot1:1,');
+hotspot_estado_set($R, 'hotspot1~1~hsprof1|');
 $e = hotspot_estado_get($R);
 $ok($e !== null && count($e['servidores']) === 1, 'um servidor lido', json_encode($e));
 $ok($e['servidores'][0]['nome'] === 'hotspot1', 'nome preservado');
 $ok($e['ligado'] === true, 'ligado');
 
-hotspot_estado_set($R, 'hotspot1:0,');
+hotspot_estado_set($R, 'hotspot1~0~hsprof1|');
 $ok(hotspot_estado_get($R)['ligado'] === false, 'desligado');
 
 // Dois servidores por engano: o painel precisa listar os dois para o admin
 // apagar o que sobra. "Ligado" e ter ALGUM ligado.
-hotspot_estado_set($R, 'hotspot1:0,hotspot2:1,');
+hotspot_estado_set($R, 'hotspot1~0~default|hotspot2~1~hsprof1|');
 $e = hotspot_estado_get($R);
 $ok(count($e['servidores']) === 2, 'dois servidores aparecem', json_encode($e['servidores']));
 $ok($e['ligado'] === true, 'um ligado entre dois ja conta como ligado');
@@ -49,10 +49,26 @@ $ok($e !== null && $e['servidores'] === [], 'roteador sem hotspot: lista vazia, 
 $ok($e['ligado'] === false, 'sem servidor, nada ligado');
 
 // Entrada de rede: o que nao casa com o formato e descartado, nao corrigido.
-hotspot_estado_set($R, 'bom:1,sem-flag,ruim:2,esp aco:1,' . str_repeat('x', 40) . ':1,');
+hotspot_estado_set($R, 'bom~1~p|sem-flag|ruim~2~p|esp aco~1~p|' . str_repeat('x', 40) . '~1~p|');
 $e = hotspot_estado_get($R);
 $ok(count($e['servidores']) === 1 && $e['servidores'][0]['nome'] === 'bom',
     'lixo descartado, so o valido entra', json_encode($e['servidores']));
+
+// O PERFIL DO SERVIDOR e o campo decisivo: ter um perfil com trial no roteador
+// nao basta, vale o que ESTE servidor usa. Foi o que faltou na primeira versao
+// desta telemetria — a tela mostrava os perfis e mesmo assim nao dava para
+// dizer qual estava valendo.
+hotspot_estado_set($R, 'hotspot-lan~1~default|');
+$e = hotspot_estado_get($R);
+$ok(($e['servidores'][0]['perfil'] ?? '') === 'default', 'o perfil do servidor chega ao painel',
+    json_encode($e['servidores']));
+
+// Formato antigo ("<nome>:<0|1>,"): o roteador leva ~1 min para baixar o app
+// novo, e nesse intervalo a tela nao pode ficar sem os servidores.
+hotspot_estado_set($R, 'hotspot1:1,');
+$e = hotspot_estado_get($R);
+$ok(count($e['servidores']) === 1 && $e['ligado'] === true, 'formato antigo ainda e lido');
+$ok(($e['servidores'][0]['perfil'] ?? null) === '', 'so que sem saber o perfil');
 
 // ---------------------------------------------------------------
 // O perfil e o que diz se o cliente CONSEGUE entrar: o portal autentica por
@@ -76,8 +92,8 @@ $ok(hotspot_perfis_parse('') === [], 'vazio nao vira perfil fantasma');
 $ok(hotspot_perfis_parse('faltando~campos|') === [], 'registro incompleto e descartado');
 
 // O perfil sobrevive a uma rodada em que o roteador nao conseguiu coleta-lo.
-hotspot_estado_set($R, 'hotspot1:1,', 'hsprof1~trial~30m~1d|');
-hotspot_estado_set($R, 'hotspot1:1,', '');
+hotspot_estado_set($R, 'hotspot1~1~hsprof1|', 'hsprof1~trial~30m~1d|');
+hotspot_estado_set($R, 'hotspot1~1~hsprof1|', '');
 $e = hotspot_estado_get($R);
 $ok(count($e['perfis']) === 1, 'perfil conhecido nao some quando a coleta falha', json_encode($e['perfis']));
 

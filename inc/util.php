@@ -322,22 +322,37 @@ function log_periodo_sql(?string $de, ?string $ate, string $col = 'a.visto_em'):
 function hotspot_estado_file(string $roteador): string { return anuncio_base($roteador) . '.hs.json'; }
 function hotspot_ordem_file(string $roteador): string  { return anuncio_base($roteador) . '.hsreq'; }
 
-// O roteador manda "<nome>:<0|1>,..." (1 = ligado). Nome de servidor no RouterOS
-// não tem vírgula nem dois-pontos, mas isto é entrada de rede: o que não casa
-// com o formato é descartado, não corrigido.
+// O roteador manda "<nome>~<0|1>~<perfil>|..." (1 = ligado).
+//
+// O PERFIL é o campo que importa para o diagnóstico: o portal autentica por
+// trial, e ter um perfil com trial no roteador não basta — vale o perfil que
+// ESTE servidor usa. Foi o que faltou na primeira versão desta telemetria.
+//
+// Formato antigo ("<nome>:<0|1>,...") ainda é aceito: o roteador baixa o app
+// novo em ~1 min, e nesse intervalo a tela não deve ficar sem os servidores.
+// Isto é entrada de rede: o que não casa com o formato é descartado.
 function hotspot_estado_set(string $roteador, string $bruto, string $prof = ''): void
 {
     $perfis = hotspot_perfis_parse($prof);
     $srv = [];
-    foreach (explode(',', $bruto) as $par) {
+    $novo = strpos($bruto, '~') !== false;
+    foreach (explode($novo ? '|' : ',', $bruto) as $par) {
         $par = trim($par);
         if ($par === '' || count($srv) >= 10) { continue; }
-        $i = strrpos($par, ':');
-        if ($i === false) { continue; }
-        $nome = substr($par, 0, $i);
-        $flag = substr($par, $i + 1);
+        if ($novo) {
+            $c = explode('~', $par);
+            if (count($c) < 3) { continue; }
+            [$nome, $flag, $perfil] = $c;
+            $perfil = substr(preg_replace('/[^A-Za-z0-9._-]/', '', $perfil), 0, 32);
+        } else {
+            $i = strrpos($par, ':');
+            if ($i === false) { continue; }
+            $nome   = substr($par, 0, $i);
+            $flag   = substr($par, $i + 1);
+            $perfil = '';
+        }
         if (!preg_match('/^[A-Za-z0-9._-]{1,32}$/', $nome) || ($flag !== '0' && $flag !== '1')) { continue; }
-        $srv[] = ['nome' => $nome, 'ligado' => $flag === '1'];
+        $srv[] = ['nome' => $nome, 'ligado' => $flag === '1', 'perfil' => $perfil];
     }
     $dir = ads_dir();
     if (!is_dir($dir)) { @mkdir($dir, 0755, true); }

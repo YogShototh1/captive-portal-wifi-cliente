@@ -76,8 +76,24 @@ $hsClienteId = $hsClienteId ?? 0;
         }
 
         if (d.servidores && d.servidores.length) {
-            srv.textContent = 'Servidores no roteador (' + d.servidores.length + '): '
-                + d.servidores.map(function (s) { return s.nome + ' — ' + (s.ligado ? 'ligado' : 'desligado'); }).join(' · ');
+            // Cruza o perfil DO SERVIDOR com a lista de perfis. Ter um perfil
+            // com trial no roteador não basta: o portal autentica por trial, e
+            // quem vale é o perfil que este servidor usa. Sem trial ali,
+            // nenhum cliente entra — e o portal volta pro começo do fluxo.
+            var porNome = {};
+            (d.perfis || []).forEach(function (p) { porNome[p.nome] = p; });
+            srv.innerHTML = 'Servidores no roteador (' + d.servidores.length + '): '
+                + d.servidores.map(function (s) {
+                    var t = s.nome + ' — ' + (s.ligado ? 'ligado' : 'desligado');
+                    if (!s.perfil) { return t; }
+                    t += ' · perfil <strong>' + s.perfil + '</strong>';
+                    var p = porNome[s.perfil];
+                    if (p && !p.trial) {
+                        t += ' <strong class="pc-hs-alerta">← este perfil não tem trial:'
+                           + ' nenhum cliente consegue entrar</strong>';
+                    }
+                    return t;
+                }).join('<br>');
         } else if (d.conhecido) {
             // Nenhum servidor de hotspot: não é o mesmo que "desligado", e a
             // diferença importa (portal nunca vai subir neste roteador).
