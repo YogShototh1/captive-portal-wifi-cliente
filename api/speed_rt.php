@@ -100,6 +100,12 @@ if ($f === 'res') {
         // talo — saturado no único lugar que importa.
         $cpu1 = (int) ($_REQUEST['cpu1'] ?? -1);
         if ($cpu1 >= 0 && $cpu1 <= 100) { $extra['cpu1'] = $cpu1; }
+
+        // http ou https. Importa na leitura: o TLS é feito em software neste
+        // hardware e foi ele que segurou a medição em 30 Mbps com um núcleo
+        // em 100%. Comparar duas medições sem saber o esquema não diz nada.
+        $esq = (string) ($_REQUEST['esq'] ?? '');
+        if ($esq === 'http' || $esq === 'https') { $extra['esq'] = $esq; }
     }
 
     // Upload: o roteador manda um payload de tamanho conhecido para o /__up da

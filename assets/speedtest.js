@@ -149,7 +149,15 @@
             var m = (d.medicoes && d.medicoes[0]) || null;
             if (m) {
                 elD.textContent = m.down != null ? fmt(mbs(m.down)) : '—';
-                if (elU) elU.textContent = m.up != null ? fmt(mbs(m.up)) : '—';
+                // Upload: o /tool fetch nao consegue medir (ver o comentario no
+                // leadsync-app.rsc). Some o campo em vez de deixar um traco
+                // parado na tela para sempre; se algum roteador conseguir
+                // reportar, ele volta sozinho.
+                if (elU) {
+                    elU.textContent = m.up != null ? fmt(mbs(m.up)) : '—';
+                    var kpiUp = elU.closest ? elU.closest('.sp-kpi') : null;
+                    if (kpiUp) kpiUp.style.display = m.up != null ? '' : 'none';
+                }
                 elP.textContent = m.ping != null ? Math.round(m.ping) : '—';
                 med.irPara(m.down != null ? mbs(m.down) : 0);
                 if (elB) elB.innerHTML = banda(m);
@@ -173,6 +181,7 @@
                         det.push('CPU em ' + (x.cpu | 0) + '%' +
                                  (x.cpu1 != null ? ' (núcleo ' + (x.cpu1 | 0) + '%)' : ''));
                     }
+                    if (x.esq)           { det.push(x.esq === 'http' ? 'sem TLS' : 'com TLS'); }
                     if (x.uerro)         { det.push('upload falhou (' + x.uerro + ')'); }
                     if (x.bytes != null && x.seg != null) {
                         det.push('baixou ' + Math.round(x.bytes / 1e6) + ' MB em ' +

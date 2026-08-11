@@ -32,7 +32,9 @@ $spCid = isset($spClienteId) ? (int) $spClienteId : null;
                     <span class="sp-kpi sp-kpi-up">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16V8"/><path d="m8 12 4-4 4 4"/></svg>
                         <b id="rt-up">—</b> <i>UPLOAD MB/s</i>
-                    </span>
+                    </span><?php /* O JS esconde este bloco quando não vem número
+                                     de upload — hoje é o caso em todo roteador
+                                     (ver o comentário no leadsync-app.rsc). */ ?>
                     <span class="sp-kpi sp-kpi-ping">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6v6l4 2"/><circle cx="12" cy="12" r="10"/></svg>
                         <b id="rt-ping">—</b> <i>PING ms</i>

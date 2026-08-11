@@ -385,14 +385,40 @@
     :local bytesAlvo ($pedido * 1000000)
     :local erro ""
 
+    # ---- Sem TLS -----------------------------------------------------------
+    #
+    # 11/08/2026: com https, um nucleo bateu 100% enquanto o teste dava 30 Mbps.
+    # Nao e o link nem a janela TCP — e este aparelho decifrando TLS em
+    # software, numa linha de execucao so. O MT7621 tem aceleracao de cripto
+    # para IPsec, e o TLS do /tool fetch NAO usa aquilo.
+    #
+    # O mesmo /__down da Cloudflare responde em http puro (200, sem redirect —
+    # conferido). Trocando o esquema muda SO o TLS: mesmo endpoint, mesmo PoP,
+    # mesmo caminho. Se o numero subir, era a cifra.
+    #
+    # Nao ha risco de privacidade: o corpo e lixo aleatorio de um endpoint
+    # publico de teste, sem nada nosso dentro. O que se perde e a garantia de
+    # que ninguem no meio adulterou os bytes — para cronometrar tanto faz. O
+    # unico efeito colateral possivel e um provedor que faca cache de http, que
+    # inflaria a medida; se o numero vier absurdo, e isso.
+    :local esq "http"
+    :local base ("http://speed.cloudflare.com/__down?bytes=")
+
     # Custo de abrir a conexao (DNS + TCP + TLS), medido com um download de
-    # tamanho zero. Sem descontar isto, um link rapido media errado: 6 MB a 100
-    # Mbps levam 0,5 s, e so o setup ja custa ~0,3 s — o resultado empacava
-    # perto de 16 Mbps por construcao, que foi o que apareceu no painel.
+    # tamanho zero, no MESMO esquema do teste. Sem descontar isto, um link
+    # rapido media errado: 6 MB a 100 Mbps levam 0,5 s, e so o setup ja custa
+    # ~0,3 s — o resultado empacava perto de 16 Mbps por construcao.
+    #
+    # E aqui tambem se descobre se o http passa: se este fetch de 0 byte falhar,
+    # cai para https antes de valer alguma coisa.
     :local o0 [:timestamp]
     :do {
-      /tool fetch url="https://speed.cloudflare.com/__down?bytes=0" check-certificate=no output=none
-    } on-error={}
+      /tool fetch url=($base . "0") check-certificate=no output=none
+    } on-error={
+      :set esq "https"
+      :set base ("https://speed.cloudflare.com/__down?bytes=")
+      :do { /tool fetch url=($base . "0") check-certificate=no output=none } on-error={}
+    }
     :local over ([:timestamp] - $o0)
 
     # ---- Por que VARIAS conexoes ao mesmo tempo ----------------------------
@@ -430,7 +456,7 @@
       :local base [:len [/system script job find]]
       :local t0 [:timestamp]
       :for i from=1 to=$ns do={
-        :execute script=(":do { /tool fetch url=\"https://speed.cloudflare.com/__down?bytes=$bytesAlvo\" check-certificate=no output=none } on-error={}")
+        :execute script=(":do { /tool fetch url=\"$base$bytesAlvo\" check-certificate=no output=none } on-error={}")
       }
       # Espera os jobs acabarem. O teto de 60 s existe para um fetch pendurado
       # nao segurar a rodada inteira do leadsync.
@@ -475,8 +501,7 @@
       :set erro ""
       :local t1 [:timestamp]
       :do {
-        /tool fetch url=("https://speed.cloudflare.com/__down?bytes=$bytesAlvo") \
-            check-certificate=no output=none
+        /tool fetch url=($base . $bytesAlvo) check-certificate=no output=none
       } on-error={ :set erro "download" }
       :set dur ([:timestamp] - $t1)
       :if ($erro = "") do={ :set bytes $bytesAlvo }
@@ -514,49 +539,30 @@
       } on-error={ :set rtt "" }
     }
 
-    # Upload: o mesmo servidor da Cloudflare aceita POST em /__up e engole o
-    # corpo sem devolver nada. O payload e montado AQUI NA MEMORIA, dobrando
-    # uma string ate 2 MB (64 x 2^15) — nunca na flash: gravar 2 MB a cada
-    # teste torraria o disco de 16 MB do hEX, que e o motivo de o download usar
-    # output=none.
+    # ---- UPLOAD: NAO DA PARA MEDIR COM /tool fetch. NAO TENTAR DE NOVO. -----
     #
-    # Bloco proprio com on-error: se o /tool fetch recusar um http-data desse
-    # tamanho, o teste ainda reporta download e ping, e a tela so fica sem o
-    # numero de upload.
+    # A ideia era postar um payload de tamanho conhecido no /__up da Cloudflare
+    # e cronometrar. A escada de 11/08/2026 (1 MB, 256 KB, 64 KB, 8 KB, parando
+    # na primeira que passasse) respondeu: SO 8 KB PASSOU. O corte esta no
+    # http-data do /tool fetch, entre 8 e 64 KB — nao no endpoint, que aceitou
+    # os 8 KB numa boa, e nao na montagem da string, que chegou a 1 MB inteira.
     #
-    # 11/08/2026: 2 MB voltou vazio; 1 MB reportou "envio", ou seja a string
-    # MONTOU e quem recusou foi o /tool fetch. Falta saber onde e o corte — e
-    # se ha corte, ja que pode ser o proprio endpoint recusando o POST.
+    # 8 KB a 30 Mbps passa em 2 ms, dentro do ruido do proprio setup da conexao.
+    # Nao ha numero para tirar dali, e as tentativas grandes ainda custavam
+    # segundos de teste para falhar. Bloco removido.
     #
-    # Escada: monta 1 MB uma vez e vai tentando fatias cada vez menores com
-    # [:pick], parando na primeira que passar. O tamanho que vingou vai no
-    # relatorio. Se nem 8 KB passar, o problema nao e tamanho — e o endpoint, e
-    # a saida seria trocar de destino de upload.
-    :local ubytes 0
-    :local udur "0"
-    :local uerro "montagem"
-    :do {
-      :local pay "0123456789012345678901234567890123456789012345678901234567890123"
-      :for i from=1 to=14 do={ :set pay ($pay . $pay) }
-      :set uerro "envio"
-      :foreach n in={1048576;262144;65536;8192} do={
-        :if ($ubytes = 0) do={
-          :do {
-            :local parte [:pick $pay 0 $n]
-            :local u0 [:timestamp]
-            /tool fetch url="https://speed.cloudflare.com/__up" http-method=post \
-                check-certificate=no output=none \
-                http-header-field="Content-Type: text/plain" http-data=$parte
-            :set udur ([:timestamp] - $u0)
-            :set ubytes $n
-            :set uerro ""
-          } on-error={}
-        }
-      }
-    } on-error={ :set ubytes 0 }
+    # O que traria o upload de volta, se algum dia valer:
+    #   - /tool speed-test (nativo, multi-conexao, TCP e UDP nos dois sentidos)
+    #     contra um RouterOS nosso — precisa de CHR numa VPS com licenca paga;
+    #   - upload=yes com src-path, que manda um ARQUIVO. Descartado de
+    #     proposito: os arquivos da flash sao a logo, o anuncio e o portal do
+    #     comprador, e mandar isso para um terceiro so para cronometrar e
+    #     entregar dado de cliente sem necessidade nenhuma.
+    #
+    # O painel esconde o campo de upload sozinho quando nao vem numero.
 
     :do {
-      /tool fetch url=("https://captivedata.com.br/api/speed_rt.php?token=$token&roteador=$ident&f=res&bytes=$bytes&dur=$dur&over=$over&ping=$rtt&ubytes=$ubytes&udur=$udur&conex=$ns&cpu=$cpu&cpu1=$cpu1&uerro=$uerro&erro=$erro") \
+      /tool fetch url=("https://captivedata.com.br/api/speed_rt.php?token=$token&roteador=$ident&f=res&bytes=$bytes&dur=$dur&over=$over&ping=$rtt&conex=$ns&cpu=$cpu&cpu1=$cpu1&esq=$esq&erro=$erro") \
           check-certificate=no output=none
     } on-error={}
   }
