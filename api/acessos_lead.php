@@ -61,7 +61,7 @@ $where = "WHERE a.roteador = ? AND a.mac IN ($ph)" . ($condData ? ' AND ' . impl
 $args  = array_merge($base, $argsData);
 
 $SELECT =
-    "SELECT a.visto_em, a.ip_cliente, a.ip_destino, a.hits, hc.host, hc.org,
+    "SELECT a.visto_em, a.ip_cliente, a.ip_destino, a.hits, hc.host, hc.org, hc.dns,
             (SELECT cx.dispositivo FROM conexoes cx WHERE cx.mac = a.mac ORDER BY cx.id DESC LIMIT 1) AS dispositivo
        FROM acessos a
        LEFT JOIN host_cache hc ON hc.ip = a.ip_destino
@@ -94,7 +94,7 @@ if ($csv) {
         fputcsv($out, [
             date('d/m/Y H:i', strtotime((string) $a['visto_em'])),
             (string) ($a['ip_cliente'] ?? ''),
-            (string) ($a['host'] !== null && $a['host'] !== '' ? $a['host'] : ($a['ip_destino'] ?? '')),
+            (string) (destino_nome($a) ?? ($a['ip_destino'] ?? '')),
             (string) ($a['org'] ?? ''),
             (string) ($a['dispositivo'] ?? ''),
         ], ';');

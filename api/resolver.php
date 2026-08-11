@@ -97,8 +97,16 @@ function asn_org($ip)
 
 $n = 0;
 try {
-    $rows = db()->query('SELECT ip, host FROM host_cache WHERE host IS NULL OR org IS NULL ORDER BY em DESC LIMIT 12')
-        ->fetchAll(PDO::FETCH_ASSOC);
+    // O terceiro caso do WHERE é novo: uma linha que já foi resolvida e ficou
+    // como "(site oculto)" volta para a fila quando o nome do cache de DNS do
+    // roteador chega (api/dns_nomes.php). É justamente nesses IPs de CDN que o
+    // reverse-DNS não tinha resposta e o cache tem.
+    $rows = db()->query(
+        "SELECT ip, host, dns FROM host_cache
+          WHERE host IS NULL OR org IS NULL
+             OR (dns IS NOT NULL AND dns <> '' AND org LIKE '%oculto%')
+          ORDER BY em DESC LIMIT 12"
+    )->fetchAll(PDO::FETCH_ASSOC);
     $upH = db()->prepare('UPDATE host_cache SET host = ? WHERE ip = ?');
     $upO = db()->prepare('UPDATE host_cache SET org = ? WHERE ip = ?');
     foreach ($rows as $r) {
@@ -109,7 +117,11 @@ try {
             $host = ($ptr && $ptr !== $ip) ? substr($ptr, 0, 190) : '';
             $upH->execute([$host, $ip]);
         }
-        list($label, $precisaAsn) = rotulo_destino($host, $ip);
+        // O nome que o cliente resolveu manda no rótulo: "scontent.cdninstagram
+        // .com" vira Instagram, onde o PTR do mesmo IP daria "Cloudflare (site
+        // oculto)". Só cai no PTR quando não há nome do cache.
+        $melhor = (isset($r['dns']) && trim((string) $r['dns']) !== '') ? (string) $r['dns'] : $host;
+        list($label, $precisaAsn) = rotulo_destino($melhor, $ip);
         if ($precisaAsn) {
             $label = asn_org($ip);
         }

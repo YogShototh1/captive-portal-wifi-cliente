@@ -330,7 +330,8 @@
 
                 var html = '<div class="pc-log-head"><span>Data e hora</span><span>IP cliente</span><span>Destino</span><span>Serviço</span><span>Aparelho</span></div><ul class="pc-log-list">';
                 d.acessos.forEach(function (a) {
-                    var destino = (a.host && a.host !== '') ? esc(a.host) : esc(a.ip_destino);
+                    // Mesma ordem do destino_nome() do inc/util.php.
+                    var destino = esc(a.dns || a.host || a.ip_destino);
                     html += '<li class="pc-log-row pc-acesso-row"><span class="pc-conex-data">' + esc(fmtData(a.visto_em)) + '</span>' +
                             '<span class="pc-log-ip">' + esc(a.ip_cliente || '—') + '</span>' +
                             '<span class="pc-acesso-dst-cel"><span class="pc-acesso-dst" title="' + esc(a.ip_destino) + '">' + destino + '</span>' + COPIA_BTN + '</span>' +

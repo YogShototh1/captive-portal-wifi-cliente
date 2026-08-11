@@ -517,6 +517,21 @@ function speed_gravar(string $roteador, array $dados): void
         json_encode(array_slice($h, 0, SPEED_HIST_MAX), JSON_UNESCAPED_UNICODE), LOCK_EX);
 }
 
+// Nome do destino de um acesso, na ordem em que se confia nele:
+//   dns  = o que o CLIENTE resolveu, lido do cache de DNS do roteador. É o
+//          único que acerta atrás de CDN, onde um IP atende milhares de sites.
+//   host = reverse-DNS (PTR) do IP. Num IP de CDN devolve "cloudflare".
+//   null = nem um nem outro; quem chama mostra o IP cru.
+// Vive aqui porque a tela (assets/acessolog.js) e as duas planilhas precisam da
+// MESMA ordem — em três lugares diferentes ela desandaria sozinha.
+function destino_nome(array $a): ?string
+{
+    foreach (['dns', 'host'] as $k) {
+        if (isset($a[$k]) && trim((string) $a[$k]) !== '') { return (string) $a[$k]; }
+    }
+    return null;
+}
+
 // A duração que o /tool fetch devolve, em segundos.
 // O RouterOS escreve tempo de dois jeitos: "6s500ms" / "1m2s" (o formato de
 // duração) ou "00:00:06.500000" (o de relógio). Cobre os dois; null se não der.

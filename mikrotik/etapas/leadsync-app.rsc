@@ -351,6 +351,49 @@
 }
 
 # ============================================================
+#  BLOCO 8: nome dos sites (cache de DNS do roteador)
+#
+#  O bloco de cima manda IP de destino, e do IP nao se volta para o site: um IP
+#  de CDN atende centenas de milhares de dominios, e o reverse-DNS do painel so
+#  consegue dizer "cloudflare". Lista de DNS resolvido baixada da internet nao
+#  ajuda — invertida, ela devolve TODOS os dominios daquele IP, nao o que o
+#  cliente pediu.
+#
+#  Quem sabe o nome certo e este roteador, no instante em que o cliente
+#  perguntou. Aqui so se le o cache e se manda os pares nome|IP.
+#
+#  DEPENDE DE UMA COISA: os clientes tem que usar o MikroTik como servidor DNS.
+#  Se o DHCP entrega o IP do provedor ou o 8.8.8.8, a pergunta nao passa por
+#  aqui e o cache fica vazio.
+#      /ip dhcp-server network set [find] dns-server=<IP do MikroTik>
+#      /ip dns set allow-remote-requests=yes
+#
+#  Vai DEPOIS do acesso.php de proposito: o painel so grava o nome de IP que ja
+#  esta no log, e quem cria a linha e o bloco de cima. O que nao pegar nesta
+#  rodada pega na proxima, enquanto a entrada continuar no cache.
+#
+#  Teto de 5000 caracteres porque o http-data do /tool fetch corta em algum
+#  ponto entre 8 e 64 KB (medido em 11/08/2026, no teste de upload).
+:do {
+  :local dpares ""
+  :foreach dc in=[/ip dns cache find where type="A"] do={
+    :if ([:len $dpares] < 5000) do={
+      :local dn [/ip dns cache get $dc name]
+      :local dd [/ip dns cache get $dc data]
+      # ">6" descarta lixo e entrada sem endereco; o menor IPv4 tem 7 caracteres.
+      :if ([:len $dn] > 0 && [:len $dd] > 6) do={
+        :set dpares ($dpares . $dn . "|" . $dd . ";")
+      }
+    }
+  }
+  :if ([:len $dpares] > 0) do={
+    /tool fetch url="https://captivedata.com.br/api/dns_nomes.php" http-method=post check-certificate=no \
+        http-header-field="Content-Type: application/x-www-form-urlencoded" \
+        http-data=("token=$token&roteador=$ident&d=$dpares") output=none
+  }
+} on-error={}
+
+# ============================================================
 #  Teste de velocidade da internet da LOJA (sob demanda)
 #  O comprador pede pelo painel; aqui so se pergunta "tem teste?" a cada
 #  rodada — uma resposta de 1 byte, barata.

@@ -34,7 +34,10 @@ $where = $cond ? 'WHERE ' . implode(' AND ', $cond) : '';
 
 // A consulta é a mesma da tela e da planilha; só muda o LIMIT.
 $SELECT =
-    "SELECT a.visto_em, a.ip_cliente, a.ip_destino, a.mac, hc.host, hc.org,
+    // hc.dns é o nome que o CLIENTE resolveu, lido do cache de DNS do roteador
+    // (api/dns_nomes.php). Ganha do hc.host (reverse-DNS) porque o reverse de um
+    // IP de CDN devolve "cloudflare", não o site.
+    "SELECT a.visto_em, a.ip_cliente, a.ip_destino, a.mac, hc.host, hc.org, hc.dns,
             (SELECT l.telefone FROM conexoes cx JOIN leads l ON l.id = cx.lead_id
                WHERE cx.mac = a.mac AND l.roteador = a.roteador ORDER BY cx.id DESC LIMIT 1) AS telefone,
             (SELECT l.nome FROM conexoes cx JOIN leads l ON l.id = cx.lead_id
@@ -75,7 +78,7 @@ if ($csv) {
             date('d/m/Y H:i', strtotime((string) $a['visto_em'])),
             (string) ($a['nome'] !== null && $a['nome'] !== '' ? $a['nome'] : ($a['telefone'] ?? '')),
             (string) ($a['ip_cliente'] ?? ''),
-            (string) ($a['host'] !== null && $a['host'] !== '' ? $a['host'] : ($a['ip_destino'] ?? '')),
+            (string) (destino_nome($a) ?? ($a['ip_destino'] ?? '')),
             (string) ($a['org'] ?? ''),
             (string) ($a['dispositivo'] ?? ''),
         ], ';');
