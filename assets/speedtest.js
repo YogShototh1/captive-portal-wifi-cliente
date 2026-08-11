@@ -125,16 +125,20 @@
                 histW.style.display = n > 1 ? '' : 'none';
                 histN.textContent = n;
                 histL.innerHTML = (d.medicoes || []).map(function (x) {
-                    // Falta algum dos dois números? Mostra o que o roteador
-                    // respondeu de fato — assim dá para ver na tela se o que
-                    // faltou foi o download, o ping ou o formato do tempo.
-                    var falha = (x.down == null || x.ping == null) ? (x.cru || x.erro || '') : '';
+                    // Uma linha em português, não o eco da chamada. Havia aqui
+                    // um "bytes=10000000 dur=00:00:04.03…" cru, que era andaime
+                    // de depuração e virou lixo na tela do cliente.
+                    var det = [];
+                    if (x.ping != null)  { det.push(Math.round(x.ping) + ' ms de ping'); }
+                    if (x.bytes != null && x.seg != null) {
+                        det.push('baixou ' + Math.round(x.bytes / 1e6) + ' MB em ' +
+                                 x.seg.toFixed(1).replace('.', ',') + ' s');
+                    }
+                    det.push((x.em || '').replace(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2}).*$/, '$3/$2 às $4'));
                     return '<li class="pc-hist-item"><span class="pc-hist-nome">' +
                         (x.down != null ? fmt(x.down) + ' Mbps' : 'sem resultado') +
-                        (falha ? ' <em class="mh-data">(' + esc(falha) + ')</em>' : '') +
-                        '</span><span class="pc-hist-meta">' +
-                        (x.ping != null ? Math.round(x.ping) + ' ms · ' : '') +
-                        (x.em || '').replace(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2}).*$/, '$3/$2 $4') +
+                        (x.down == null && x.erro ? ' <em class="mh-data">' + esc(x.erro) + '</em>' : '') +
+                        '</span><span class="pc-hist-meta">' + esc(det.join(' · ')) +
                         '</span></li>';
                 }).join('');
             }

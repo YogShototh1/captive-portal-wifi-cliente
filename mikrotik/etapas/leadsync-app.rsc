@@ -374,30 +374,34 @@
     # Ping ate um destino externo: mede a latencia da internet da loja, nao a
     # do caminho ate o painel.
     #
-    # Duas tentativas ja falharam aqui. Primeiro pedindo ($pg->"avg-rtt"), que o
-    # as-value do /ping nao devolve. Depois lendo ($r->"time") de cada pacote,
-    # que tambem veio vazio. Como nao da para inspecionar o roteador daqui, esta
-    # versao nao aposta em nome de campo nenhum: converte o retorno inteiro em
-    # texto e manda para o servidor, que garimpa os tempos com expressao
-    # regular. Qualquer que seja o formato, os "12ms300us" estao la dentro.
+    # O as-value do /ping NAO devolve avg-rtt — devolve uma LISTA, um item por
+    # pacote, cada um com o seu "time". Manda os tempos crus, separados por
+    # virgula; a media e feita no servidor.
+    #
+    # NAO trocar por [:tostr [/ping ...]]: ja foi tentado e derrubou o teste
+    # inteiro. O :tostr de uma lista de arrays sai com ";" "=" "{" "}" no meio,
+    # e o que sobrava depois de limpar tinha ESPACOS — /tool fetch nao aceita
+    # URL com espaco, entao o fetch do resultado morria e o painel ficava sem
+    # download E sem ping. O "time" de cada pacote sempre funcionou; quem nao
+    # sabia ler o "00:00:00.021866" era o servidor.
     #
     # Dois destinos porque ha provedor que bloqueia um deles.
     :local rtt ""
-    :do { :set rtt [:tostr [/ping 1.1.1.1 count=3 as-value]] } on-error={ :set rtt "" }
+    :do {
+      :foreach r in=[/ping 1.1.1.1 count=3 as-value] do={
+        :local t ($r->"time")
+        :if ([:typeof $t] != "nothing") do={ :set rtt ($rtt . $t . ",") }
+      }
+    } on-error={ :set rtt "" }
     :if ([:len $rtt] < 5) do={
-      :do { :set rtt [:tostr [/ping 8.8.8.8 count=3 as-value]] } on-error={ :set rtt "" }
+      :set rtt ""
+      :do {
+        :foreach r in=[/ping 8.8.8.8 count=3 as-value] do={
+          :local t ($r->"time")
+          :if ([:typeof $t] != "nothing") do={ :set rtt ($rtt . $t . ",") }
+        }
+      } on-error={ :set rtt "" }
     }
-    # Os separadores do :tostr (; = { }) quebrariam a query string; viram espaco.
-    :local plimpo ""
-    :local n [:len $rtt]
-    :if ($n > 400) do={ :set n 400 }
-    :for i from=0 to=($n - 1) do={
-      :local c [:pick $rtt $i ($i + 1)]
-      :if ($c = ";" || $c = "=" || $c = "{" || $c = "}" || $c = "&" || $c = "+" || $c = "%") do={
-        :set plimpo ($plimpo . " ")
-      } else={ :set plimpo ($plimpo . $c) }
-    }
-    :set rtt $plimpo
 
     :do {
       /tool fetch url=("https://captivedata.com.br/api/speed_rt.php?token=$token&roteador=$ident&f=res&bytes=$bytes&dur=$dur&over=$over&ping=$rtt&erro=$erro") \

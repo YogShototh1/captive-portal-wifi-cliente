@@ -480,7 +480,13 @@ function speed_rtt_ms(string $v): ?float
               ['/(?<![m u])(\d+(?:\.\d+)?)\s*s(?![a-z])/', 1000]] as [$re, $mult]) {
         if (preg_match($re, $v, $m)) { $ms += ((float) $m[1]) * $mult; $achou = true; }
     }
-    return $achou ? round($ms, 1) : null;
+    if ($achou) { return round($ms, 1); }
+
+    // Formato de relógio ("00:00:00.021866"): é assim que o /ping do RouterOS
+    // escreve o time de cada pacote, e foi o que ficou meses sem aparecer no
+    // painel — o roteador sempre mandou, o servidor é que não sabia ler.
+    $s = speed_dur_seg($v);
+    return $s === null ? null : round($s * 1000, 1);
 }
 
 // --- Imagem enxuta para o roteador guardar na flash ---

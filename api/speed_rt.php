@@ -79,25 +79,16 @@ if ($f === 'res') {
         if ($over !== null) { $extra['setup'] = round($over, 3); }
     }
 
-    // O ping chega como o retorno CRU do /ping, virado em texto pelo roteador.
-    // Não se procura um campo com nome certo — duas tentativas assim já vieram
-    // vazias, e não dá para inspecionar o equipamento daqui. Aqui se garimpam os
-    // tempos com expressão regular: "time=12ms300us", "12ms300us" solto ou uma
-    // lista separada por vírgula, tanto faz.
+    // O ping vem como os tempos de cada pacote separados por vírgula, do jeito
+    // que o /ping do RouterOS os escreve: "00:00:00.021866,00:00:00.015775,".
+    // Média simples dos que derem para ler.
     $ping = trim((string) ($_REQUEST['ping'] ?? ''));
     if ($ping !== '') {
         $vals = [];
-        // Um tempo do RouterOS: número COLADO na unidade, possivelmente
-        // encadeado ("12ms300us"). Sem espaço entre os dois de propósito —
-        // permitindo espaço, "count 3 size" virava "3 s" e o ping saía errado.
-        // O (?![a-z0-9]) impede que "56 t" de "size 56 ttl" case como tempo.
-        if (preg_match_all('/\d+(?:\.\d+)?(?:ms|us|s)(?:\d+(?:\.\d+)?(?:ms|us))?(?![a-z0-9])/i', $ping, $m)) {
-            foreach ($m[0] as $p) {
-                $ms = speed_rtt_ms($p);
-                // Acima de 5 s não é ping de rede que funciona; provavelmente
-                // casou com outra coisa do retorno (timeout, uptime).
-                if ($ms !== null && $ms > 0 && $ms < 5000) { $vals[] = $ms; }
-            }
+        foreach (explode(',', $ping) as $p) {
+            $ms = speed_rtt_ms(trim($p));
+            // Acima de 5 s não é ping de rede que funciona.
+            if ($ms !== null && $ms > 0 && $ms < 5000) { $vals[] = $ms; }
         }
         if ($vals) { $extra['ping'] = round(array_sum($vals) / count($vals), 1); }
     }
@@ -106,15 +97,8 @@ if ($f === 'res') {
     }
     // Grava mesmo vazio: o "acabou sem número" precisa aparecer na tela, senão
     // o painel fica girando até desistir sozinho, sem dizer o que houve.
-    // E guarda o que o roteador mandou de fato — sem isso, "sem resultado" não
-    // diz se o problema foi o download, o formato do tempo ou outra coisa.
-    if (!isset($extra['down']) || !isset($extra['ping'])) {
-        $extra['cru'] = mb_substr('bytes=' . (string) ($_REQUEST['bytes'] ?? '-')
-                      . ' dur=' . (string) ($_REQUEST['dur'] ?? '-')
-                      . ' ping=' . (string) ($_REQUEST['ping'] ?? '-'), 0, 160);
-        if (!isset($extra['down']) && !isset($extra['erro'])) {
-            $extra['erro'] = 'sem medida de velocidade';
-        }
+    if (!isset($extra['down']) && !isset($extra['erro'])) {
+        $extra['erro'] = 'sem medida de velocidade';
     }
     speed_gravar($roteador, $extra);
     exit('ok');

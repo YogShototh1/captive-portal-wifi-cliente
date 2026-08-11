@@ -112,7 +112,13 @@ $media = function (string $ping): ?float {
     }
     return $v ? round(array_sum($v) / count($v), 1) : null;
 };
-foreach (['12ms300us,11ms800us,13ms100us' => 12.4,
+// O formato de baixo (00:00:00.021866) e o que o roteador manda DE VERDADE —
+// copiado de uma medicao real da Primix, 09/08/2026 16:27. Ficou meses sem
+// aparecer no painel porque o servidor so sabia ler "12ms300us"; o roteador
+// sempre mandou certo.
+foreach (['00:00:00.021866,00:00:00.015775,00:00:00.015864,' => 17.9,
+          '00:00:00.015989,00:00:00.015927,00:00:00.015895,' => 15.9,
+          '12ms300us,11ms800us,13ms100us' => 12.4,
           '15ms,16ms,14ms,'               => 15.0,   // virgula sobrando no fim
           '8ms500us'                      => 8.5,    // um pacote so
           '1s200ms,1s100ms'               => 1150.0] as $e => $esp) {
@@ -125,7 +131,9 @@ $ok($media('') === null, 'string vazia nao vira zero');
 // ---------------------------------------------------------------
 echo "\nrtt do RouterOS -> ms\n";
 foreach (['12ms300us' => 12.3, '1s200ms' => 1200.0, '500us' => 0.5, '23' => 23.0,
-          '2s' => 2000.0, '45ms' => 45.0] as $e => $esp) {
+          '2s' => 2000.0, '45ms' => 45.0,
+          '00:00:00.021866' => 21.9,   // formato de relogio: o do /ping
+          '00:00:01.500000' => 1500.0] as $e => $esp) {
     $r = speed_rtt_ms((string) $e);
     $ok($r !== null && abs($r - $esp) < 0.01, "\"$e\" -> {$esp}ms", var_export($r, true));
 }
