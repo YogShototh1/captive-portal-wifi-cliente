@@ -204,7 +204,7 @@ if ($ext === 'zip') {
     if ($falhas > 0) {
         $msg .= " — atenção: $falhas não puderam ser gravados (falha de leitura/gravação no servidor)";
     }
-    $msg .= ". O MikroTik atualiza em até ~1 min.";
+    $msg .= ". O roteador atualiza em até ~1 min.";
     voltar_msg($voltar, 'portal_ok', $msg);
 }
 
@@ -223,4 +223,4 @@ if (!move_uploaded_file((string) $f['tmp_name'], $base . '/' . $nome)) {
 }
 @chmod($base . '/' . $nome, 0644);
 portal_hist_add($roteador, $nome, 1, quem_enviou($c));
-voltar_msg($voltar, 'portal_ok', "\"$nome\" atualizado. O MikroTik aplica em até ~1 min.");
+voltar_msg($voltar, 'portal_ok', "\"$nome\" atualizado. O roteador aplica em até ~1 min.");

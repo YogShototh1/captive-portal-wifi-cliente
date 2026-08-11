@@ -16,7 +16,7 @@ if (empty($portalHist)) {
 }
 $ultimo = $portalHist[0];
 ?>
-<p class="pc-dst-atual pc-hist-ult">Último envio ao MikroTik:
+<p class="pc-dst-atual pc-hist-ult">Último envio ao roteador:
     <strong><?= h((string) ($ultimo['nome'] ?? '?')) ?></strong>
     — <?= h(fmt_data((string) ($ultimo['em'] ?? ''))) ?>
 </p>

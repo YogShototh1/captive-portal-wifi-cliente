@@ -125,10 +125,10 @@
                 histW.style.display = n > 1 ? '' : 'none';
                 histN.textContent = n;
                 histL.innerHTML = (d.medicoes || []).map(function (x) {
-                    // Sem número, mostra o que o roteador respondeu: assim dá
-                    // para ver se faltou o download ou o formato do tempo, sem
-                    // precisar abrir o servidor.
-                    var falha = x.down == null ? (x.cru || x.erro || '') : '';
+                    // Falta algum dos dois números? Mostra o que o roteador
+                    // respondeu de fato — assim dá para ver na tela se o que
+                    // faltou foi o download, o ping ou o formato do tempo.
+                    var falha = (x.down == null || x.ping == null) ? (x.cru || x.erro || '') : '';
                     return '<li class="pc-hist-item"><span class="pc-hist-nome">' +
                         (x.down != null ? fmt(x.down) + ' Mbps' : 'sem resultado') +
                         (falha ? ' <em class="mh-data">(' + esc(falha) + ')</em>' : '') +
@@ -198,7 +198,7 @@
                 if (d.medicoes && d.medicoes.length) {
                     fase('Última medição: ' + (d.medicoes[0].em || '').slice(0, 16));
                 } else if (!d.online) {
-                    fase('O MikroTik está fora do ar.');
+                    fase('O roteador está fora do ar.');
                 }
                 if (d.pendente) {   // já havia um pedido em aberto
                     btn.disabled = true; box.classList.add('rodando');

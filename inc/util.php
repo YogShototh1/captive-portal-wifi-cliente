@@ -1226,7 +1226,7 @@ function alertas_catalogo(): array
         'fieis_sumidos'    => ['Fiéis que sumiram', 'Vinham em 4 semanas ou mais e estão há 7 dias sem aparecer.', 'ruim', true],
         'visita_unica'     => ['Vieram uma vez e não voltaram', 'Conheceram o Wi-Fi há mais de 7 dias e não deram as caras de novo.', 'ruim', true],
         'queda_semana'     => ['Movimento em queda', 'Os acessos desta semana caíram mais de 20% ante a semana passada.', 'ruim', false],
-        'mikrotik_offline' => ['MikroTik fora do ar', 'O roteador parou de reportar para o painel.', 'ruim', false],
+        'mikrotik_offline' => ['Roteador fora do ar', 'O roteador parou de reportar para o painel.', 'ruim', false],
         'forte_recorrencia'=> ['Clientes em sequência', 'Vieram 5 dias seguidos ou mais no último mês.', 'bom', true],
         'novos_semana'     => ['Clientes novos', 'Apareceram pela primeira vez nos últimos 7 dias.', 'bom', true],
         'reativados'       => ['Clientes que voltaram', 'Sumiram por 30 dias ou mais e reapareceram nesta semana.', 'bom', true],

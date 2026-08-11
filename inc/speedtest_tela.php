@@ -21,7 +21,7 @@ $spCid = isset($spClienteId) ? (int) $spClienteId : null;
                  <?php if ($spCid !== null): ?>data-cliente="<?= $spCid ?>"<?php endif; ?>
                  data-csrf="<?= h($csrf) ?>">
                 <h2 class="pc-anuncio-title">Teste de velocidade</h2>
-                <p class="pc-anuncio-desc">Mede a internet que chega no <strong>MikroTik <?= h((string) $rotAtivo) ?></strong>, sem precisar ir até a loja. O próprio roteador baixa de um servidor de teste da Cloudflare, então o número é o do link da loja — não o da nossa hospedagem. O teste roda na próxima rodada e o resultado leva cerca de um minuto para aparecer aqui.</p>
+                <p class="pc-anuncio-desc">Mede a internet que chega no <strong>roteador <?= h((string) $rotAtivo) ?></strong>, sem precisar ir até a loja. O próprio roteador baixa de um servidor de teste da Cloudflare, então o número é o do link da loja — não o da nossa hospedagem. O teste roda na próxima rodada e o resultado leva cerca de um minuto para aparecer aqui.</p>
 
                 <div class="sp-topo">
                     <span class="sp-kpi sp-kpi-down">

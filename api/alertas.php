@@ -261,8 +261,8 @@ function calcular(string $id, string $ph, array $lista): array
             }
             return ['n' => count($off), 'lista' => [],
                     'texto' => count($off) === 1
-                        ? 'O MikroTik ' . $off[0] . ' parou de reportar'
-                        : '{n} MikroTiks pararam de reportar'];
+                        ? 'O roteador ' . $off[0] . ' parou de reportar'
+                        : '{n} roteadores pararam de reportar'];
     }
     return ['n' => 0, 'lista' => [], 'texto' => ''];
 }

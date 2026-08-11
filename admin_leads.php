@@ -94,8 +94,8 @@ $portalHist  = $rotAtivo !== null ? portal_hist($rotAtivo)  : [];
 
 // Aviso mostrado nas abas de configuração quando a conta multi está em "todos".
 $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" aria-hidden="true"></span><div class="glow-body"><div class="pc-dst">'
-    . '<h2 class="pc-anuncio-title">Selecione um MikroTik</h2>'
-    . '<p class="pc-anuncio-desc">Esta configuração é feita por roteador. Escolha um MikroTik no seletor do topo da página para editar.</p>'
+    . '<h2 class="pc-anuncio-title">Selecione um roteador</h2>'
+    . '<p class="pc-anuncio-desc">Esta configuração é feita por roteador. Escolha um roteador no seletor do topo da página para editar.</p>'
     . '</div></div></section>';
 ?>
 <!doctype html>
@@ -158,7 +158,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                 </button>
                 <button type="button" class="pc-side-item" data-aba="html">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-                    HTML Mikrotik
+                    HTML do roteador
                 </button>
                 <button type="button" class="pc-side-item" data-aba="estatisticas">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="m19 9-5 5-4-4-3 3"/></svg>
@@ -186,7 +186,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
             <div id="mikrotik-status" class="mk-status <?= $mkOnline ? 'mk-on' : 'mk-off' ?>"
                  data-endpoint="api/mikrotik_status.php?<?= $rotAtivo !== null ? 'roteador=' . urlencode($rotAtivo) : 'cliente_id=' . (int) $id ?>">
                 <span class="mk-led"></span>
-                <span class="mk-text">MikroTik <?= $mkOnline ? 'online' : 'offline' ?></span>
+                <span class="mk-text">Roteador <?= $mkOnline ? 'online' : 'offline' ?></span>
             </div>
 
             <header class="pc-topbar">
@@ -197,7 +197,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                     <div>
                         <h1 class="pc-brand">Leads do cliente</h1>
                         <p class="pc-sub"><?= h($cliente['nome'] ?: $cliente['email']) ?>
-                            — <?= $multi ? '<strong>' . count($rotLista) . ' MikroTiks</strong>' : 'roteador <strong>' . h((string) ($rotLista[0] ?? '—')) . '</strong>' ?></p>
+                            — <?= $multi ? '<strong>' . count($rotLista) . ' roteadores</strong>' : 'roteador <strong>' . h((string) ($rotLista[0] ?? '—')) . '</strong>' ?></p>
                     </div>
                 </div>
                 <div class="pc-topbar-right">
@@ -205,11 +205,11 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                     <details class="rt-sel">
                         <summary>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.86a10 10 0 0 1 14 0"/><path d="M8.5 16.43a5 5 0 0 1 7 0"/></svg>
-                            <span><?= $rotAtivo !== null ? h($rotAtivo) : 'Todos os MikroTiks' ?></span>
+                            <span><?= $rotAtivo !== null ? h($rotAtivo) : 'Todos os roteadores' ?></span>
                             <svg class="rt-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
                         </summary>
                         <div class="rt-menu">
-                            <div class="rt-menu-title">MikroTik</div>
+                            <div class="rt-menu-title">Roteador</div>
                             <?php foreach ($rotLista as $rt): ?>
                             <a class="rt-item<?= $rotAtivo === $rt ? ' atual' : '' ?>" href="?id=<?= (int) $id ?>&amp;r=<?= urlencode($rt) ?>">
                                 <span><?= h($rt) ?></span>
@@ -616,16 +616,16 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                 <?php else: echo $avisoRoteador; endif; ?>
             </section>
 
-            <!-- ============ ABA: HTML MIKROTIK (admin sempre vê) ============ -->
+            <!-- ============ ABA: HTML DO ROTEADOR (admin sempre vê) ============ -->
             <section class="pc-tela" data-tela="html">
                 <?php if ($rotAtivo !== null): ?>
                 <div class="glow-card pc-dst-card">
                     <span class="glow-fx" aria-hidden="true"></span>
                     <div class="glow-body">
                         <div class="pc-dst">
-                            <h2 class="pc-anuncio-title">Página de login do hotspot (MikroTik)</h2>
+                            <h2 class="pc-anuncio-title">Página de login do hotspot (roteador)</h2>
                             <div class="pc-anuncio-target">Roteador <strong><?= h((string) $rotAtivo) ?></strong></div>
-                            <p class="pc-anuncio-desc">Envie um <strong>.zip</strong> do template (com <code>login.html</code>, <code>css/</code>, <code>img/</code>, <code>xml/</code>…): extraímos e o MikroTik substitui os de <code>flash/hostsv7</code> em até ~1 min (as subpastas são criadas sozinhas). Ou envie um arquivo avulso para trocar só ele. Até 2 MB por arquivo.</p>
+                            <p class="pc-anuncio-desc">Envie um <strong>.zip</strong> do template (com <code>login.html</code>, <code>css/</code>, <code>img/</code>, <code>xml/</code>…): extraímos e o roteador substitui os de <code>flash/hostsv7</code> em até ~1 min (as subpastas são criadas sozinhas). Ou envie um arquivo avulso para trocar só ele. Até 2 MB por arquivo.</p>
                             <?php require __DIR__ . '/inc/portal_hist_tela.php'; ?>
                             <?php if ($portalFiles): ?>
                                 <p class="pc-dst-atual">No servidor (<?= count($portalFiles) ?>): <strong><?= h(implode(', ', $portalFiles)) ?></strong></p>
@@ -643,7 +643,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                                     <input type="file" name="arquivo" accept=".zip,.html,.htm,.css,.js,.svg,.png,.jpg,.jpeg,.gif,.ico,.json,.txt,.xml,.xsd" required>
                                     <span class="pc-file-label">Escolher .zip ou arquivo…</span>
                                 </label>
-                                <button type="submit" class="pc-btn-primary">Enviar ao MikroTik</button>
+                                <button type="submit" class="pc-btn-primary">Enviar ao roteador</button>
                             </form>
                         </div>
                     </div>

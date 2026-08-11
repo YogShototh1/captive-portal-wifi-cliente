@@ -29,6 +29,12 @@ if ($roteador === '') {
 // Heartbeat: esta chamada (autenticada) prova que o MikroTik está online agora.
 mikrotik_tocar($roteador);
 
+// Versao do RouterOS e modelo, enviados pelo leadsync a partir do BLOCO 0.
+// Roteador com script antigo simplesmente nao manda — e o campo fica vazio.
+if (isset($_REQUEST['rosver']) || isset($_REQUEST['board'])) {
+    mikrotik_info_set($roteador, (string) ($_REQUEST['rosver'] ?? ''), (string) ($_REQUEST['board'] ?? ''));
+}
+
 // MACs online (separados por vírgula), normalizados e sem duplicados.
 $macsSet = [];
 foreach (explode(',', (string) ($_REQUEST['macs'] ?? '')) as $m) {

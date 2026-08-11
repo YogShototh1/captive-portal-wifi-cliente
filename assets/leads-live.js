@@ -513,7 +513,7 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ csrf: CSRF, id: parseInt(tr.getAttribute('data-id'), 10) })
         }).then(function (r) { return r.json(); }).then(function (d) {
-            if (d && d.ok) { window.alert('Cookies apagados (' + (d.macs || 0) + ' aparelho(s)). Vale em até ~1 min, quando o MikroTik atualizar a lista.'); }
+            if (d && d.ok) { window.alert('Cookies apagados (' + (d.macs || 0) + ' aparelho(s)). Vale em até ~1 min, quando o roteador atualizar a lista.'); }
             else { window.alert((d && d.erro) || 'Erro ao apagar cookies.'); }
         }).catch(function () { window.alert('Erro ao apagar cookies. Tente de novo.'); });
     }
@@ -628,13 +628,13 @@
     function render(online) {
         box.classList.toggle('mk-on', online);
         box.classList.toggle('mk-off', !online);
-        if (txt) txt.textContent = 'MikroTik ' + (online ? 'online' : 'offline');
+        if (txt) txt.textContent = 'Roteador ' + (online ? 'online' : 'offline');
     }
 
     function toast(online) {
         var t = document.createElement('div');
         t.className = 'mk-toast ' + (online ? 'mk-toast-on' : 'mk-toast-off');
-        t.textContent = online ? 'MikroTik voltou a ficar online' : 'MikroTik ficou offline';
+        t.textContent = online ? 'Roteador voltou a ficar online' : 'Roteador ficou offline';
         document.body.appendChild(t);
         // forca o reflow p/ a transicao de entrada
         void t.offsetWidth;

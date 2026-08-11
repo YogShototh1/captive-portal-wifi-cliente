@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Roteador fora do ar não vai buscar o pedido — melhor dizer isso agora do
     // que deixar o painel girando à toa por dez minutos.
     if (!mikrotik_online($roteador)) {
-        exit(json_encode(['ok' => false, 'erro' => 'O MikroTik está fora do ar. O teste roda quando ele voltar.']));
+        exit(json_encode(['ok' => false, 'erro' => 'O roteador está fora do ar. O teste roda quando ele voltar.']));
     }
     speed_pedir($roteador, 10);
 }

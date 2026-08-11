@@ -95,8 +95,8 @@ $portalHist  = ($portalHabil && $rotAtivo !== null) ? portal_hist($rotAtivo)  : 
 
 // Aviso mostrado nas abas de configuração quando a conta multi está em "todos".
 $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" aria-hidden="true"></span><div class="glow-body"><div class="pc-dst">'
-    . '<h2 class="pc-anuncio-title">Selecione um MikroTik</h2>'
-    . '<p class="pc-anuncio-desc">Esta configuração é feita por roteador. Escolha um MikroTik no seletor do topo da página para editar.</p>'
+    . '<h2 class="pc-anuncio-title">Selecione um roteador</h2>'
+    . '<p class="pc-anuncio-desc">Esta configuração é feita por roteador. Escolha um roteador no seletor do topo da página para editar.</p>'
     . '</div></div></section>';
 ?>
 <!doctype html>
@@ -159,7 +159,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                 <?php if ($portalHabil): ?>
                 <button type="button" class="pc-side-item" data-aba="html">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-                    HTML Mikrotik
+                    HTML do roteador
                 </button>
                 <?php endif; ?>
                 <button type="button" class="pc-side-item" data-aba="estatisticas">
@@ -183,7 +183,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
         <div class="pc-shell">
             <div id="mikrotik-status" class="mk-status <?= $mkOnline ? 'mk-on' : 'mk-off' ?>" data-endpoint="api/mikrotik_status.php?roteador=<?= urlencode((string) $rotAtivo) ?>">
                 <span class="mk-led"></span>
-                <span class="mk-text">MikroTik <?= $mkOnline ? 'online' : 'offline' ?></span>
+                <span class="mk-text">Roteador <?= $mkOnline ? 'online' : 'offline' ?></span>
             </div>
 
             <header class="pc-topbar">
@@ -201,11 +201,11 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                     <details class="rt-sel">
                         <summary>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.86a10 10 0 0 1 14 0"/><path d="M8.5 16.43a5 5 0 0 1 7 0"/></svg>
-                            <span><?= $rotAtivo !== null ? h($rotAtivo) : 'Todos os MikroTiks' ?></span>
+                            <span><?= $rotAtivo !== null ? h($rotAtivo) : 'Todos os roteadores' ?></span>
                             <svg class="rt-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
                         </summary>
                         <div class="rt-menu">
-                            <div class="rt-menu-title">MikroTik</div>
+                            <div class="rt-menu-title">Roteador</div>
                             <?php foreach ($rotLista as $rt): ?>
                             <a class="rt-item<?= $rotAtivo === $rt ? ' atual' : '' ?>" href="?r=<?= urlencode($rt) ?>">
                                 <span><?= h($rt) ?></span>
@@ -604,7 +604,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
             </section>
 
             <?php if ($portalHabil): ?>
-            <!-- ============ ABA: HTML MIKROTIK (só com a flag liberada) ============ -->
+            <!-- ============ ABA: HTML DO ROTEADOR (só com a flag liberada) ============ -->
             <section class="pc-tela" data-tela="html">
                 <?php if ($rotAtivo !== null): ?>
                 <div class="glow-card pc-dst-card">
@@ -612,7 +612,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                     <div class="glow-body">
                         <div class="pc-dst">
                             <h2 class="pc-anuncio-title">Página de login do hotspot</h2>
-                            <p class="pc-anuncio-desc">Envie um <strong>.zip</strong> do template (com <code>login.html</code>, <code>css/</code>, <code>img/</code>, <code>xml/</code>…): extraímos e o MikroTik substitui os de <code>flash/hostsv7</code> em até ~1 min (as subpastas são criadas sozinhas). Ou envie um arquivo avulso para trocar só ele. Até 2 MB por arquivo.</p>
+                            <p class="pc-anuncio-desc">Envie um <strong>.zip</strong> do template (com <code>login.html</code>, <code>css/</code>, <code>img/</code>, <code>xml/</code>…): extraímos e o roteador substitui os de <code>flash/hostsv7</code> em até ~1 min (as subpastas são criadas sozinhas). Ou envie um arquivo avulso para trocar só ele. Até 2 MB por arquivo.</p>
                             <?php require __DIR__ . '/inc/portal_hist_tela.php'; ?>
                             <?php if ($portalFiles): ?>
                                 <p class="pc-dst-atual">No servidor (<?= count($portalFiles) ?>): <strong><?= h(implode(', ', $portalFiles)) ?></strong></p>
@@ -629,7 +629,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                                     <input type="file" name="arquivo" accept=".zip,.html,.htm,.css,.js,.svg,.png,.jpg,.jpeg,.gif,.ico,.json,.txt,.xml,.xsd" required>
                                     <span class="pc-file-label">Escolher .zip ou arquivo…</span>
                                 </label>
-                                <button type="submit" class="pc-btn-primary">Enviar ao MikroTik</button>
+                                <button type="submit" class="pc-btn-primary">Enviar ao roteador</button>
                             </form>
                         </div>
                     </div>

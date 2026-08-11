@@ -130,7 +130,7 @@ $csrf = csrf_token();
                         <input type="email" name="email" value="<?= h($dados['email']) ?>" required placeholder="email@exemplo.com">
                     </div>
                     <div class="af-field">
-                        <label>Roteadores (identity do MikroTik — um por linha)</label>
+                        <label>Roteadores (identity do roteador — um por linha)</label>
                         <textarea name="roteadores" rows="3" placeholder="ex.:&#10;PRIMIX-LOJA-01&#10;PRIMIX-LOJA-02"><?= h($dados['roteadores']) ?></textarea>
                     </div>
                     <div class="af-field">
