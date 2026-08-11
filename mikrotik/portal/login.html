@@ -13,6 +13,18 @@
 
 <body>
 
+    <!-- O hotspot RECUSOU o login anterior (trial esgotado, trial fora do
+         login-by, etc.). Marcado aqui, fora do $(if chap-id), para nao aninhar
+         dois $(if) — o RouterOS nao lida bem com isso.
+
+         Por que importa: o aparelho ja cadastrado entra pelo caminho rapido, que
+         cobre a tela com o #cd-cover, esconde o .main e vai direto pro anuncio.
+         O $(error) do hotspot mora DENTRO desse .main. Recusado o login, o
+         cliente via anuncio -> recusa -> anuncio, sem nunca ver o motivo: o
+         ciclo infinito relatado na loja. Com esta marca o caminho rapido e
+         desligado e a tela aparece com a mensagem do proprio roteador. -->
+    $(if error)<script>window.CD_ERRO = 1;</script>$(endif)
+
     $(if chap-id)
     <form name="sendin" action="$(link-login-only)" method="post" style="display:none">
         <input type="hidden" name="username" />
@@ -43,7 +55,9 @@
                     k = L.indexOf(h) >= 0;
                 }
             } catch (e) {}
-            d.className += k ? ' cd-known' : ' cd-unknown';
+            // Login recusado -> nunca pelo caminho rapido: a tela precisa
+            // aparecer com a mensagem do hotspot, senao o cliente fica preso.
+            d.className += (k && !window.CD_ERRO) ? ' cd-known' : ' cd-unknown';
         })();
     </script>
     <style>

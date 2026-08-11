@@ -23,6 +23,7 @@ $hsClienteId = $hsClienteId ?? 0;
         <button type="button" class="pc-btn" id="hs-btn" hidden></button>
     </div>
     <p class="pc-hs-srv" id="hs-srv"></p>
+    <p class="pc-hs-srv" id="hs-prof"></p>
     <p class="pc-anuncio-msg" id="hs-msg" hidden></p>
 </div>
 <script>
@@ -35,6 +36,7 @@ $hsClienteId = $hsClienteId ?? 0;
         est = document.getElementById('hs-estado'),
         btn = document.getElementById('hs-btn'),
         srv = document.getElementById('hs-srv'),
+        prof = document.getElementById('hs-prof'),
         msg = document.getElementById('hs-msg');
 
     function qs() {
@@ -82,6 +84,21 @@ $hsClienteId = $hsClienteId ?? 0;
             srv.textContent = 'Nenhum servidor de hotspot criado neste roteador.';
         } else {
             srv.textContent = '';
+        }
+
+        // Perfil do hotspot: é ele que decide se o cliente CONSEGUE entrar. O
+        // portal autentica por trial; sem "trial" no login-by o roteador recusa
+        // todo login e o cliente volta pro começo do fluxo — o ciclo infinito.
+        // Com trial ligado, o limite diário por aparelho é o outro suspeito.
+        if (d.perfis && d.perfis.length) {
+            prof.innerHTML = d.perfis.map(function (p) {
+                return 'Perfil <strong>' + p.nome + '</strong>: login por <code>' + (p.login || '?') + '</code>'
+                     + (p.trial
+                         ? ' · trial de <strong>' + (p.limite || '?') + '</strong> por aparelho, zera a cada <strong>' + (p.reset || '?') + '</strong>'
+                         : ' · <strong class="pc-hs-alerta">sem trial — o portal não consegue autenticar ninguém</strong>');
+            }).join('<br>');
+        } else {
+            prof.textContent = '';
         }
     }
 

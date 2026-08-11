@@ -55,6 +55,33 @@ $ok(count($e['servidores']) === 1 && $e['servidores'][0]['nome'] === 'bom',
     'lixo descartado, so o valido entra', json_encode($e['servidores']));
 
 // ---------------------------------------------------------------
+// O perfil e o que diz se o cliente CONSEGUE entrar: o portal autentica por
+// trial, entao sem "trial" no login-by o roteador recusa todo login e o
+// cliente volta pro comeco do fluxo.
+echo "\nperfil do hotspot\n";
+$p = hotspot_perfis_parse('hsprof1~http-chap;trial~30m~1d|');
+$ok(count($p) === 1, 'um perfil lido', json_encode($p));
+$ok(($p[0]['nome'] ?? '') === 'hsprof1', 'nome');
+$ok(($p[0]['login'] ?? '') === 'http-chap,trial', 'o ";" do :tostr vira virgula', $p[0]['login'] ?? '');
+$ok(($p[0]['trial'] ?? null) === true, 'trial reconhecido');
+$ok(($p[0]['limite'] ?? '') === '30m' && ($p[0]['reset'] ?? '') === '1d', 'limite e reset');
+
+$p = hotspot_perfis_parse('hsprof1~http-chap;http-pap~none~none|');
+$ok(($p[0]['trial'] ?? null) === false, 'sem trial e detectado — e a causa de ninguem entrar');
+
+$p = hotspot_perfis_parse('a~trial~30m~1d|b~http-chap~none~none|');
+$ok(count($p) === 2, 'dois perfis', count($p));
+
+$ok(hotspot_perfis_parse('') === [], 'vazio nao vira perfil fantasma');
+$ok(hotspot_perfis_parse('faltando~campos|') === [], 'registro incompleto e descartado');
+
+// O perfil sobrevive a uma rodada em que o roteador nao conseguiu coleta-lo.
+hotspot_estado_set($R, 'hotspot1:1,', 'hsprof1~trial~30m~1d|');
+hotspot_estado_set($R, 'hotspot1:1,', '');
+$e = hotspot_estado_get($R);
+$ok(count($e['perfis']) === 1, 'perfil conhecido nao some quando a coleta falha', json_encode($e['perfis']));
+
+// ---------------------------------------------------------------
 echo "\nordem do painel\n";
 $limpar();
 $ok(hotspot_ordem_pendente($R) === null, 'nada pedido');

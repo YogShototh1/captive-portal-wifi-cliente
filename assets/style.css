@@ -2777,3 +2777,11 @@ html[data-tema] .painel-cliente .pc-hs-srv { color: var(--t-fg3); }
 /* Recorte por data dentro do pop-up de acessos de um lead */
 .pc-log-filtro-modal { padding: 0 22px; margin: 12px 0 0; }
 @media (max-width: 600px) { .pc-log-filtro-modal { padding: 0 12px; } }
+
+/* Perfil sem trial: o portal autentica por trial, entao sem ele NINGUEM entra.
+   E o diagnostico mais importante da aba, por isso destacado. */
+.pc-hs-alerta { color: #f87171; }
+#hs-prof { margin-top: 6px; line-height: 1.6; }
+#hs-prof code { font-size: 12px; padding: 1px 5px; border-radius: 4px; background: rgba(255,255,255,0.08); }
+html[data-tema="claro"] .pc-hs-alerta { color: #dc2626; }
+html[data-tema="claro"] #hs-prof code { background: rgba(15,23,42,0.07); }

@@ -10,15 +10,40 @@
 #   4) aplica o limite de banda por usuario via /queue simple
 #
 #  ANTES DE USAR: troque o token pelo admin_token do seu inc/config.php.
-#
-#  ESTE E O APP. O scheduler NAO importa este arquivo — quem faz isso e o
-#  canal (flash/leadsync.rsc), no fim dele, dentro de :do{} on-error={}.
-#  Por isso aqui pode-se mexer a vontade: um erro neste arquivo nao derruba
-#  o contato com o painel, e a correcao chega sozinha na rodada seguinte.
 # ============================================================
 
 :local token "SEU_ADMIN_TOKEN_AQUI"
 :local ident [/system identity get name]
+
+# ============================================================
+#  BLOCO 0 - auto-atualizacao deste script
+#  Roda ANTES de tudo e nunca deixa erro escapar. Enquanto este pedaco viver, o
+#  painel consegue corrigir qualquer coisa no roteador sem visita - inclusive um
+#  erro neste proprio arquivo. Nao havia isso antes: uma vez instalado, o script
+#  so mudava indo ate o local.
+#
+#  O painel responde qual versao do leadsync deve rodar. Se for diferente da que
+#  esta em memoria, baixa por cima de flash/leadsync.rsc; o scheduler
+#  (/import flash/leadsync.rsc) executa a versao nova na proxima volta.
+# ============================================================
+:global cdSyncVer
+:if ([:typeof $cdSyncVer] = "nothing") do={ :set cdSyncVer "" }
+:do {
+  :local sv ""
+  :do {
+    :local svr [/tool fetch url=("https://captivedata.com.br/api/leadsync.php?token=$token&roteador=$ident") \
+        check-certificate=no output=user as-value]
+    :set sv ($svr->"data")
+  } on-error={ :set sv "" }
+  :if ([:len $sv] > 0 && [:len $sv] < 20 && $sv != $cdSyncVer) do={
+    :do {
+      /tool fetch url=("https://captivedata.com.br/api/leadsync.php?token=$token&roteador=$ident&f=1") \
+          check-certificate=no dst-path="flash/leadsync.rsc"
+      :set cdSyncVer $sv
+    } on-error={}
+  }
+} on-error={}
+
 
 # 1) coletar os MACs das sessoes ativas + consumo (bytes-in + bytes-out)
 #    uso = "MAC=bytes,MAC=bytes,..." (o servidor grava na conexao aberta)
@@ -81,71 +106,6 @@
     }
   }
 }
-
-# ============================================================
-#  Hotspot ligado/desligado, por ordem do painel
-#
-#  Quando o portal quebra, a saida e desligar o hotspot: o Wi-Fi da loja volta
-#  a funcionar sem a tela de login. Isso exigia Winbox e alguem com acesso ao
-#  roteador; agora o admin manda pelo painel e a ordem chega na rodada seguinte.
-#
-#  Uma chamada so: manda o estado de cada servidor ("<nome>:<0|1>,...") e
-#  recebe de volta "on", "off" ou "-" (nada a fazer). Vem CEDO no script de
-#  proposito -- e a alavanca de socorro, entao nao pode depender de os blocos
-#  seguintes terem dado certo.
-#
-#  Liga/desliga TODOS os servidores: o roteador do cliente tem um so, e se
-#  aparecer um segundo por engano o painel lista os nomes para o admin apagar.
-#
-#  ponytail: o nome do servidor vai cru na query. Nome com & ou = quebraria a
-#  leitura no painel (a lista aparece vazia); nome de hotspot no RouterOS e
-#  "hotspot1" e afins. Se um dia isso acontecer, sanear aqui antes de montar.
-# ============================================================
-:do {
-  :local hsids [/ip hotspot find]
-  :local hs ""
-  :foreach i in=$hsids do={
-    :local on "1"
-    :if ([/ip hotspot get $i disabled] = true) do={ :set on "0" }
-    :set hs ($hs . [/ip hotspot get $i name] . ":" . $on . ",")
-  }
-
-  # Perfil do hotspot: e o que diz se o cliente CONSEGUE logar.
-  #
-  # O portal autentica por TRIAL (GET no link-login-only com username, sem
-  # senha). Se "trial" nao estiver no login-by, ou se o MAC ja gastou o
-  # trial-uptime-limit do dia, o roteador recusa e devolve a propria tela de
-  # login — o cliente volta pro comeco. Sem esta informacao no painel nao da
-  # para saber qual dos dois e, e nao da para abrir o Winbox da loja.
-  #
-  # Formato: "<nome>~<login-by>~<limite>~<reset>|". Em bloco proprio porque
-  # trial-uptime-* nem sempre existe: se der erro, o liga/desliga continua.
-  :local prof ""
-  :do {
-    :foreach i in=[/ip hotspot profile find] do={
-      :set prof ($prof . [/ip hotspot profile get $i name] . "~" . \
-                 [:tostr [/ip hotspot profile get $i login-by]] . "~" . \
-                 [:tostr [/ip hotspot profile get $i trial-uptime-limit]] . "~" . \
-                 [:tostr [/ip hotspot profile get $i trial-uptime-reset]] . "|")
-    }
-  } on-error={ :set prof "" }
-
-  :local ordem "-"
-  :do {
-    :local hr [/tool fetch url="https://captivedata.com.br/api/hotspot_rt.php" \
-        http-method=post check-certificate=no \
-        http-header-field="Content-Type: application/x-www-form-urlencoded" \
-        http-data=("token=$token&roteador=$ident&hs=$hs&prof=$prof") \
-        output=user as-value]
-    :set ordem ($hr->"data")
-  } on-error={ :set ordem "-" }
-
-  # Sem servidor nenhum nao ha o que ligar; enable/disable de lista vazia erra.
-  :if ([:len $hsids] > 0) do={
-    :if ($ordem = "on")  do={ /ip hotspot enable $hsids }
-    :if ($ordem = "off") do={ /ip hotspot disable $hsids }
-  }
-} on-error={}
 
 # ============================================================
 #  Pagina de login do hotspot (flash/hostsv7)
@@ -333,99 +293,3 @@
         http-data=("token=$token&roteador=$ident&map=$amap&conns=$aconns") output=none
   } on-error={}
 }
-
-# ============================================================
-#  Teste de velocidade da internet da LOJA (sob demanda)
-#  O comprador pede pelo painel; aqui so se pergunta "tem teste?" a cada
-#  rodada — uma resposta de 1 byte, barata.
-#
-#  QUEM MEDE E ESTE SCRIPT, nao o servidor. Ha um Cloudflare na frente da
-#  hospedagem: ele engole a resposta inteira depressa e so entao a repassa para
-#  ca, entao o tempo cronometrado do lado do servidor e o do trecho ate o
-#  Cloudflare — nao o que chega na loja. O /tool fetch devolve quantos bytes
-#  baixou e em quanto tempo (as-value), e sao esses dois numeros que viajam de
-#  volta no f=res.
-#
-#  output=none: os bytes sao descartados conforme chegam, entao nada vai para a
-#  flash (a do hEX Gr3 tem 16 MB e vive cheia) nem fica preso na memoria.
-# ============================================================
-:do {
-  :local pedido "0"
-  :do {
-    :local pr [/tool fetch url=("https://captivedata.com.br/api/speed_rt.php?token=$token&roteador=$ident&f=req") \
-        check-certificate=no output=user as-value]
-    :set pedido ($pr->"data")
-  } on-error={ :set pedido "0" }
-
-  :if ([:len $pedido] > 0 && $pedido != "0") do={
-    # O download NAO vem do nosso servidor. Duas razoes:
-    #   - a hospedagem e compartilhada e limita a banda de saida, entao o teto
-    #     medido seria o dela, nao o do link da loja;
-    #   - o Cloudflare na frente dela bufferiza, o que ja tinha estragado a
-    #     medicao feita do lado do servidor.
-    # speed.cloudflare.com/__down e um endpoint publico de teste de velocidade,
-    # servido pelo PoP mais proximo (no Brasil), sem compressao e com tamanho
-    # exato. E o que chega perto de "quanto a internet da loja aguenta".
-    :local bytesAlvo ($pedido * 1000000)
-    :local erro ""
-
-    # Custo de abrir a conexao (DNS + TCP + TLS), medido com um download de
-    # tamanho zero. Sem descontar isto, um link rapido media errado: 6 MB a 100
-    # Mbps levam 0,5 s, e so o setup ja custa ~0,3 s — o resultado empacava
-    # perto de 16 Mbps por construcao, que foi o que apareceu no painel.
-    :local o0 [:timestamp]
-    :do {
-      /tool fetch url="https://speed.cloudflare.com/__down?bytes=0" check-certificate=no output=none
-    } on-error={}
-    :local over ([:timestamp] - $o0)
-
-    :local t0 [:timestamp]
-    :do {
-      /tool fetch url=("https://speed.cloudflare.com/__down?bytes=$bytesAlvo") \
-          check-certificate=no output=none
-    } on-error={ :set erro "download" }
-    :local dur ([:timestamp] - $t0)
-
-    # Baixou inteiro? Entao sao os bytes pedidos. Se deu erro no meio, nao ha
-    # tamanho confiavel e o painel mostra a falha em vez de um numero inventado.
-    :local bytes 0
-    :if ($erro = "") do={ :set bytes $bytesAlvo }
-
-    # Ping ate um destino externo: mede a latencia da internet da loja, nao a
-    # do caminho ate o painel.
-    #
-    # O as-value do /ping NAO devolve avg-rtt — devolve uma LISTA, um item por
-    # pacote, cada um com o seu "time". Manda os tempos crus, separados por
-    # virgula; a media e feita no servidor.
-    #
-    # NAO trocar por [:tostr [/ping ...]]: ja foi tentado e derrubou o teste
-    # inteiro. O :tostr de uma lista de arrays sai com ";" "=" "{" "}" no meio,
-    # e o que sobrava depois de limpar tinha ESPACOS — /tool fetch nao aceita
-    # URL com espaco, entao o fetch do resultado morria e o painel ficava sem
-    # download E sem ping. O "time" de cada pacote sempre funcionou; quem nao
-    # sabia ler o "00:00:00.021866" era o servidor.
-    #
-    # Dois destinos porque ha provedor que bloqueia um deles.
-    :local rtt ""
-    :do {
-      :foreach r in=[/ping 1.1.1.1 count=3 as-value] do={
-        :local t ($r->"time")
-        :if ([:typeof $t] != "nothing") do={ :set rtt ($rtt . $t . ",") }
-      }
-    } on-error={ :set rtt "" }
-    :if ([:len $rtt] < 5) do={
-      :set rtt ""
-      :do {
-        :foreach r in=[/ping 8.8.8.8 count=3 as-value] do={
-          :local t ($r->"time")
-          :if ([:typeof $t] != "nothing") do={ :set rtt ($rtt . $t . ",") }
-        }
-      } on-error={ :set rtt "" }
-    }
-
-    :do {
-      /tool fetch url=("https://captivedata.com.br/api/speed_rt.php?token=$token&roteador=$ident&f=res&bytes=$bytes&dur=$dur&over=$over&ping=$rtt&erro=$erro") \
-          check-certificate=no output=none
-    } on-error={}
-  }
-} on-error={}

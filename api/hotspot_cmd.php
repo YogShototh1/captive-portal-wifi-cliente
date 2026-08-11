@@ -60,6 +60,7 @@ echo json_encode([
     'conhecido'  => $e !== null,
     'ligado'     => $e['ligado'] ?? null,
     'servidores' => $e['servidores'] ?? [],
+    'perfis'     => $e['perfis'] ?? [],
     'idade'      => $e['idade'] ?? null,
     'pendente'   => hotspot_ordem_pendente($roteador),   // true=ligar, false=desligar, null=nada
 ]);

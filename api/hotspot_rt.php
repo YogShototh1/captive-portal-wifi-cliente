@@ -37,7 +37,7 @@ header('Cache-Control: no-store');
 // precisa ser gravado como tal, senão a tela mostra para sempre o último estado
 // de quando ainda havia um.
 if (isset($_REQUEST['hs'])) {
-    hotspot_estado_set($roteador, (string) $_REQUEST['hs']);
+    hotspot_estado_set($roteador, (string) $_REQUEST['hs'], (string) ($_REQUEST['prof'] ?? ''));
 }
 
 $ordem = hotspot_ordem_ler($roteador);

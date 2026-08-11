@@ -325,8 +325,9 @@ function hotspot_ordem_file(string $roteador): string  { return anuncio_base($ro
 // O roteador manda "<nome>:<0|1>,..." (1 = ligado). Nome de servidor no RouterOS
 // não tem vírgula nem dois-pontos, mas isto é entrada de rede: o que não casa
 // com o formato é descartado, não corrigido.
-function hotspot_estado_set(string $roteador, string $bruto): void
+function hotspot_estado_set(string $roteador, string $bruto, string $prof = ''): void
 {
+    $perfis = hotspot_perfis_parse($prof);
     $srv = [];
     foreach (explode(',', $bruto) as $par) {
         $par = trim($par);
@@ -340,8 +341,44 @@ function hotspot_estado_set(string $roteador, string $bruto): void
     }
     $dir = ads_dir();
     if (!is_dir($dir)) { @mkdir($dir, 0755, true); }
-    @file_put_contents(hotspot_estado_file($roteador),
-        json_encode(['servidores' => $srv, 'em' => date('c')]));
+    // Preserva os perfis já conhecidos: o roteador manda os dois juntos, mas se
+    // a coleta do perfil falhar lá (trial-uptime-* nem sempre existe) o que já
+    // se sabia não deve sumir da tela.
+    $antes = json_decode((string) @file_get_contents(hotspot_estado_file($roteador)), true);
+    @file_put_contents(hotspot_estado_file($roteador), json_encode([
+        'servidores' => $srv,
+        'perfis'     => $perfis !== [] ? $perfis : (is_array($antes['perfis'] ?? null) ? $antes['perfis'] : []),
+        'em'         => date('c'),
+    ]));
+}
+
+// Perfis do hotspot, como o roteador os manda: "<nome>~<login-by>~<limite>~<reset>|"
+//
+// É aqui que se vê POR QUE um cliente não consegue entrar. O portal autentica
+// por trial; sem "trial" no login-by, ou com o trial-uptime-limit do dia já
+// gasto pelo MAC, o roteador recusa e devolve a própria tela de login — e o
+// cliente volta pro começo do fluxo.
+function hotspot_perfis_parse(string $bruto): array
+{
+    $out = [];
+    foreach (explode('|', $bruto) as $p) {
+        $p = trim($p);
+        if ($p === '' || count($out) >= 10) { continue; }
+        $c = explode('~', $p);
+        if (count($c) < 4) { continue; }
+        // O :tostr do RouterOS separa lista com ";" — vira vírgula, que é como
+        // o login-by aparece no Winbox.
+        $login = strtr(trim($c[1]), [';' => ',']);
+        $lim   = trim($c[2]);
+        $out[] = [
+            'nome'   => substr(preg_replace('/[^A-Za-z0-9._-]/', '', $c[0]), 0, 32),
+            'login'  => substr(preg_replace('/[^a-z0-9,_-]/', '', strtolower($login)), 0, 64),
+            'trial'  => strpos($login, 'trial') !== false,
+            'limite' => substr(preg_replace('/[^0-9a-z:.]/', '', strtolower($lim)), 0, 16),
+            'reset'  => substr(preg_replace('/[^0-9a-z:.]/', '', strtolower(trim($c[3]))), 0, 16),
+        ];
+    }
+    return $out;
 }
 
 // Último estado conhecido, ou null se o roteador nunca reportou.
@@ -359,6 +396,7 @@ function hotspot_estado_get(string $roteador): ?array
     $ts = strtotime((string) ($j['em'] ?? '')) ?: 0;
     return [
         'servidores' => array_values($j['servidores']),
+        'perfis'     => is_array($j['perfis'] ?? null) ? array_values($j['perfis']) : [],
         'ligado'     => $ligado,
         'em'         => (string) ($j['em'] ?? ''),
         'idade'      => $ts ? max(0, time() - $ts) : null,
