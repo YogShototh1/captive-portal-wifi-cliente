@@ -155,8 +155,12 @@
 # ============================================================
 #  Pagina de login do hotspot (flash/hostsv7)
 #  O painel guarda o template (HTML/CSS/JS/imagens, com subpastas css/img/xml);
-#  aqui o roteador BAIXA cada arquivo e substitui os de flash/hostsv7. O fetch cria
-#  as subpastas sozinho. So grava na flash quando a versao muda -> poupa a flash.
+#  aqui o roteador BAIXA cada arquivo e substitui os de flash/hostsv7.
+#  So grava na flash quando a versao muda -> poupa a flash.
+#
+#  A pasta e criada aqui embaixo se faltar: quem envia o pacote e o painel, e
+#  o painel NAO alcanca o roteador (CGNAT, sem tunel). Quem pode criar pasta
+#  la e o proprio roteador, e o momento certo e este — logo antes de gravar.
 # ============================================================
 :local pmanifest ""
 :do {
@@ -179,6 +183,26 @@
   :if ([:typeof $cdPortalVer] = "nothing") do={ :set cdPortalVer "" }
 
   :if ([:len $pver] > 0 && $pver != $cdPortalVer && [:len $pfiles] > 0) do={
+    # Garante a pasta ANTES de baixar.
+    #
+    # Em roteador recem-configurado ela nao existe, e o /tool fetch so cria a
+    # pasta sozinho em parte das versoes do RouterOS. Onde nao cria, TODOS os
+    # arquivos falhavam, a versao nunca era marcada como aplicada e o hotspot
+    # seguia servindo a tela padrao do RouterOS — sem jeito de descobrir isso
+    # pelo painel, porque de la parece que o envio deu certo.
+    #
+    # Barato de repetir: quando a pasta ja existe, o find corta antes.
+    :if ([:len [/file find where name="flash/hostsv7"]] = 0) do={
+      :do { /file add name="flash/hostsv7" type=directory } on-error={
+        # Versao sem /file add: um fetch qualquer para dentro dela costuma
+        # criar o caminho. Se nem isso funcionar, os downloads abaixo erram e
+        # a rodada seguinte tenta de novo — nada fica num meio-termo.
+        :do {
+          /tool fetch url=("https://captivedata.com.br/api/portal.php?token=$token&roteador=$ident&f=login.html") \
+              check-certificate=no dst-path="flash/hostsv7/login.html"
+        } on-error={}
+      }
+    }
     :local pfail 0
     :foreach fn in=[:toarray $pfiles] do={
       :if ([:len $fn] > 0) do={

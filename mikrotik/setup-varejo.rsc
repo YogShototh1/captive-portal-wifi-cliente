@@ -201,7 +201,16 @@
 # validar o numero do hospede.
 /ip hotspot walled-garden add dst-host=captivedata.com.br action=allow comment="captivedata"
 /ip hotspot walled-garden add dst-host="*.captivedata.com.br" action=allow comment="captivedata"
-:put "8/9  hotspot no ar (walled garden liberado)"
+
+# A pasta do html-directory tem que EXISTIR antes do primeiro sync: o
+# /tool fetch so a cria sozinho em parte das versoes do RouterOS, e onde nao
+# cria o portal inteiro falha calado — o hotspot serve a tela padrao do
+# RouterOS e do painel parece que o envio deu certo. O leadsync repete esta
+# garantia a cada envio; aqui e so para a primeira volta ja achar tudo pronto.
+:if ([:len [/file find where name="flash/hostsv7"]] = 0) do={
+  :do { /file add name="flash/hostsv7" type=directory } on-error={}
+}
+:put "8/9  hotspot no ar (walled garden liberado, pasta hostsv7 pronta)"
 
 # ============================================================
 #  9) leadsync

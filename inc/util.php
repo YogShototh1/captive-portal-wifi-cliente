@@ -1369,7 +1369,8 @@ function filtro_leads_sql(string $f): string
 // O painel guarda aqui os arquivos (extraídos de um .zip); o MikroTik os BAIXA (pull)
 // para flash/hostsv7 via leadsync.rsc — a hospedagem compartilhada não alcança o
 // roteador (sem túnel). Ficam dentro de ads/ (já bloqueada por .htaccess); só saem
-// por api/portal.php. O fetch do RouterOS recria as subpastas em flash/hostsv7.
+// por api/portal.php. Quem garante a pasta flash/hostsv7 e as subpastas e o
+// proprio roteador, no bloco do portal do leadsync — daqui nao se alcanca ele.
 //
 // IMPORTANTE: guardamos os arquivos PLANOS (sem subpastas) porque a hospedagem nem
 // sempre deixa criar subpastas dentro de ads/. A barra do caminho lógico vira "~" no

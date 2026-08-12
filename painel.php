@@ -605,7 +605,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                     <div class="glow-body">
                         <div class="pc-dst">
                             <h2 class="pc-anuncio-title">Página de login do hotspot</h2>
-                            <p class="pc-anuncio-desc">Envie um <strong>.zip</strong> do template (com <code>login.html</code>, <code>css/</code>, <code>img/</code>, <code>xml/</code>…): extraímos e o roteador substitui os de <code>flash/hostsv7</code> em até ~1 min (as subpastas são criadas sozinhas). Ou envie um arquivo avulso para trocar só ele. Até 2 MB por arquivo.</p>
+                            <p class="pc-anuncio-desc">Envie um <strong>.zip</strong> do template (com <code>login.html</code>, <code>css/</code>, <code>img/</code>, <code>xml/</code>…): extraímos e o roteador substitui os de <code>flash/hostsv7</code> em até ~1 min. A pasta <code>hostsv7</code> e as subpastas são criadas pelo próprio roteador se não existirem — roteador recém-configurado não precisa de nada no Winbox. Ou envie um arquivo avulso para trocar só ele. Até 2 MB por arquivo.</p>
                             <?php require __DIR__ . '/inc/portal_hist_tela.php'; ?>
                             <?php if ($portalFiles): ?>
                                 <p class="pc-dst-atual">No servidor (<?= count($portalFiles) ?>): <strong><?= h(implode(', ', $portalFiles)) ?></strong></p>
