@@ -16,6 +16,9 @@
 #
 #  IDEMPOTENTE: apaga o que existe antes de criar. Rodar duas vezes nao
 #  duplica bridge, pool, DHCP nem hotspot.
+#
+#  A senha do admin ja vai definida aqui dentro: o reset deixa em branco e
+#  um roteador sem senha exposto na internet nao pode sair da bancada.
 # ============================================================
 
 
@@ -42,6 +45,11 @@
 # primeira vez; dali em diante o proprio leadsync se atualiza sozinho.
 :local token "SEU_ADMIN_TOKEN_AQUI"
 
+# Senha do usuario admin do roteador. O reset deixa em branco, e um MikroTik
+# sem senha na internet e questao de horas. Definida na etapa 1, ANTES de a
+# WAN subir: se algo falhar do meio para a frente, o aparelho ja fica fechado.
+:local senha "SENHA_DO_ADMIN_AQUI"
+
 :local wan "ether1"
 :local lan "192.168.1.1"
 :local rede "192.168.1.0/24"
@@ -60,12 +68,29 @@
   :put "!! Ele tem que ser igual ao cadastrado no painel. Abortado."
   :error "nome do roteador nao configurado"
 }
+:if ($senha = "SENHA_DO_ADMIN_AQUI") do={
+  :put "!! Senha nao preenchida. Use a copia gerada. Abortado."
+  :error "senha nao configurada"
+}
 
 # ============================================================
-#  1) Identidade
+#  1) Identidade e senha do admin
+#  Antes de qualquer outra coisa: e a etapa que nao pode ficar pela metade.
 # ============================================================
 /system identity set name=$ident
-:put ("1/9  identidade: " . $ident)
+:local senhaok 0
+:do {
+  /user set [find name="admin"] password=$senha
+  :set senhaok 1
+} on-error={}
+:if ($senhaok = 0) do={
+  # Usuario "admin" renomeado ou removido: nao da para adivinhar qual e, e
+  # seguir sem senha seria deixar o aparelho aberto sem avisar.
+  :put "!! Nao consegui definir a senha: nao existe usuario chamado admin."
+  :put "!! Defina na mao antes de por este roteador em campo. Abortado."
+  :error "senha do admin nao definida"
+}
+:put ("1/9  identidade: " . $ident . "  (senha do admin definida)")
 
 # ============================================================
 #  2) Limpeza do que veio de fabrica
@@ -229,5 +254,4 @@
 :put "modo .......... HOSPEDAGEM (pousada, hotel)"
 :put "proximo ....... confira o mesmo nome no painel (tipo: Hospedagem)"
 :put ""
-:put "FALTA VOCE FAZER: senha do admin (o reset deixa em branco)"
-:put "   /user set admin password=UMA-SENHA-BOA"
+:put "senha do admin ja definida por este script."
