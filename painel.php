@@ -30,20 +30,10 @@ $totalBase = $resumo[$filtro === '' ? 'total' : $filtro];
 $POR_PAG      = 50;
 $totalPaginas = max(1, (int) ceil($totalBase / $POR_PAG));
 $pagina       = min($totalPaginas, max(1, (int) ($_GET['pagina'] ?? 1)));
-$leads = [];
-if ($rotQuery) {
-    $ph = implode(',', array_fill(0, count($rotQuery), '?'));
-    $q = db()->prepare(
-        "SELECT id, telefone, nome, ip, dispositivo, conectado_em, online, segundos_conectado, visto_em, tempo_limite_min, banda_limite, total_conexoes,
-                (SELECT COALESCE(SUM(c.bytes), 0) FROM conexoes c WHERE c.lead_id = leads.id) AS bytes_total
-           FROM leads
-          WHERE roteador IN ($ph)" . filtro_leads_sql($filtro) . '
-          ORDER BY conectado_em DESC
-          LIMIT ' . $POR_PAG . ' OFFSET ' . (($pagina - 1) * $POR_PAG)
-    );
-    $q->execute($rotQuery);
-    $leads = $q->fetchAll();
-}
+// Uma linha por PESSOA: quem conecta em mais de um MikroTik da conta tem uma
+// linha em `leads` para cada um, e vendo "todos os roteadores" isso aparecia
+// como dois clientes. leads_pagina() junta pelo telefone (ver inc/util.php).
+$leads = leads_pagina($rotQuery, $filtro, $pagina, $POR_PAG);
 
 $dbNow = db_now();
 $nowTs = strtotime($dbNow);
@@ -300,14 +290,14 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                                         elseif ($segF !== null) { $tempoTxt = fmt_tempo($segF); }
                                         else                    { $tempoTxt = '—'; }
                                     ?>
-                                    <tr data-id="<?= (int) $l['id'] ?>" data-online="<?= $online ?>" data-elapsed="<?= $elapsed ?>" data-limite="<?= $lim === null ? '' : (int) $lim ?>" data-banda="<?= $banda === null ? '' : (int) $banda ?>" data-total="<?= $total ?>" data-tel="<?= h($l['telefone']) ?>" data-nome="<?= h((string) ($l['nome'] ?? '')) ?>">
+                                    <tr data-id="<?= (int) $l['id'] ?>" data-ids="<?= h(implode(',', $l['ids'] ?? [(int) $l['id']])) ?>" data-online="<?= $online ?>" data-elapsed="<?= $elapsed ?>" data-limite="<?= $lim === null ? '' : (int) $lim ?>" data-banda="<?= $banda === null ? '' : (int) $banda ?>" data-total="<?= $total ?>" data-tel="<?= h($l['telefone']) ?>" data-nome="<?= h((string) ($l['nome'] ?? '')) ?>">
                                         <td><?= h(($l['nome'] !== null && $l['nome'] !== '') ? $l['nome'] : $l['telefone']) ?></td>
                                         <td><?= h($l['ip'] ?? '—') ?></td>
                                         <td class="pc-aparelho"><?= h($l['dispositivo'] ?? '—') ?></td>
                                         <td>
                                             <?php $dh = explode(' - ', fmt_data($l['conectado_em'])); ?>
                                             <div class="pc-conex-cel">
-                                                <button type="button" class="pc-ver-conexoes" data-lead="<?= (int) $l['id'] ?>" aria-label="Ver conexões">
+                                                <button type="button" class="pc-ver-conexoes" data-lead="<?= h(implode(',', $l['ids'] ?? [(int) $l['id']])) ?>" aria-label="Ver conexões">
                                                     <svg class="pc-conex-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
                                                     <span class="pc-total"><?= $total ?></span>
                                                 </button>
@@ -714,7 +704,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <script src="assets/dashboard.js?v=11"></script>
     <script src="assets/dashgeral.js?v=14"></script>
     <script src="assets/estatisticas.js?v=8"></script>
-    <script src="assets/leads-live.js?v=28"></script>
+    <script src="assets/leads-live.js?v=33"></script>
     <?php require __DIR__ . '/inc/tema.php'; ?>
 </body>
 </html>

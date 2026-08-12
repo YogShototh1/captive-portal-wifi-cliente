@@ -128,12 +128,21 @@ if ($outroId !== false) {
     exit(json_encode(['ok' => true, 'mesclado' => true, 'id' => $alvo, 'id_removido' => $id, 'nome' => $nomeFinal, 'telefone' => $telefone, 'limite' => $limite, 'banda' => $banda]));
 }
 
+// `ids` chega quando a linha da tabela é uma pessoa mesclada de vários MikroTiks:
+// nome, número e limites são dela, então valem em todos os cadastros. O `id`
+// sozinho continua valendo (visão de um roteador só) — e a mescla acima, que é
+// entre dois cadastros do MESMO roteador, é outra coisa e segue como estava.
+$alvos = leads_permitidos($in['ids'] ?? $id, $comprador);
+if (!in_array($id, $alvos, true)) {
+    $alvos[] = $id;
+}
+$ph = implode(',', array_fill(0, count($alvos), '?'));
 try {
-    $u = db()->prepare('UPDATE leads SET nome = ?, telefone = ?, tempo_limite_min = ?, banda_limite = ? WHERE id = ?');
-    $u->execute([$nome, $telefone, $limite, $banda, $id]);
+    $u = db()->prepare("UPDATE leads SET nome = ?, telefone = ?, tempo_limite_min = ?, banda_limite = ? WHERE id IN ($ph)");
+    $u->execute(array_merge([$nome, $telefone, $limite, $banda], $alvos));
 } catch (Throwable $e) {
     http_response_code(500);
-    exit(json_encode(['ok' => false, 'erro' => 'Falha ao salvar. Banco atualizado? Rode sql/migracao_nome.sql.']));
+    exit(json_encode(['ok' => false, 'erro' => 'Falha ao salvar. Se trocou o número, já existe outro cadastro com ele em um dos roteadores.']));
 }
 
 echo json_encode(['ok' => true, 'id' => $id, 'nome' => $nome, 'telefone' => $telefone, 'limite' => $limite, 'banda' => $banda]);

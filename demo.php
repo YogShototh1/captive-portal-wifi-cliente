@@ -691,7 +691,7 @@ window.CD_DEMO = <?= json_encode($D, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLA
     <script src="assets/dashboard.js?v=11"></script>
     <script src="assets/dashgeral.js?v=14"></script>
     <script src="assets/estatisticas.js?v=8"></script>
-    <script src="assets/leads-live.js?v=28"></script>
+    <script src="assets/leads-live.js?v=33"></script>
     <?php require __DIR__ . '/inc/tema.php'; ?>
 </body>
 </html>

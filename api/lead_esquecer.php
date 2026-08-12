@@ -28,17 +28,12 @@ if (!csrf_valido($in['csrf'] ?? '')) {
 
 $id = (int) ($in['id'] ?? 0);
 
-$q = db()->prepare('SELECT roteador FROM leads WHERE id = ?');
-$q->execute([$id]);
-$row = $q->fetch();
-if (!$row) {
+// `ids` chega quando a linha da tabela é uma pessoa mesclada de vários
+// MikroTiks: esquecer vale nos dois, senão ela entraria direto pelo outro.
+$ids = leads_permitidos($in['ids'] ?? $id, $comprador);
+if (!$ids) {
     http_response_code(404);
     exit(json_encode(['ok' => false, 'erro' => 'Lead não encontrado.']));
-}
-$isAdmin = (int) $comprador['is_admin'] === 1;
-if (!$isAdmin && !in_array($row['roteador'], roteadores_conta((int) $comprador['id']), true)) {
-    http_response_code(403);
-    exit(json_encode(['ok' => false, 'erro' => 'Sem permissão.']));
 }
 
 try {
@@ -49,13 +44,19 @@ try {
             PRIMARY KEY (roteador, mac)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
     );
-    // MACs distintos deste número (do histórico de conexões).
-    $qm = db()->prepare('SELECT DISTINCT mac FROM conexoes WHERE lead_id = ? AND mac IS NOT NULL AND mac <> ""');
-    $qm->execute([$id]);
+    // MACs distintos deste número, cada um com o roteador do SEU cadastro —
+    // macs_esquecidos é (roteador, mac), então o par tem de vir junto.
+    $ph = implode(',', array_fill(0, count($ids), '?'));
+    $qm = db()->prepare(
+        "SELECT DISTINCT l.roteador, c.mac
+           FROM conexoes c JOIN leads l ON l.id = c.lead_id
+          WHERE c.lead_id IN ($ph) AND c.mac IS NOT NULL AND c.mac <> ''"
+    );
+    $qm->execute($ids);
     $ins = db()->prepare('INSERT IGNORE INTO macs_esquecidos (roteador, mac) VALUES (?, ?)');
     $n = 0;
-    foreach ($qm->fetchAll(PDO::FETCH_COLUMN) as $mac) {
-        $ins->execute([$row['roteador'], $mac]);
+    foreach ($qm->fetchAll() as $par) {
+        $ins->execute([$par['roteador'], $par['mac']]);
         $n++;
     }
 } catch (Throwable $e) {

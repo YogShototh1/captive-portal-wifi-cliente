@@ -1088,6 +1088,12 @@ function lead_estado(array $l, int $nowTs): array
 //   online = sessões ativas agora | hoje = números que conectaram hoje
 //   total  = todos os números já registrados (sem o teto de 2000 da tabela).
 // Usado no painel do cliente e na tela de leads do admin (mesmos números).
+//
+// Conta DISTINCT telefone, não linhas: `leads` tem 1 linha por (roteador,
+// telefone), então a mesma pessoa em dois MikroTiks da conta são duas linhas e
+// COUNT(*) a contaria como dois clientes. Com um roteador só dá no mesmo (a
+// UNIQUE garante um telefone por roteador) — por isso não há caso especial aqui,
+// nem em leads_pagina(), que mescla as mesmas linhas na tabela.
 function resumo_leads($roteadores): array
 {
     $lista = array_values(array_filter(
@@ -1101,16 +1107,16 @@ function resumo_leads($roteadores): array
     // "online agora" = flag online=1 E confirmado pelo sync dentro da janela.
     // (evita contar sessões travadas quando o MikroTik/sync ficou fora do ar)
     $qOnline = db()->prepare(
-        "SELECT COUNT(*) FROM leads WHERE roteador IN ($ph) AND online = 1
+        "SELECT COUNT(DISTINCT telefone) FROM leads WHERE roteador IN ($ph) AND online = 1
            AND visto_em IS NOT NULL AND visto_em >= (NOW() - INTERVAL " . MIKROTIK_TIMEOUT_SEG . ' SECOND)'
     );
     $qOnline->execute($lista);
-    $qHoje = db()->prepare("SELECT COUNT(*) FROM leads WHERE roteador IN ($ph) AND DATE(conectado_em) = CURRENT_DATE");
+    $qHoje = db()->prepare("SELECT COUNT(DISTINCT telefone) FROM leads WHERE roteador IN ($ph) AND DATE(conectado_em) = CURRENT_DATE");
     $qHoje->execute($lista);
     // cadastrados hoje = números cuja PRIMEIRA conexão foi hoje (leads novos).
-    $qCad = db()->prepare("SELECT COUNT(*) FROM leads WHERE roteador IN ($ph) AND primeira_conexao IS NOT NULL AND DATE(primeira_conexao) = CURRENT_DATE");
+    $qCad = db()->prepare("SELECT COUNT(DISTINCT telefone) FROM leads WHERE roteador IN ($ph) AND primeira_conexao IS NOT NULL AND DATE(primeira_conexao) = CURRENT_DATE");
     $qCad->execute($lista);
-    $qTotal = db()->prepare("SELECT COUNT(*) FROM leads WHERE roteador IN ($ph)");
+    $qTotal = db()->prepare("SELECT COUNT(DISTINCT telefone) FROM leads WHERE roteador IN ($ph)");
     $qTotal->execute($lista);
     return [
         'online'      => (int) $qOnline->fetchColumn(),
@@ -1118,6 +1124,125 @@ function resumo_leads($roteadores): array
         'cadastrados' => (int) $qCad->fetchColumn(),
         'total'       => (int) $qTotal->fetchColumn(),
     ];
+}
+
+// Junta as linhas do MESMO telefone numa linha só (a pessoa, não o cadastro).
+//
+// Principal = a linha vista por último (visto_em, ou a conexão quando o sync
+// ainda não confirmou). É ela que carrega o estado de agora: se a pessoa está
+// online em algum MikroTik, aquela linha tem visto_em de segundos atrás e ganha
+// — o online sai certo sem remendo em cima do lead_estado().
+function lead_mesclado(array $linhas): array
+{
+    // Datas no formato 'Y-m-d H:i:s' comparam certo como texto.
+    $quando = function (array $r): string {
+        return max((string) ($r['visto_em'] ?? ''), (string) ($r['conectado_em'] ?? ''));
+    };
+    usort($linhas, function ($a, $b) use ($quando) {
+        $c = strcmp($quando($b), $quando($a));
+        return $c !== 0 ? $c : ((int) $b['id'] <=> (int) $a['id']);
+    });
+
+    $p = $linhas[0];
+    // Todos os ids do grupo: o painel manda a lista de volta nas ações, para
+    // excluir/limitar/ver conexões valerem para a pessoa, não para um cadastro.
+    $p['ids']            = array_map(function ($r) { return (int) $r['id']; }, $linhas);
+    $p['total_conexoes'] = array_sum(array_map('intval', array_column($linhas, 'total_conexoes')));
+    $p['bytes_total']    = array_sum(array_map('intval', array_column($linhas, 'bytes_total')));
+    // Nome: o da linha mais recente que TIVER nome. Se a pessoa foi identificada
+    // num roteador e não no outro, ela não pode voltar a aparecer como número.
+    if ((string) ($p['nome'] ?? '') === '') {
+        foreach ($linhas as $r) {
+            if ((string) ($r['nome'] ?? '') !== '') {
+                $p['nome'] = $r['nome'];
+                break;
+            }
+        }
+    }
+    return $p;
+}
+
+// Uma página da tabela de leads, já mesclada por telefone (ver lead_mesclado).
+// Duas consultas de propósito: a primeira decide QUEM entra na página — o corte
+// e a ordem são por pessoa, senão a paginação pularia gente ao juntar linhas.
+function leads_pagina(array $roteadores, string $filtro, int $pagina, int $porPag): array
+{
+    if (!$roteadores) {
+        return [];
+    }
+    $ph = implode(',', array_fill(0, count($roteadores), '?'));
+
+    $q = db()->prepare(
+        "SELECT telefone, MAX(conectado_em) AS ult
+           FROM leads WHERE roteador IN ($ph)" . filtro_leads_sql($filtro) . '
+          GROUP BY telefone
+          ORDER BY ult DESC
+          LIMIT ' . max(1, $porPag) . ' OFFSET ' . max(0, ($pagina - 1) * $porPag)
+    );
+    $q->execute($roteadores);
+    $tels = array_column($q->fetchAll(), 'telefone');
+    if (!$tels) {
+        return [];
+    }
+
+    // Agora todas as linhas dessas pessoas — inclusive as que o filtro deixou de
+    // fora: o total de conexões e o consumo são da pessoa, não do recorte.
+    $pt = implode(',', array_fill(0, count($tels), '?'));
+    $q2 = db()->prepare(
+        "SELECT id, telefone, nome, ip, dispositivo, conectado_em, online, segundos_conectado,
+                visto_em, tempo_limite_min, banda_limite, total_conexoes,
+                (SELECT COALESCE(SUM(c.bytes), 0) FROM conexoes c WHERE c.lead_id = leads.id) AS bytes_total
+           FROM leads WHERE roteador IN ($ph) AND telefone IN ($pt)"
+    );
+    $q2->execute(array_merge($roteadores, $tels));
+
+    $grupos = [];
+    foreach ($q2->fetchAll() as $r) {
+        $grupos[(string) $r['telefone']][] = $r;
+    }
+    $saida = [];
+    foreach ($tels as $tel) { // mantém a ordem da primeira consulta
+        if (isset($grupos[(string) $tel])) {
+            $saida[] = lead_mesclado($grupos[(string) $tel]);
+        }
+    }
+    return $saida;
+}
+
+// Ids de lead vindos do painel, filtrados pelo que a conta pode mexer.
+// Aceita `ids` (linha mesclada: a mesma pessoa em vários MikroTiks) ou `id`
+// sozinho. Id de outra conta é DESCARTADO, não recusado — o painel só manda os
+// próprios, e descartar mantém a ação restrita ao dono mesmo se vier lixo.
+function leads_permitidos($pedido, array $comprador): array
+{
+    $ids = [];
+    foreach ((is_array($pedido) ? $pedido : [$pedido]) as $v) {
+        $n = (int) $v;
+        if ($n > 0 && !in_array($n, $ids, true)) {
+            $ids[] = $n;
+        }
+        if (count($ids) >= 50) { // teto: uma pessoa não está em 50 roteadores
+            break;
+        }
+    }
+    if (!$ids) {
+        return [];
+    }
+    $ph = implode(',', array_fill(0, count($ids), '?'));
+    $q  = db()->prepare("SELECT id, roteador FROM leads WHERE id IN ($ph)");
+    $q->execute($ids);
+    $rows = $q->fetchAll();
+    if ((int) $comprador['is_admin'] === 1) {
+        return array_map(function ($r) { return (int) $r['id']; }, $rows);
+    }
+    $meus = roteadores_conta((int) $comprador['id']);
+    $ok   = [];
+    foreach ($rows as $r) {
+        if (in_array($r['roteador'], $meus, true)) {
+            $ok[] = (int) $r['id'];
+        }
+    }
+    return $ok;
 }
 
 // Filtro dos cartões de resumo ('' = todos | online | hoje | cadastrados).

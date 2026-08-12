@@ -58,6 +58,14 @@
             : '<span class="pc-lead-nome">' + esc(tel) + '</span>';
         return '<div class="pc-lead-cel">' + icone + '<span class="pc-lead-txt">' + texto + '</span></div>';
     }
+    // Ids da linha. Olhando "todos os roteadores", uma linha é uma PESSOA e pode
+    // vir de mais de um cadastro (o mesmo número em dois MikroTiks) — as ações
+    // valem para todos eles. data-ids é a lista; data-id é só o cadastro
+    // principal, usado para casar a linha entre um poll e outro.
+    function idsDe(tr) {
+        var s = (tr && tr.getAttribute('data-ids')) || (tr && tr.getAttribute('data-id')) || '';
+        return s.split(',').map(function (v) { return parseInt(v, 10); }).filter(function (v) { return v > 0; });
+    }
     // Converte as células já renderizadas pelo servidor (data-tel/data-nome).
     var rows0 = tbody.querySelectorAll('tr[data-id]');
     for (var ct = 0; ct < rows0.length; ct++) {
@@ -102,7 +110,7 @@
         var cfg = cell.classList.contains('pc-banda') ? EDITAVEIS.banda : EDITAVEIS.limite;
         if (!cfg.ep) return;
         var tr = cell.closest('tr');
-        var id = tr.getAttribute('data-id');
+        var ids = idsDe(tr);
         var atual = tr.getAttribute(cfg.attr) || '';
         cell.classList.add('editing');
         cell.innerHTML = '';
@@ -117,7 +125,7 @@
             var val = inp.value.trim();
             var valor = (val === '') ? null : Math.max(0, parseInt(val, 10) || 0);
             done = true;
-            var body = { csrf: CSRF, id: parseInt(id, 10) };
+            var body = { csrf: CSRF, id: ids[0], ids: ids };
             body[cfg.key] = valor;
             fetch(cfg.ep, {
                 method: 'POST', credentials: 'same-origin',
@@ -146,7 +154,7 @@
     function conexHTML(l) {
         var dh = fmtData(l.conectado_em).split(' - ');
         return '<div class="pc-conex-cel">' +
-            '<button type="button" class="pc-ver-conexoes" data-lead="' + l.id + '" aria-label="Ver conexões">' + GLOBO +
+            '<button type="button" class="pc-ver-conexoes" data-lead="' + (l.ids || [l.id]).join(',') + '" aria-label="Ver conexões">' + GLOBO +
             '<span class="pc-total">' + (l.total_conexoes || 1) + '</span></button>' +
             '<div class="pc-dh"><span class="pc-data">' + esc(dh[0] || '') + '</span><span class="pc-hora">' + esc(dh[1] || '') + '</span></div>' +
             '</div>';
@@ -156,6 +164,7 @@
     function buildRow(l) {
         var tr = document.createElement('tr');
         tr.setAttribute('data-id', l.id);
+        tr.setAttribute('data-ids', (l.ids || [l.id]).join(','));
         tr.setAttribute('data-online', l.online ? '1' : '0');
         tr.setAttribute('data-elapsed', l.elapsed);
         tr.setAttribute('data-limite', (l.tempo_limite_min == null ? '' : l.tempo_limite_min));
@@ -504,7 +513,7 @@
             fetch(EP_EDITAR, {
                 method: 'POST', credentials: 'same-origin',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ csrf: CSRF, id: parseInt(tr.getAttribute('data-id'), 10), nome: edNome ? edNome.value.trim() : '', telefone: edTel ? edTel.value.trim() : '', limite: edLimite ? edLimite.value.trim() : '', banda: edBanda ? edBanda.value.trim() : '', mesclar: mesclar ? 1 : 0 })
+                body: JSON.stringify({ csrf: CSRF, id: parseInt(tr.getAttribute('data-id'), 10), ids: idsDe(tr), nome: edNome ? edNome.value.trim() : '', telefone: edTel ? edTel.value.trim() : '', limite: edLimite ? edLimite.value.trim() : '', banda: edBanda ? edBanda.value.trim() : '', mesclar: mesclar ? 1 : 0 })
             }).then(function (r) { return r.json(); }).then(function (d) {
                 edSalvar.disabled = false;
                 if (!d || !d.ok) {
@@ -552,7 +561,7 @@
         fetch(EP_EXCLUIR, {
             method: 'POST', credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ csrf: CSRF, id: parseInt(tr.getAttribute('data-id'), 10) })
+            body: JSON.stringify({ csrf: CSRF, id: idsDe(tr)[0], ids: idsDe(tr) })
         }).then(function (r) { return r.json(); }).then(function (d) {
             if (d && d.ok) { tr.remove(); }
             else { window.alert((d && d.erro) || 'Erro ao excluir.'); }
@@ -568,7 +577,7 @@
         fetch(EP_ESQUECER, {
             method: 'POST', credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ csrf: CSRF, id: parseInt(tr.getAttribute('data-id'), 10) })
+            body: JSON.stringify({ csrf: CSRF, id: idsDe(tr)[0], ids: idsDe(tr) })
         }).then(function (r) { return r.json(); }).then(function (d) {
             if (d && d.ok) { window.alert('Cookies apagados (' + (d.macs || 0) + ' aparelho(s)). Vale em até ~1 min, quando o roteador atualizar a lista.'); }
             else { window.alert((d && d.erro) || 'Erro ao apagar cookies.'); }
@@ -593,6 +602,12 @@
                     tr.setAttribute('data-online', l.online ? '1' : '0');
                     tr.setAttribute('data-elapsed', l.elapsed);
                     tr.setAttribute('data-total', l.total_conexoes || 1);
+                    // A pessoa pode ter passado a existir em outro MikroTik desde
+                    // o último poll: a lista de cadastros da linha acompanha.
+                    var idsNovos = (l.ids || [l.id]).join(',');
+                    tr.setAttribute('data-ids', idsNovos);
+                    var bcx = tr.querySelector('.pc-ver-conexoes');
+                    if (bcx) bcx.setAttribute('data-lead', idsNovos);
                     var tc = tr.querySelector('.pc-tempo');
                     if (tc) tc.textContent = displayTempo(l);
                     var uc = tr.querySelector('.pc-uso');

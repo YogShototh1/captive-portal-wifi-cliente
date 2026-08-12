@@ -26,25 +26,21 @@ if (!csrf_valido($in['csrf'] ?? '')) {
 
 $id = (int) ($in['id'] ?? 0);
 
-$q = db()->prepare('SELECT roteador FROM leads WHERE id = ?');
-$q->execute([$id]);
-$row = $q->fetch();
-if (!$row) {
+// `ids` chega quando a linha da tabela é uma pessoa mesclada de vários
+// MikroTiks: excluir apaga a pessoa, senão ela voltaria a aparecer pelo outro.
+$ids = leads_permitidos($in['ids'] ?? $id, $comprador);
+if (!$ids) {
     http_response_code(404);
     exit(json_encode(['ok' => false, 'erro' => 'Lead não encontrado.']));
 }
-$isAdmin = (int) $comprador['is_admin'] === 1;
-if (!$isAdmin && !in_array($row['roteador'], roteadores_conta((int) $comprador['id']), true)) {
-    http_response_code(403);
-    exit(json_encode(['ok' => false, 'erro' => 'Sem permissão.']));
-}
 
+$ph = implode(',', array_fill(0, count($ids), '?'));
 try {
-    db()->prepare('DELETE FROM conexoes WHERE lead_id = ?')->execute([$id]);
-    db()->prepare('DELETE FROM leads WHERE id = ?')->execute([$id]);
+    db()->prepare("DELETE FROM conexoes WHERE lead_id IN ($ph)")->execute($ids);
+    db()->prepare("DELETE FROM leads WHERE id IN ($ph)")->execute($ids);
 } catch (Throwable $e) {
     http_response_code(500);
     exit(json_encode(['ok' => false, 'erro' => 'Falha ao excluir.']));
 }
 
-echo json_encode(['ok' => true, 'id' => $id]);
+echo json_encode(['ok' => true, 'id' => $id, 'ids' => $ids]);

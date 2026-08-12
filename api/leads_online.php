@@ -47,16 +47,8 @@ if (!$lista) {
 $filtro  = filtro_leads($_GET['filtro'] ?? '');
 $POR_PAG = 50;
 $pagina  = max(1, (int) ($_GET['pagina'] ?? 1));
-$ph = implode(',', array_fill(0, count($lista), '?'));
-$q = db()->prepare(
-    "SELECT id, telefone, nome, ip, dispositivo, conectado_em, online, segundos_conectado, visto_em, tempo_limite_min, banda_limite, total_conexoes,
-            (SELECT COALESCE(SUM(c.bytes), 0) FROM conexoes c WHERE c.lead_id = leads.id) AS bytes_total
-       FROM leads WHERE roteador IN ($ph)" . filtro_leads_sql($filtro) . '
-      ORDER BY conectado_em DESC
-      LIMIT ' . $POR_PAG . ' OFFSET ' . (($pagina - 1) * $POR_PAG)
-);
-$q->execute($lista);
-$leads = $q->fetchAll();
+// Mesma mescla por telefone da página renderizada (uma linha = uma pessoa).
+$leads = leads_pagina($lista, $filtro, $pagina, $POR_PAG);
 
 $dbNow = db_now();
 $nowTs = strtotime($dbNow);

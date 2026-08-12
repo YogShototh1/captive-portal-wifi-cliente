@@ -36,20 +36,15 @@ if ($banda !== null) {
 }
 
 // Confirma que o lead pertence ao roteador do comprador (admin pode qualquer um).
-$q = db()->prepare('SELECT roteador FROM leads WHERE id = ?');
-$q->execute([$id]);
-$row = $q->fetch();
-if (!$row) {
+// `ids` chega quando a linha é uma pessoa mesclada de vários MikroTiks.
+$ids = leads_permitidos($in['ids'] ?? $id, $comprador);
+if (!$ids) {
     http_response_code(404);
     exit(json_encode(['ok' => false, 'erro' => 'lead nao encontrado']));
 }
-$isAdmin = (int) $comprador['is_admin'] === 1;
-if (!$isAdmin && !in_array($row['roteador'], roteadores_conta((int) $comprador['id']), true)) {
-    http_response_code(403);
-    exit(json_encode(['ok' => false, 'erro' => 'sem permissao']));
-}
 
-$u = db()->prepare('UPDATE leads SET banda_limite = ? WHERE id = ?');
-$u->execute([$banda, $id]);
+$ph = implode(',', array_fill(0, count($ids), '?'));
+$u = db()->prepare("UPDATE leads SET banda_limite = ? WHERE id IN ($ph)");
+$u->execute(array_merge([$banda], $ids));
 
 echo json_encode(['ok' => true, 'id' => $id, 'banda' => $banda]);
