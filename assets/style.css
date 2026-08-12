@@ -2900,6 +2900,11 @@ html[data-tema="claro"] #hs-prof code { background: rgba(15,23,42,0.07); }
 .painel-cliente .pc-dot.on { background: #34d399; box-shadow: 0 0 8px rgba(52, 211, 153, 0.9); }
 .painel-cliente .hsp-sit { font-size: 12.5px; color: rgba(255, 255, 255, 0.62); }
 .painel-cliente .hsp-saida-previa { margin: 2px 0 0; font-size: 12.5px; color: rgba(255, 255, 255, 0.55); }
+/* Campos do cadastro de hóspede iguais ao filtro da aba Informações: altura e
+   raio do .pc-dst-input base. O .pc-editar-body deixa os campos mais altos e
+   retangulares — aquele desenho é do modal de editar lead, e mexer nele
+   mudaria as duas telas. Por isso a classe .hsp-body, só aqui. */
+.painel-cliente .hsp-body .pc-dst-input { height: 44px; padding: 0 14px; border-radius: 10px; }
 html[data-tema="claro"] .painel-cliente .hsp-dica,
 html[data-tema="claro"] .painel-cliente .hsp-sit,
 html[data-tema="claro"] .painel-cliente .hsp-saida-previa { color: #5c5e62; }
