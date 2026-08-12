@@ -76,8 +76,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (db()->inTransaction()) {
                     db()->rollBack();
                 }
+                // O roteador PODE estar em outra conta (é de propósito), então
+                // 23000 aqui só sobra para o e-mail, que continua único.
                 $erro = ($e->getCode() === '23000')
-                    ? 'E-mail já cadastrado ou roteador vinculado a outra conta.'
+                    ? 'E-mail já cadastrado em outra conta.'
                     : 'Erro ao salvar.';
             }
         }
@@ -130,7 +132,7 @@ $csrf = csrf_token();
                         <input type="email" name="email" value="<?= h($dados['email']) ?>" required placeholder="email@exemplo.com">
                     </div>
                     <div class="af-field">
-                        <label>Roteadores (identity do roteador — um por linha)</label>
+                        <label>Roteadores (identity do roteador — um por linha; o mesmo roteador pode estar em mais de uma conta)</label>
                         <textarea name="roteadores" rows="3" placeholder="ex.:&#10;PRIMIX-LOJA-01&#10;PRIMIX-LOJA-02"><?= h($dados['roteadores']) ?></textarea>
                     </div>
                     <div class="af-field">

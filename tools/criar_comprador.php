@@ -62,5 +62,6 @@ try {
     $tipo = $isAdmin ? 'ADMIN' : 'cliente';
     echo "OK: {$tipo} criado -> {$email}" . ($rot ? " (roteador={$rot})" : "") . "\n";
 } catch (PDOException $e) {
-    echo ($e->getCode() === '23000') ? "Erro: e-mail ou roteador ja existe.\n" : "Erro ao inserir.\n";
+    // O roteador pode repetir entre contas (de proposito); so o e-mail e unico.
+    echo ($e->getCode() === '23000') ? "Erro: e-mail ja cadastrado.\n" : "Erro ao inserir.\n";
 }
