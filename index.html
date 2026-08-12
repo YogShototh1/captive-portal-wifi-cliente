@@ -64,6 +64,9 @@ button{font:inherit}
 /* width:100% evita o par colapsar p/ min-content (e empilhar) quando o pai e
    um flex column com align-items:center. */
 .btn-row{display:flex;width:100%;gap:14px;flex-wrap:wrap;justify-content:center}
+/* Convite para a demonstração, logo abaixo do vídeo. */
+.demo-nota{margin-top:12px;font-size:.875rem;opacity:.7}
+#demonstracao .btn-row{margin-top:26px}
 @media(max-width:600px){.btn-row{flex-direction:column;width:min(320px,100%);margin-inline:auto}}
 
 /* ---------- Nav ---------- */
@@ -533,6 +536,10 @@ footer{background:var(--ink);color:rgba(255,255,255,.5);padding:24px 0 34px;font
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
     </button>
   </div>
+  <div class="btn-row rv rv-3">
+    <a href="/demo.php" class="btn btn-solid">Teste o painel agora mesmo</a>
+  </div>
+  <p class="sec-sub demo-nota">Abre o painel completo com dados de exemplo. Sem cadastro, sem compromisso.</p>
 </section>
 
 <!-- ===================== PLANOS ===================== -->
