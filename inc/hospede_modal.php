@@ -13,7 +13,7 @@
                 <h3 class="pc-modal-title" id="hsp-titulo">Cadastrar hóspede</h3>
                 <button type="button" class="pc-modal-x" data-close aria-label="Fechar">&times;</button>
             </div>
-            <div class="pc-modal-body pc-editar-body hsp-body">
+            <div class="pc-modal-body pc-editar-body">
                 <label class="pc-ed-label">Nome do hóspede
                     <input type="text" id="hsp-nome" class="pc-dst-input" maxlength="120" placeholder="ex.: Maria Silva">
                 </label>

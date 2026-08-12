@@ -635,11 +635,22 @@ html:has(.pc-modal.aberto) { overflow: hidden; }
     display: flex; flex-direction: column; gap: 7px; text-align: left;
     font-size: 12.5px; font-weight: 600; color: rgba(255, 255, 255, 0.65);
 }
-/* Inputs altos mas RETANGULARES (raio 10px = padrão do site, ex.: campos de data),
-   não arredondados. O .painel-cliente é obrigatório: vence o min-width do
-   .pc-dst-input base, que senão estoura o card com a linha de 2 colunas. */
-.painel-cliente .pc-editar-body .pc-dst-input {
-    min-width: 0; width: 100%; height: 52px; padding: 0 16px; border-radius: 8px;
+/* Campos dos modais (editar lead e cadastrar hóspede) IGUAIS ao filtro da aba
+   Informações: 44 de altura, raio 10, padding 14 — os mesmos números do
+   .pc-dst-input base. Duas coisas obrigam o seletor a ser assim:
+     - .painel-cliente vence o min-width: 240px do base, que senão estoura o
+       card na linha de 2 colunas;
+     - html[data-tema] porque a camada de tema (mais abaixo) força
+       border-radius: var(--t-r) = 4px em TODO input do modal. Sem ele o raio
+       não muda por mais que se escreva a regra. */
+html[data-tema] .painel-cliente .pc-editar-body .pc-dst-input {
+    /* flex: none anula o `flex: 1` do base. Aqui o pai é um <label> em COLUNA,
+       e ali flex-grow manda a altura vir do algoritmo do flex em vez do
+       `height` — era por isso que o campo saía com 22px por mais que a regra
+       dissesse 44. Na aba Informações o pai é uma LINHA, e lá o flex: 1 é o
+       certo: é ele que faz o campo ocupar a sobra ao lado do botão. */
+    flex: none;
+    min-width: 0; width: 100%; height: 44px; padding: 0 14px; border-radius: 10px;
     font-size: 15px;
 }
 /* Tempo limite + banda lado a lado (empilham em telas estreitas). */
@@ -2900,11 +2911,6 @@ html[data-tema="claro"] #hs-prof code { background: rgba(15,23,42,0.07); }
 .painel-cliente .pc-dot.on { background: #34d399; box-shadow: 0 0 8px rgba(52, 211, 153, 0.9); }
 .painel-cliente .hsp-sit { font-size: 12.5px; color: rgba(255, 255, 255, 0.62); }
 .painel-cliente .hsp-saida-previa { margin: 2px 0 0; font-size: 12.5px; color: rgba(255, 255, 255, 0.55); }
-/* Campos do cadastro de hóspede iguais ao filtro da aba Informações: altura e
-   raio do .pc-dst-input base. O .pc-editar-body deixa os campos mais altos e
-   retangulares — aquele desenho é do modal de editar lead, e mexer nele
-   mudaria as duas telas. Por isso a classe .hsp-body, só aqui. */
-.painel-cliente .hsp-body .pc-dst-input { height: 44px; padding: 0 14px; border-radius: 10px; }
 html[data-tema="claro"] .painel-cliente .hsp-dica,
 html[data-tema="claro"] .painel-cliente .hsp-sit,
 html[data-tema="claro"] .painel-cliente .hsp-saida-previa { color: #5c5e62; }
