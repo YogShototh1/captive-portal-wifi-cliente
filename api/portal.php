@@ -48,7 +48,10 @@ $push     = is_file($flagPush);
 $f = trim((string) ($_REQUEST['f'] ?? ''));
 
 if ($f === '') {
-    $lista = portal_files($roteador);
+    // portal_conjunto: o que o comprador subiu, ou o template padrao quando ele
+    // nunca subiu nada — e assim que um roteador recem-configurado ganha a tela
+    // de login sozinho, sem ninguem arrastar arquivo no Winbox.
+    $lista = portal_conjunto($roteador);
     $ver   = portal_versao($roteador);
     if ($push) {
         $lista[] = '../leadsync.rsc';
@@ -91,6 +94,17 @@ if (!portal_path_ok($f)) {
     exit('');
 }
 $path = portal_dir($roteador) . '/' . portal_encode($f);
+// Sem conjunto proprio, entrega o template padrao. A checagem e por portal_files
+// (e nao pela existencia deste arquivo): um comprador que subiu a pagina dele
+// nao pode receber pedaco do padrao se faltar um arquivo do conjunto dele.
+if (!portal_files($roteador)) {
+    $base = portal_base_path($f);
+    if ($base === null) {
+        http_response_code(404);
+        exit('');
+    }
+    $path = $base;
+}
 if (!is_file($path)) {
     http_response_code(404);
     exit('');

@@ -1430,15 +1430,71 @@ function portal_files(string $roteador): array
     return $out;
 }
 
+// --- Página de login PADRÃO (o template do repositório) ---
+//
+// Roteador recém-configurado não tem página nenhuma: portal_files() só devolve o
+// que o COMPRADOR subiu pelo painel, e quem nunca subiu ficava sem login.html —
+// o setup só terminava com alguém arrastando arquivo no Winbox. Aqui entra o
+// template de mikrotik/portal/, que o roteador baixa igual aos outros.
+//
+// Também é o que faz uma correção no template (ex.: o passo de validação do
+// hóspede) chegar em quem nunca personalizou a tela.
+function portal_base_dir(): string
+{
+    return __DIR__ . '/../mikrotik/portal';
+}
+
+// Caminhos LÓGICOS do template padrão, na forma que o roteador grava em
+// hostsv7/ (login.html, css/style.css, fonts/*.woff2).
+function portal_base_files(): array
+{
+    $dir = portal_base_dir();
+    $out = [];
+    if (is_file($dir . '/login.html')) {
+        $out[] = 'login.html';
+    }
+    // O style.css do template mora solto; no roteador ele é css/style.css,
+    // que é o caminho que o login.html referencia.
+    if (is_file($dir . '/style.css')) {
+        $out[] = 'css/style.css';
+    }
+    foreach (glob($dir . '/fonts/*.woff2') ?: [] as $f) {
+        $out[] = 'fonts/' . basename($f);
+    }
+    return $out;
+}
+
+// Caminho em disco de um arquivo do template, ou null se não for do conjunto.
+// Só aceita o que portal_base_files() lista — nada de caminho vindo de fora.
+function portal_base_path(string $logico): ?string
+{
+    if (!in_array($logico, portal_base_files(), true)) {
+        return null;
+    }
+    $dir = portal_base_dir();
+    $real = $logico === 'css/style.css' ? $dir . '/style.css' : $dir . '/' . $logico;
+    return is_file($real) ? $real : null;
+}
+
+// O conjunto que o ROTEADOR deve ter: o do comprador quando existe, senão o
+// padrão. Separado de portal_files() de propósito — o painel mostra "arquivos
+// enviados", e o template não foi enviado por ninguém.
+function portal_conjunto(string $roteador): array
+{
+    $meus = portal_files($roteador);
+    return $meus ?: portal_base_files();
+}
+
 // Versão do conjunto (muda quando qualquer arquivo muda). O MikroTik compara com a
 // última aplicada e só rebaixa quando difere — poupa a flash. Usa mtime+size (stat,
 // sem ler os arquivos) porque o roteador consulta isso a cada minuto.
 function portal_versao(string $roteador): string
 {
+    $meus = portal_files($roteador);
     $base = portal_dir($roteador);
-    $sig = '';
-    foreach (portal_files($roteador) as $f) {
-        $p = $base . '/' . portal_encode($f);
+    $sig  = '';
+    foreach (portal_conjunto($roteador) as $f) {
+        $p = $meus ? $base . '/' . portal_encode($f) : (string) portal_base_path($f);
         $sig .= $f . ':' . (int) @filemtime($p) . ':' . (int) @filesize($p) . '|';
     }
     return $sig === '' ? '0' : substr(sha1($sig), 0, 16);
