@@ -26,3 +26,7 @@ echo 'window.LOGO_FORMA=' . json_encode($roteador !== '' ? logo_forma($roteador)
 echo 'window.CORES=' . json_encode($roteador !== '' ? cores_get($roteador) : cores_padrao()) . ';';
 // Efeitos ligados/desligados no painel — o login.html vira classes no <html>.
 echo 'window.ESTILO=' . json_encode($roteador !== '' ? estilo_get($roteador) : estilo_padrao()) . ';';
+// Modo do roteador: 'hospedagem' faz o portal VALIDAR o número contra a lista de
+// hóspedes em vez de simplesmente capturá-lo. Vai junto porque o login.html já
+// espera este script — não custa uma requisição a mais no portal.
+echo 'window.PORTAL_MODO=' . json_encode($roteador !== '' ? roteador_modo($roteador) : 'varejo') . ';';

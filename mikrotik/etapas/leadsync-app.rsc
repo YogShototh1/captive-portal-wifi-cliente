@@ -394,6 +394,44 @@
 } on-error={}
 
 # ============================================================
+#  BLOCO 9: hospedagem — derruba quem ja fez check-out
+#
+#  Painel de pousada: o hospede so entra se a recepcao cadastrou o numero dele,
+#  e a diaria tem hora para acabar. Barrar o login novo NAO resolve sozinho —
+#  quem ja esta conectado continua navegando ate desligar o wifi do celular.
+#
+#  Aqui o roteador manda os MACs conectados AGORA e o painel devolve os que
+#  devem cair (saida vencida, ou hospede apagado do painel). Pergunta o roteador,
+#  responde a VPS: mesmo caminho do resto, sem tunel e sem IP fixo.
+#
+#  Roteador de varejo recebe resposta vazia e nada acontece — o hospede_kick.php
+#  corta cedo quando a conta nao e de hospedagem.
+:do {
+  :local hmacs ""
+  :foreach ha in=[/ip hotspot active find] do={
+    :if ([:len $hmacs] < 4000) do={
+      :set hmacs ($hmacs . [/ip hotspot active get $ha mac-address] . ";")
+    }
+  }
+  :if ([:len $hmacs] > 0) do={
+    :local kr [/tool fetch url="https://captivedata.com.br/api/hospede_kick.php" \
+        http-method=post check-certificate=no \
+        http-header-field="Content-Type: application/x-www-form-urlencoded" \
+        http-data=("token=$token&roteador=$ident&m=$hmacs") \
+        output=user as-value]
+    :local fora ($kr->"data")
+    # :toarray separa por virgula; resposta vazia vira lista vazia.
+    :if ([:len $fora] > 10) do={
+      :foreach fm in=[:toarray $fora] do={
+        # Um remove por vez, cada um no seu :do — MAC que ja saiu sozinho entre
+        # a pergunta e a resposta daria erro e mataria o resto da lista.
+        :do { /ip hotspot active remove [/ip hotspot active find where mac-address=$fm] } on-error={}
+      }
+    }
+  }
+} on-error={}
+
+# ============================================================
 #  Teste de velocidade da internet da LOJA (sob demanda)
 #  O comprador pede pelo painel; aqui so se pergunta "tem teste?" a cada
 #  rodada — uma resposta de 1 byte, barata.

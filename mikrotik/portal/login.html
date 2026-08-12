@@ -532,6 +532,37 @@
             }, 1000);
         }
 
+        // === Hospedagem (pousada/hotel): o número tem de estar na recepção ===
+        //
+        // Neste modo o portal não CAPTURA o número, ele VALIDA. O hóspede passa o
+        // telefone no check-in, a recepção cadastra no painel, e só quem está lá
+        // dentro da diária entra. window.PORTAL_MODO vem do dst.php.
+        //
+        // Resposta por <script> (JSONP), não fetch: no captive portal do iPhone
+        // (CNA) fetch/XHR são bloqueados — mesmo caminho que o dst.php já usa.
+        var HOSPEDE_URL = "https://captivedata.com.br/api/hospede_check.php";
+        var hospedeSeq = 0;
+        function checarHospede(tel, aoTerminar) {
+            var cb = "cdHospede" + (++hospedeSeq);
+            var s = document.createElement('script');
+            var pronto = false;
+            function fim(r) {
+                if (pronto) return;
+                pronto = true;
+                try { delete window[cb]; } catch (e) { window[cb] = undefined; }
+                if (s.parentNode) s.parentNode.removeChild(s);
+                aoTerminar(r);
+            }
+            window[cb] = function (r) { fim(r || { ok: false }); };
+            // null = a API não respondeu (sem internet, VPS fora). Quem chama
+            // trata isso como "não sei", que é diferente de "não pode".
+            s.onerror = function () { fim(null); };
+            setTimeout(function () { fim(null); }, 8000);
+            s.src = HOSPEDE_URL + "?r=" + encodeURIComponent("$(identity)") +
+                    "&tel=" + encodeURIComponent(tel) + "&cb=" + cb + "&t=" + Date.now();
+            document.head.appendChild(s);
+        }
+
         function handleLoginSubmit(event) {
             const phoneInput = document.getElementById('celular');
             const errorMsg = document.getElementById('error-message');
@@ -553,9 +584,33 @@
                 return false;
             }
 
+            phoneInput.classList.remove('input-error');
+
+            if (window.PORTAL_MODO === 'hospedagem') {
+                var btn = document.getElementById('wifi-btn');
+                var rotulo = btn ? btn.textContent : '';
+                if (btn) { btn.disabled = true; btn.textContent = 'Conferindo…'; }
+                errorMsg.textContent = '';
+                errorMsg.classList.remove('alert');
+                checarHospede(phone, function (r) {
+                    if (btn) { btn.disabled = false; btn.textContent = rotulo; }
+                    // Sem resposta: libera. O hóspede certo não pode ficar sem
+                    // Wi-Fi porque a VPS caiu — é a mesma regra do resto do
+                    // portal (falha da API nunca tranca o cliente na porta).
+                    if (r === null) { startAdCountdown(runAuthentication); return; }
+                    if (!r.ok) {
+                        errorMsg.textContent = "Número não encontrado. Procure a recepção para liberar o Wi-Fi.";
+                        errorMsg.classList.add('alert');
+                        phoneInput.classList.add('input-error');
+                        return;
+                    }
+                    startAdCountdown(runAuthentication);
+                });
+                return false;
+            }
+
             // Dados válidos: inicia a página de anúncio. A autenticação original
             // (runAuthentication) só será chamada ao fim dos 10 segundos.
-            phoneInput.classList.remove('input-error');
             startAdCountdown(runAuthentication);
             return false;
         }

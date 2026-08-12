@@ -22,6 +22,13 @@ $rotQuery = $rotAtivo !== null ? [$rotAtivo] : $rotLista;
 $multi    = count($rotLista) > 1;
 
 // Contadores dos 4 cartões de resumo (online / conectados hoje / cadastrados hoje / total).
+// Tipo de painel do CLIENTE aberto (varejo/hospedagem). O admin edita a
+// pousada pela mesma tela que o dono dela usa — mesmo include, mesmo JS.
+$hospedagem = painel_tipo($id) === 'hospedagem';
+$hspCliente = $id;
+$hospedes   = $hospedagem ? hospedes_lista($rotQuery) : [];
+$hResumo    = $hospedagem ? hospedes_resumo($rotQuery) : [];
+
 $resumo = resumo_leads($rotQuery);
 
 // Filtro dos cartões (?f=): a tabela mostra só o grupo do cartão clicado.
@@ -98,7 +105,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Leads — <?= h($cliente['nome'] ?: $cliente['email']) ?></title>
     <link rel="icon" href="assets/logo-icone.png?v=1" type="image/png">
-    <link rel="stylesheet" href="assets/style.css?v=129">
+    <link rel="stylesheet" href="assets/style.css?v=130">
 </head>
 <body class="painel-cliente">
     <!-- Camadas de fundo (decorativas) -->
@@ -185,7 +192,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
                     </button>
                     <div>
-                        <h1 class="pc-brand">Leads do cliente</h1>
+                        <h1 class="pc-brand"><?= $hospedagem ? 'Hóspedes do cliente' : 'Leads do cliente' ?></h1>
                         <p class="pc-sub"><?= h($cliente['nome'] ?: $cliente['email']) ?>
                             — <?= $multi ? '<strong>' . count($rotLista) . ' roteadores</strong>' : 'roteador <strong>' . h((string) ($rotLista[0] ?? '—')) . '</strong>' ?></p>
                     </div>
@@ -218,6 +225,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
 
             <!-- ============ ABA: PAINEL (métricas + leads) ============ -->
             <section class="pc-tela" data-tela="painel">
+                <?php if ($hospedagem): require __DIR__ . '/inc/hospedes_tela.php'; else: ?>
                 <?php $fBase = '?id=' . (int) $id . '&amp;r=' . urlencode((string) $rotAtivo) . '&amp;f='; ?>
                 <div class="pc-summary">
                     <a class="glow-card pc-metric<?= $filtro === 'online' ? ' atual' : '' ?>" href="<?= $fBase ?>online" title="Filtrar: online agora">
@@ -328,6 +336,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                         <?php endif; ?>
                     </div>
                 </div>
+                <?php endif; /* hospedagem */ ?>
             </section>
 
             <!-- ============ ABA: DASHBOARD (visão geral da semana) ============ -->
@@ -708,6 +717,8 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     </div>
 
     <!-- Pop-up: editar lead (nome de identificação + número) -->
+    <?php if ($hospedagem): require __DIR__ . '/inc/hospede_modal.php'; endif; ?>
+
     <div class="pc-modal" id="editar-modal" aria-hidden="true">
         <div class="pc-modal-backdrop" data-close></div>
         <div class="pc-modal-card glow-card">
@@ -766,6 +777,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <script src="assets/estatisticas.js?v=8"></script>
     <script src="assets/speedtest.js?v=11"></script>
     <script src="assets/leads-live.js?v=33"></script>
+    <?php if ($hospedagem): ?><script src="assets/hospedes.js?v=1"></script><?php endif; ?>
     <?php require __DIR__ . '/inc/tema.php'; ?>
 </body>
 </html>

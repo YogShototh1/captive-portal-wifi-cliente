@@ -8,11 +8,11 @@ $admin = exigir_admin();
 $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 $editando = $id > 0;
 $erro = '';
-$dados = ['nome' => '', 'email' => '', 'roteadores' => '', 'is_admin' => 0, 'portal_habilitado' => 0];
+$dados = ['nome' => '', 'email' => '', 'roteadores' => '', 'is_admin' => 0, 'portal_habilitado' => 0, 'painel' => 'varejo'];
 
 // Modo edição: carrega os dados atuais (exceto quando acabou de enviar o form).
 if ($editando && $_SERVER['REQUEST_METHOD'] !== 'POST') {
-    $q = db()->prepare('SELECT nome, email, is_admin, portal_habilitado FROM compradores WHERE id = ?');
+    $q = db()->prepare('SELECT nome, email, is_admin, portal_habilitado, painel FROM compradores WHERE id = ?');
     $q->execute([$id]);
     $row = $q->fetch();
     if (!$row) {
@@ -33,9 +33,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $senha     = (string) ($_POST['senha'] ?? '');
         $isAdmin   = !empty($_POST['is_admin']) ? 1 : 0;
         $portalHab = !empty($_POST['portal_habilitado']) ? 1 : 0;
+        $painel    = painel_tipo_valido($_POST['painel'] ?? '');
         // Um identity por linha -> lista limpa (sem vazios/duplicados).
         $rots = array_values(array_unique(array_filter(array_map('trim', preg_split('/\R/', $rotsTxt)))));
-        $dados = ['nome' => $nome, 'email' => $email, 'roteadores' => implode("\n", $rots), 'is_admin' => $isAdmin, 'portal_habilitado' => $portalHab];
+        $dados = ['nome' => $nome, 'email' => $email, 'roteadores' => implode("\n", $rots), 'is_admin' => $isAdmin, 'portal_habilitado' => $portalHab, 'painel' => $painel];
 
         $rotLongo = array_filter($rots, function ($r) { return strlen($r) > 120; });
         if ($email === '') {
@@ -51,16 +52,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 db()->beginTransaction();
                 if ($editando) {
                     if ($senha !== '') {
-                        $q = db()->prepare('UPDATE compradores SET nome=?, email=?, is_admin=?, portal_habilitado=?, senha_hash=? WHERE id=?');
-                        $q->execute([$nome, $email, $isAdmin, $portalHab, password_hash($senha, PASSWORD_BCRYPT), $id]);
+                        $q = db()->prepare('UPDATE compradores SET nome=?, email=?, is_admin=?, portal_habilitado=?, painel=?, senha_hash=? WHERE id=?');
+                        $q->execute([$nome, $email, $isAdmin, $portalHab, $painel, password_hash($senha, PASSWORD_BCRYPT), $id]);
                     } else {
-                        $q = db()->prepare('UPDATE compradores SET nome=?, email=?, is_admin=?, portal_habilitado=? WHERE id=?');
-                        $q->execute([$nome, $email, $isAdmin, $portalHab, $id]);
+                        $q = db()->prepare('UPDATE compradores SET nome=?, email=?, is_admin=?, portal_habilitado=?, painel=? WHERE id=?');
+                        $q->execute([$nome, $email, $isAdmin, $portalHab, $painel, $id]);
                     }
                     $uid = $id;
                 } else {
-                    $q = db()->prepare('INSERT INTO compradores (nome, email, senha_hash, is_admin, portal_habilitado) VALUES (?,?,?,?,?)');
-                    $q->execute([$nome, $email, password_hash($senha, PASSWORD_BCRYPT), $isAdmin, $portalHab]);
+                    $q = db()->prepare('INSERT INTO compradores (nome, email, senha_hash, is_admin, portal_habilitado, painel) VALUES (?,?,?,?,?,?)');
+                    $q->execute([$nome, $email, password_hash($senha, PASSWORD_BCRYPT), $isAdmin, $portalHab, $painel]);
                     $uid = (int) db()->lastInsertId();
                 }
                 // Sincroniza os vínculos: a lista do formulário é a verdade.
@@ -130,6 +131,13 @@ $csrf = csrf_token();
                     <div class="af-field">
                         <label>E-mail</label>
                         <input type="email" name="email" value="<?= h($dados['email']) ?>" required placeholder="email@exemplo.com">
+                    </div>
+                    <div class="af-field">
+                        <label>Tipo de painel</label>
+                        <select name="painel" class="af-select">
+                            <option value="varejo"<?= $dados['painel'] !== 'hospedagem' ? ' selected' : '' ?>>Varejista — loja, cafeteria, restaurante (captura o número de quem conecta)</option>
+                            <option value="hospedagem"<?= $dados['painel'] === 'hospedagem' ? ' selected' : '' ?>>Hospedagem — pousada, hotel (cadastra hóspedes; o portal só libera quem está cadastrado)</option>
+                        </select>
                     </div>
                     <div class="af-field">
                         <label>Roteadores (identity do roteador — um por linha; o mesmo roteador pode estar em mais de uma conta)</label>

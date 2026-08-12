@@ -18,8 +18,16 @@ $rotAtivo = roteador_escolhido($rotLista, $_GET['r'] ?? null); // null = todos
 $rotQuery = $rotAtivo !== null ? [$rotAtivo] : $rotLista;
 $multi    = count($rotLista) > 1;
 
+// Tipo de painel da conta. Hospedagem (pousada/hotel) troca SÓ o conteúdo da
+// aba Painel: no lugar dos leads, o cadastro de hóspedes. As outras abas
+// (anúncio, URL, limites, relatórios...) são as mesmas — é o mesmo Wi-Fi.
+$tipoPainel = painel_tipo((int) $comprador['id']);
+$hospedagem = $tipoPainel === 'hospedagem';
+
 // Contadores dos 4 cartões de resumo (online / conectados hoje / cadastrados hoje / total).
 $resumo = resumo_leads($rotQuery);
+$hospedes = $hospedagem ? hospedes_lista($rotQuery) : [];
+$hResumo  = $hospedagem ? hospedes_resumo($rotQuery) : [];
 
 // Filtro dos cartões (?f=): a tabela mostra só o grupo do cartão clicado.
 // A paginação usa o contador do grupo filtrado (mesmos critérios do cartão).
@@ -97,9 +105,9 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <script>(function(){try{var t=localStorage.getItem('cd-tema');document.documentElement.setAttribute('data-tema',t==='escuro'?'escuro':'claro');}catch(e){document.documentElement.setAttribute('data-tema','claro');}})();</script>
     <meta name="format-detection" content="telephone=no">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Leads</title>
+    <title><?= $hospedagem ? 'Painel de Hóspedes' : 'Painel de Leads' ?></title>
     <link rel="icon" href="assets/logo-icone.png?v=1" type="image/png">
-    <link rel="stylesheet" href="assets/style.css?v=129">
+    <link rel="stylesheet" href="assets/style.css?v=130">
 </head>
 <body class="painel-cliente">
     <div class="pc-bg-gradient"></div>
@@ -184,7 +192,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
                     </button>
                     <div>
-                        <h1 class="pc-brand">Painel de Leads</h1>
+                        <h1 class="pc-brand"><?= $hospedagem ? 'Painel de Hóspedes' : 'Painel de Leads' ?></h1>
                         <p class="pc-sub">Olá, <?= h($comprador['nome'] ?: $comprador['email']) ?></p>
                     </div>
                 </div>
@@ -216,6 +224,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
 
             <!-- ============ ABA: PAINEL (métricas + leads) ============ -->
             <section class="pc-tela" data-tela="painel">
+                <?php if ($hospedagem): require __DIR__ . '/inc/hospedes_tela.php'; else: ?>
                 <?php $fBase = '?r=' . urlencode((string) $rotAtivo) . '&amp;f='; ?>
                 <div class="pc-summary">
                     <a class="glow-card pc-metric<?= $filtro === 'online' ? ' atual' : '' ?>" href="<?= $fBase ?>online" title="Filtrar: online agora">
@@ -325,6 +334,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                         <?php endif; ?>
                     </div>
                 </div>
+                <?php endif; /* hospedagem */ ?>
             </section>
 
             <!-- ============ ABA: DASHBOARD (visão geral da semana) ============ -->
@@ -649,6 +659,8 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     </div>
 
     <!-- Pop-up: editar lead (nome de identificação + número) -->
+    <?php if ($hospedagem): require __DIR__ . '/inc/hospede_modal.php'; endif; ?>
+
     <div class="pc-modal" id="editar-modal" aria-hidden="true">
         <div class="pc-modal-backdrop" data-close></div>
         <div class="pc-modal-card glow-card">
@@ -705,6 +717,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <script src="assets/dashgeral.js?v=14"></script>
     <script src="assets/estatisticas.js?v=8"></script>
     <script src="assets/leads-live.js?v=33"></script>
+    <?php if ($hospedagem): ?><script src="assets/hospedes.js?v=1"></script><?php endif; ?>
     <?php require __DIR__ . '/inc/tema.php'; ?>
 </body>
 </html>

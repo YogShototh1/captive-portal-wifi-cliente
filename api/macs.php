@@ -43,12 +43,22 @@ try {
             PRIMARY KEY (roteador, mac)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
     );
+    // Numa POUSADA a lista é só de quem ainda está hospedado. Sem isto, o
+    // aparelho de quem já fez check-out continuaria pulando a pergunta do
+    // número e entrando direto — a validação do hóspede nem chegaria a rodar.
+    // O vínculo é o telefone: é o mesmo número no cadastro e no lead.
+    $soHospede = roteador_modo($roteador) === 'hospedagem'
+        ? ' AND EXISTS (SELECT 1 FROM hospedes hp
+                         WHERE hp.roteador = l.roteador AND hp.telefone = l.telefone
+                           AND hp.saida_em > NOW())'
+        : '';
     // MACs cadastrados do roteador, MENOS os que tiveram os cookies apagados.
     $q = db()->prepare(
         'SELECT DISTINCT c.mac FROM conexoes c
            JOIN leads l ON l.id = c.lead_id
           WHERE l.roteador = ? AND c.mac IS NOT NULL AND c.mac <> ""
-            AND NOT EXISTS (SELECT 1 FROM macs_esquecidos e WHERE e.roteador = l.roteador AND e.mac = c.mac)
+            AND NOT EXISTS (SELECT 1 FROM macs_esquecidos e WHERE e.roteador = l.roteador AND e.mac = c.mac)'
+        . $soHospede . '
           LIMIT 5000'
     );
     $q->execute([$roteador]);

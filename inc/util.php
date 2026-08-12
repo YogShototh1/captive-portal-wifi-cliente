@@ -1245,6 +1245,105 @@ function leads_permitidos($pedido, array $comprador): array
     return $ok;
 }
 
+// --- Tipo de painel: varejo (loja/cafeteria) ou hospedagem (pousada/hotel) ---
+//
+// No varejo o portal CAPTURA o número de quem conecta. Na hospedagem ele
+// VALIDA: o hóspede passa o telefone na recepção, entra no painel, e o portal
+// só libera quem está cadastrado e ainda não passou da data de saída.
+const PAINEL_TIPOS = ['varejo', 'hospedagem'];
+
+function painel_tipo_valido(?string $t): string
+{
+    return in_array((string) $t, PAINEL_TIPOS, true) ? (string) $t : 'varejo';
+}
+
+// Tipo de painel de uma conta. Coluna nova: banco ainda sem ela = varejo.
+function painel_tipo(int $compradorId): string
+{
+    try {
+        $q = db()->prepare('SELECT painel FROM compradores WHERE id = ?');
+        $q->execute([$compradorId]);
+        return painel_tipo_valido((string) $q->fetchColumn());
+    } catch (Throwable $e) {
+        return 'varejo';
+    }
+}
+
+// Modo do ROTEADOR, que é o que o portal do hotspot precisa saber.
+//
+// O tipo é da conta, mas desde a migração migrar_roteador_compartilhado o mesmo
+// MikroTik pode estar em várias contas. Se QUALQUER dona for de hospedagem, o
+// portal daquele roteador valida hóspede — não dá para o portal ser as duas
+// coisas, e liberar só hóspede é o lado seguro (o contrário abriria o WiFi da
+// pousada para qualquer número).
+function roteador_modo(string $identity): string
+{
+    if ($identity === '') {
+        return 'varejo';
+    }
+    try {
+        $q = db()->prepare(
+            "SELECT 1 FROM roteadores r
+               JOIN compradores c ON c.id = r.comprador_id
+              WHERE r.identity = ? AND c.painel = 'hospedagem' LIMIT 1"
+        );
+        $q->execute([$identity]);
+        return $q->fetchColumn() !== false ? 'hospedagem' : 'varejo';
+    } catch (Throwable $e) {
+        return 'varejo';
+    }
+}
+
+// Momento da saída a partir do que a recepção digita: check-in + diárias, na
+// hora do check-out. Devolve 'Y-m-d H:i:s'. Fora daqui ninguém calcula isso —
+// a data de saída é gravada pronta para o portal comparar com um SELECT só.
+function hospede_saida(string $entrada, int $dias, string $hora): string
+{
+    $ts = strtotime($entrada . ' ' . $hora);
+    if ($ts === false) {
+        $ts = strtotime(date('Y-m-d') . ' 12:00');
+    }
+    return date('Y-m-d H:i:s', strtotime('+' . max(1, $dias) . ' day', $ts));
+}
+
+// Hóspedes de um ou mais roteadores, os que ainda não saíram primeiro.
+function hospedes_lista(array $roteadores): array
+{
+    if (!$roteadores) {
+        return [];
+    }
+    $ph = implode(',', array_fill(0, count($roteadores), '?'));
+    try {
+        $q = db()->prepare(
+            "SELECT id, roteador, nome, quarto, telefone, entrada_em, dias, saida_em,
+                    (saida_em > NOW()) AS hospedado
+               FROM hospedes WHERE roteador IN ($ph)
+              ORDER BY hospedado DESC, saida_em ASC"
+        );
+        $q->execute($roteadores);
+        return $q->fetchAll();
+    } catch (Throwable $e) {
+        return []; // banco sem a tabela ainda: a tela mostra a lista vazia
+    }
+}
+
+// Contadores dos cartões do painel de hospedagem.
+function hospedes_resumo(array $roteadores): array
+{
+    $lista = hospedes_lista($roteadores);
+    $r = ['hospedados' => 0, 'saem_hoje' => 0, 'total' => count($lista)];
+    $hoje = date('Y-m-d');
+    foreach ($lista as $h) {
+        if ((int) $h['hospedado'] === 1) {
+            $r['hospedados']++;
+            if (substr((string) $h['saida_em'], 0, 10) === $hoje) {
+                $r['saem_hoje']++;
+            }
+        }
+    }
+    return $r;
+}
+
 // Filtro dos cartões de resumo ('' = todos | online | hoje | cadastrados).
 // Valida o valor vindo da URL e devolve a condição SQL extra da tabela de
 // leads — MESMOS critérios dos contadores, para a tabela bater com o cartão.

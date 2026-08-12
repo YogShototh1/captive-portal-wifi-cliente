@@ -691,13 +691,19 @@ a.pc-pag-btn:hover { background: rgba(34,211,238, 0.2); border-color: #22d3ee; c
 .login-screen .af-field { display: flex; flex-direction: column; gap: 6px; }
 .login-screen .af-field label { font-size: 12.5px; font-weight: 500; color: rgba(255, 255, 255, 0.62); }
 .login-screen .af-field input,
+.login-screen .af-field select,
 .login-screen .af-field textarea {
     width: 100%; height: 48px; padding: 0 16px; font-size: 15px; color: #fff;
     background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.10);
     border-radius: 12px; outline: none; transition: background .2s, border-color .2s;
 }
+/* O <select> nativo herda o fundo do sistema na lista aberta; as <option> ficam
+   escuras de propósito para nao virar texto branco em fundo branco no Windows. */
+.login-screen .af-field select { font-family: inherit; cursor: pointer; }
+.login-screen .af-field select option { background: #1b1d22; color: #fff; }
 .login-screen .af-field textarea { height: auto; min-height: 88px; padding: 10px 14px; resize: vertical; font-family: inherit; line-height: 1.5; }
 .login-screen .af-field input:focus,
+.login-screen .af-field select:focus,
 .login-screen .af-field textarea:focus { background: rgba(255, 255, 255, 0.10); border-color: rgba(255, 255, 255, 0.20); }
 .login-screen .af-field input::placeholder,
 .login-screen .af-field textarea::placeholder { color: rgba(255, 255, 255, 0.35); }
@@ -1011,6 +1017,7 @@ a.pc-pag-btn:hover { background: rgba(34,211,238, 0.2); border-color: #22d3ee; c
     /* (1) Inputs a 16px no celular: impede o zoom automático do iOS ao focar. */
     .login-screen .lp-field input,
     .login-screen .af-field input,
+    .login-screen .af-field select,
     .painel-cliente .pc-dst-input,
     .painel-cliente td.pc-limite input,
     .painel-cliente td.pc-banda input { font-size: 16px; }
@@ -1672,11 +1679,14 @@ html[data-tema="claro"] .login-screen .lp-field-icon { color: #8b8d90; }
 html[data-tema="claro"] .login-screen .lp-field:focus-within .lp-field-icon { color: #171a20; }
 html[data-tema="claro"] .login-screen .lp-field input,
 html[data-tema="claro"] .login-screen .af-field input,
+html[data-tema="claro"] .login-screen .af-field select,
 html[data-tema="claro"] .login-screen .af-field textarea {
     background: #f4f4f4; color: #171a20; border-color: transparent;
 }
+html[data-tema="claro"] .login-screen .af-field select option { background: #fff; color: #171a20; }
 html[data-tema="claro"] .login-screen .lp-field input:focus,
 html[data-tema="claro"] .login-screen .af-field input:focus,
+html[data-tema="claro"] .login-screen .af-field select:focus,
 html[data-tema="claro"] .login-screen .af-field textarea:focus {
     background: #fff; border-color: #171a20;
 }
@@ -2872,3 +2882,33 @@ html[data-tema="claro"] #hs-prof code { background: rgba(15,23,42,0.07); }
 }
 .pc-fones .fone-tel  { font-size: 11.5px; color: rgba(255,255,255,.82); font-variant-numeric: tabular-nums; }
 .pc-fones .fone-data { font-size: 10.5px; color: rgba(255,255,255,.55); }
+
+/* ============================================================
+   Painel de HOSPEDAGEM (pousada/hotel)
+   Reaproveita cartões, tabela e modal do painel de leads; aqui só o que
+   não existia: barra do botão "Cadastrar hóspede" e a coluna de situação.
+   ============================================================ */
+.painel-cliente .hsp-topo {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 14px; flex-wrap: wrap; padding: 14px 18px 4px;
+}
+.painel-cliente .hsp-novo { display: inline-flex; align-items: center; gap: 8px; width: auto; margin: 0; }
+.painel-cliente .hsp-novo svg { width: 17px; height: 17px; }
+.painel-cliente .hsp-dica { margin: 0; font-size: 12px; color: rgba(255, 255, 255, 0.45); }
+.painel-cliente td.hsp-quarto { font-weight: 600; font-variant-numeric: tabular-nums; }
+/* Quem ainda está hospedado acende o ponto, igual ao "online" dos leads. */
+.painel-cliente .pc-dot.on { background: #34d399; box-shadow: 0 0 8px rgba(52, 211, 153, 0.9); }
+.painel-cliente .hsp-sit { font-size: 12.5px; color: rgba(255, 255, 255, 0.62); }
+.painel-cliente .hsp-saida-previa { margin: 2px 0 0; font-size: 12.5px; color: rgba(255, 255, 255, 0.55); }
+html[data-tema="claro"] .painel-cliente .hsp-dica,
+html[data-tema="claro"] .painel-cliente .hsp-sit,
+html[data-tema="claro"] .painel-cliente .hsp-saida-previa { color: #5c5e62; }
+/* <select>/<input type=date|time> dentro do modal: o navegador desenha a lista
+   e o iconezinho com as cores do sistema — sem isto vira texto branco em fundo
+   branco no Windows e o calendário some no tema escuro. */
+.painel-cliente .pc-editar-body select.pc-dst-input option { background: #1b1d22; color: #fff; }
+.painel-cliente .pc-editar-body input[type="date"].pc-dst-input,
+.painel-cliente .pc-editar-body input[type="time"].pc-dst-input { color-scheme: dark; }
+html[data-tema="claro"] .painel-cliente .pc-editar-body select.pc-dst-input option { background: #fff; color: #171a20; }
+html[data-tema="claro"] .painel-cliente .pc-editar-body input[type="date"].pc-dst-input,
+html[data-tema="claro"] .painel-cliente .pc-editar-body input[type="time"].pc-dst-input { color-scheme: light; }
