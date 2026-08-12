@@ -6,7 +6,7 @@
 #
 #  COMO USAR
 #    1) Reset:  /system reset-configuration no-defaults=yes skip-backup=yes
-#    2) Edite as DUAS linhas de CONFIGURACAO logo abaixo.
+#    2) Troque o NOME DO ROTEADOR abaixo (e a unica coisa que muda por cliente).
 #    3) Winbox -> Files -> arraste este arquivo.
 #    4) Terminal:  /import setup-varejo.rsc
 #
@@ -18,27 +18,47 @@
 #  duplica bridge, pool, DHCP nem hotspot.
 # ============================================================
 
-# ============================================================
-#  CONFIGURACAO - as unicas duas linhas que voce edita
-# ============================================================
-# Nome do roteador. E a CHAVE que liga este aparelho ao painel: tem que ser
-# exatamente o mesmo texto cadastrado em "Roteadores" na conta do cliente.
-:local ident "PRIMIX-LOJA-01"
 
-# admin_token do inc/config.php da VPS. So serve para baixar o leadsync a
+# ############################################################
+# ###                                                      ###
+# ###          M U D E   A P E N A S   E S T A   L I N H A ###
+# ###                                                      ###
+# ############################################################
+#
+#  NOME DO ROTEADOR  ->  e a CHAVE que liga este aparelho ao painel.
+#  Tem que ser IDENTICO ao que esta cadastrado em "Roteadores", na conta do
+#  cliente (maiusculas/minusculas incluidas). Errou aqui: o hotspot sobe, mas
+#  o painel nao recebe nada deste roteador.
+#
+:local ident "TROQUE-PELO-NOME-DO-ROTEADOR"
+#
+# ############################################################
+# ###          F I M   D O   Q U E   S E   M U D A         ###
+# ############################################################
+
+
+# Daqui para baixo nao precisa mexer.
+# admin_token da VPS (inc/config.php). So serve para baixar o leadsync a
 # primeira vez; dali em diante o proprio leadsync se atualiza sozinho.
 :local token "SEU_ADMIN_TOKEN_AQUI"
 
-# ------------------------------------------------------------
 :local wan "ether1"
 :local lan "192.168.1.1"
 :local rede "192.168.1.0/24"
 :local faixa "192.168.1.10-192.168.1.254"
 
 :put "== Captive Data :: setup VAREJO (loja, cafeteria, restaurante) =="
+
+# Duas travas antes de mexer em qualquer coisa: um roteador meio configurado e
+# pior do que um roteador intacto.
 :if ($token = "SEU_ADMIN_TOKEN_AQUI") do={
-  :put "!! Edite o token no topo do arquivo antes de rodar. Abortado."
+  :put "!! Token nao preenchido. Use a copia gerada com o token. Abortado."
   :error "token nao configurado"
+}
+:if ($ident = "TROQUE-PELO-NOME-DO-ROTEADOR") do={
+  :put "!! Voce nao trocou o NOME DO ROTEADOR no topo do arquivo."
+  :put "!! Ele tem que ser igual ao cadastrado no painel. Abortado."
+  :error "nome do roteador nao configurado"
 }
 
 # ============================================================
@@ -204,7 +224,7 @@
 :put ("roteador ...... " . $ident)
 :put "LAN ........... 192.168.1.1/24, DHCP de .10 a .254"
 :put "modo .......... VAREJO (loja, cafeteria, restaurante)"
-:put "proximo ....... cadastre PRIMIX-LOJA-01 no painel (tipo: Varejista)"
+:put "proximo ....... confira o mesmo nome no painel (tipo: Varejista)"
 :put ""
 :put "FALTA VOCE FAZER: senha do admin (o reset deixa em branco)"
 :put "   /user set admin password=UMA-SENHA-BOA"
