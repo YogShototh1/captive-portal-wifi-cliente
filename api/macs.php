@@ -43,30 +43,27 @@ try {
             PRIMARY KEY (roteador, mac)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
     );
-    // Numa POUSADA a lista é só de quem ainda está hospedado. Sem isto, o
-    // aparelho de quem já fez check-out continuaria pulando a pergunta do
-    // número e entrando direto — a validação do hóspede nem chegaria a rodar.
-    // O vínculo é o telefone: é o mesmo número no cadastro e no lead.
-    $soHospede = roteador_modo($roteador) === 'hospedagem'
-        ? ' AND EXISTS (SELECT 1 FROM hospedes hp
-                         WHERE hp.roteador = l.roteador AND hp.telefone = l.telefone
-                           AND hp.saida_em > NOW())'
-        : '';
-    // MACs cadastrados do roteador, MENOS os que tiveram os cookies apagados.
-    $q = db()->prepare(
-        'SELECT DISTINCT c.mac FROM conexoes c
-           JOIN leads l ON l.id = c.lead_id
-          WHERE l.roteador = ? AND c.mac IS NOT NULL AND c.mac <> ""
-            AND NOT EXISTS (SELECT 1 FROM macs_esquecidos e WHERE e.roteador = l.roteador AND e.mac = c.mac)'
-        . $soHospede . '
-          LIMIT 5000'
-    );
-    $q->execute([$roteador]);
     $hashes = [];
-    foreach ($q->fetchAll(PDO::FETCH_COLUMN) as $m) {
-        $hashes[] = substr(md5(strtoupper((string) $m)), 0, 12);
+    // POUSADA não tem lista de aparelhos. O atalho existe para o cliente de
+    // loja não digitar o número de novo; aqui o número É a validação — quem
+    // pula a pergunta pula a conferência da recepção, e o aparelho de quem já
+    // fez check-out entraria sozinho. Lista vazia: o login.html segue o fluxo
+    // normal e pergunta sempre.
+    if (roteador_modo($roteador) !== 'hospedagem') {
+        // MACs cadastrados do roteador, MENOS os que tiveram os cookies apagados.
+        $q = db()->prepare(
+            'SELECT DISTINCT c.mac FROM conexoes c
+               JOIN leads l ON l.id = c.lead_id
+              WHERE l.roteador = ? AND c.mac IS NOT NULL AND c.mac <> ""
+                AND NOT EXISTS (SELECT 1 FROM macs_esquecidos e WHERE e.roteador = l.roteador AND e.mac = c.mac)
+              LIMIT 5000'
+        );
+        $q->execute([$roteador]);
+        foreach ($q->fetchAll(PDO::FETCH_COLUMN) as $m) {
+            $hashes[] = substr(md5(strtoupper((string) $m)), 0, 12);
+        }
+        sort($hashes); // ordem estável -> versão só muda quando a LISTA muda
     }
-    sort($hashes); // ordem estável -> versão só muda quando a LISTA muda
 } catch (Throwable $e) {
     http_response_code(500);
     exit('');
