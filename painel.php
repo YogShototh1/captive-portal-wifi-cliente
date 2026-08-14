@@ -107,7 +107,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $hospedagem ? 'Painel de Hóspedes' : 'Painel de Leads' ?></title>
     <link rel="icon" href="assets/logo-icone.png?v=1" type="image/png">
-    <link rel="stylesheet" href="assets/style.css?v=132">
+    <link rel="stylesheet" href="assets/style.css?v=133">
 </head>
 <body class="painel-cliente">
     <div class="pc-bg-gradient"></div>
@@ -126,6 +126,13 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                     Painel
                 </button>
+                <?php /* As abas de recorrência não existem na pousada: hóspede não
+                         "deixou de vir", ele foi embora — era o combinado. Dashboard,
+                         Alertas, Informações, Relatórios e Estatísticas medem
+                         fidelidade de consumidor de loja e ficariam no menu sem
+                         responder nada. Alertas volta quando tiver aviso de pousada
+                         (estadia vencida ainda conectada, roteador fora do ar). */ ?>
+                <?php if (!$hospedagem): ?>
                 <button type="button" class="pc-side-item" data-aba="dashboard">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
                     Dashboard
@@ -142,6 +149,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M7 16v-5"/><path d="M12 16V8"/><path d="M17 16v-8"/></svg>
                     Relatórios
                 </button>
+                <?php endif; /* !hospedagem */ ?>
                 <button type="button" class="pc-side-item" data-aba="anuncio">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18.37 2.63 14 7l-1.59-1.59a2 2 0 0 0-2.82 0L8 7l9 9 1.59-1.59a2 2 0 0 0 0-2.82L17 10l4.37-4.37a2.12 2.12 0 1 0-3-3Z"/><path d="M9 8c-2 3-4 3.5-7 4l8 10c2-1 6-5 6-7"/><path d="M14.5 17.5 4.5 15"/></svg>
                     Personalizar
@@ -160,10 +168,12 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                     HTML do roteador
                 </button>
                 <?php endif; ?>
+                <?php if (!$hospedagem): ?>
                 <button type="button" class="pc-side-item" data-aba="estatisticas">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="m19 9-5 5-4-4-3 3"/></svg>
                     Estatísticas
                 </button>
+                <?php endif; ?>
                 <?php /* Teste de velocidade: só na tela do admin, por enquanto. O
                          número depende demais do caminho até o servidor de teste
                          para o comprador tomar decisão em cima dele. A aba vive
@@ -337,6 +347,10 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                 <?php endif; /* hospedagem */ ?>
             </section>
 
+            <?php /* Nada de deixar a marcação escondida por CSS: cada uma destas
+                     telas tem um data-endpoint que o JS busca ao abrir. Fora do
+                     HTML, nem o menu nem as chamadas existem. */ ?>
+            <?php if (!$hospedagem): ?>
             <!-- ============ ABA: DASHBOARD (visão geral da semana) ============ -->
             <section class="pc-tela" data-tela="dashboard">
                 <div class="glow-card pc-dst-card">
@@ -414,6 +428,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                     </div>
                 </div>
             </section>
+            <?php endif; /* !hospedagem: dashboard, alertas, informações, relatórios */ ?>
 
             <!-- ============ ABA: ANÚNCIO ============ -->
             <section class="pc-tela" data-tela="anuncio">
@@ -570,8 +585,15 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                     <span class="glow-fx" aria-hidden="true"></span>
                     <div class="glow-body">
                         <div class="pc-dst">
-                            <h2 class="pc-anuncio-title">Aplicar limites a todos os usuários</h2>
-                            <p class="pc-anuncio-desc">Define o limite para quem já está na tabela e para os próximos que conectarem. Deixe vazio para "sem limite". Para mudar um usuário específico, use a própria tabela na aba Painel (clique no valor).</p>
+                            <h2 class="pc-anuncio-title"><?= $hospedagem ? 'Banda de todos os hóspedes' : 'Aplicar limites a todos os usuários' ?></h2>
+                            <p class="pc-anuncio-desc"><?= $hospedagem
+                                ? 'Define a banda de quem já está conectado e dos próximos. Deixe vazio para "ilimitado". Serve para um quarto sozinho não levar a internet da pousada inteira.'
+                                : 'Define o limite para quem já está na tabela e para os próximos que conectarem. Deixe vazio para "sem limite". Para mudar um usuário específico, use a própria tabela na aba Painel (clique no valor).' ?></p>
+                            <?php /* Tempo limite não existe na pousada: quem corta o
+                                     acesso do hóspede é o check-out, não um cronômetro
+                                     de minutos. Deixar o campo aqui só criaria um
+                                     segundo dono da mesma decisão. */ ?>
+                            <?php if (!$hospedagem): ?>
                             <?php if ($tlimOk): ?><p class="pc-anuncio-msg ok"><?= h($tlimOk) ?></p><?php endif; ?>
                             <?php if ($tlimErro): ?><p class="pc-anuncio-msg err"><?= h($tlimErro) ?></p><?php endif; ?>
                             <form class="pc-dst-form" method="post" action="api/set_padrao.php">
@@ -581,6 +603,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                                        placeholder="Tempo limite (min) — vazio = sem limite" value="<?= $tlPadrao === null ? '' : (int) $tlPadrao ?>">
                                 <button type="submit" class="pc-btn-primary">Aplicar tempo</button>
                             </form>
+                            <?php endif; ?>
                             <?php if ($bandaOk): ?><p class="pc-anuncio-msg ok"><?= h($bandaOk) ?></p><?php endif; ?>
                             <?php if ($bandaErro): ?><p class="pc-anuncio-msg err"><?= h($bandaErro) ?></p><?php endif; ?>
                             <form class="pc-dst-form" method="post" action="api/set_padrao.php">
@@ -631,6 +654,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
             </section>
             <?php endif; ?>
 
+            <?php if (!$hospedagem): ?>
             <!-- ============ ABA: ESTATÍSTICAS ============ -->
             <section class="pc-tela" data-tela="estatisticas">
                 <div class="glow-card pc-dst-card">
@@ -654,6 +678,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                     </div>
                 </div>
             </section>
+            <?php endif; /* !hospedagem */ ?>
 
         </div>
     </div>
@@ -711,11 +736,13 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <script src="assets/abas.js?v=4"></script>
     <script src="assets/cores.js?v=8"></script>
     <script src="assets/ig.js?v=3"></script>
+    <?php if (!$hospedagem): /* donos das abas que a pousada não tem */ ?>
     <script src="assets/relatorio.js?v=17"></script>
     <script src="assets/alertas.js?v=3"></script>
     <script src="assets/dashboard.js?v=11"></script>
     <script src="assets/dashgeral.js?v=14"></script>
     <script src="assets/estatisticas.js?v=8"></script>
+    <?php endif; ?>
     <script src="assets/leads-live.js?v=33"></script>
     <?php if ($hospedagem): ?><script src="assets/hospedes.js?v=1"></script><?php endif; ?>
     <?php require __DIR__ . '/inc/tema.php'; ?>
