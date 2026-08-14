@@ -201,6 +201,9 @@
 :do { /ip pool remove [find] } on-error={}
 :do { /ip dhcp-client remove [find] } on-error={}
 :do { /ip address remove [find] } on-error={}
+# As portas primeiro: remover a bridge deixa as entradas de /interface bridge
+# port para tras, e a proxima bridge nao consegue mais pegar aquelas portas.
+:do { /interface bridge port remove [find] } on-error={}
 :do { /interface bridge remove [find] } on-error={}
 :do { /queue simple remove [find] } on-error={}
 :put "2/9  configuracao antiga removida"
@@ -219,7 +222,16 @@
   :error "bridge nao criada"
 }
 :foreach n in=[:toarray $portas] do={
-  /interface bridge port add bridge=bridge interface=$n
+  # Cinto e suspensorio: se a limpeza acima falhou calada, a porta ainda esta
+  # presa na bridge velha e o add recusaria.
+  :do { /interface bridge port remove [find interface=$n] } on-error={}
+  :do {
+    /interface bridge port add bridge=bridge interface=$n
+  } on-error={
+    :log warning ("cdsetup ABORTOU: " . $n . " nao entrou na bridge")
+    :put ("!! " . $n . " nao entrou na bridge. Veja: /interface bridge port print")
+    :error "porta na bridge"
+  }
 }
 :put ("3/9  bridge com: " . $portas)
 :log info ("cdsetup " . ("3/9  bridge com: " . $portas))
