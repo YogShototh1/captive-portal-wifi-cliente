@@ -6,7 +6,7 @@
 #
 #  COMO USAR
 #    1) Reset:  /system reset-configuration no-defaults=yes skip-backup=yes
-#    2) Troque o NOME DO ROTEADOR abaixo (e a unica coisa que muda por cliente).
+#    2) Ajuste o bloco do topo: nome do roteador + portas (internet / rede).
 #    3) Winbox -> Files -> arraste este arquivo.
 #    4) Terminal:  /import setup-hospedagem.rsc
 #
@@ -24,7 +24,7 @@
 
 # ############################################################
 # ###                                                      ###
-# ###          M U D E   A P E N A S   E S T A   L I N H A ###
+# ###        M U D E   S O   E S T E   B L O C O          ###
 # ###                                                      ###
 # ############################################################
 #
@@ -34,6 +34,23 @@
 #  o painel nao recebe nada deste roteador.
 #
 :local ident "TROQUE-PELO-NOME-DO-ROTEADOR"
+
+#
+#  PORTA DA INTERNET  ->  onde entra o cabo do provedor/modem. Leva o NAT.
+#
+:local wan "ether2"
+
+#
+#  PORTAS DA REDE DO CLIENTE  ->  entram na bridge e recebem o hotspot.
+#  Separe por virgula: "ether3,ether4,ether5". Wi-Fi integrado (quando o
+#  modelo tiver) entra pelo nome tambem: "ether3,wlan1".
+#
+#  NAO liste aqui a porta da internet.
+#
+#  Estao so ether2 e ether3 de proposito: a ether1 do aparelho de bancada
+#  esta com defeito. Roteador novo e saudavel: use "ether3,ether4,ether5".
+#
+:local portas "ether3"
 #
 # ############################################################
 # ###          F I M   D O   Q U E   S E   M U D A         ###
@@ -50,15 +67,14 @@
 # WAN subir: se algo falhar do meio para a frente, o aparelho ja fica fechado.
 :local senha "SENHA_DO_ADMIN_AQUI"
 
-:local wan "ether1"
 :local lan "192.168.1.1"
 :local rede "192.168.1.0/24"
 :local faixa "192.168.1.10-192.168.1.254"
 
 :put "== Captive Data :: setup HOSPEDAGEM (pousada, hotel) =="
 
-# Duas travas antes de mexer em qualquer coisa: um roteador meio configurado e
-# pior do que um roteador intacto.
+# Travas antes de mexer em qualquer coisa: um roteador meio configurado e pior
+# do que um roteador intacto.
 :if ($token = "SEU_ADMIN_TOKEN_AQUI") do={
   :put "!! Token nao preenchido. Use a copia gerada com o token. Abortado."
   :error "token nao configurado"
@@ -71,6 +87,27 @@
 :if ($senha = "SENHA_DO_ADMIN_AQUI") do={
   :put "!! Senha nao preenchida. Use a copia gerada. Abortado."
   :error "senha nao configurada"
+}
+
+# Nome de porta errado e o erro mais caro deste script: o roteador fica sem
+# internet, o leadsync nao instala, e a porta onde esta o AP fica fora da rede.
+# Conferir custa nada, e o aviso ja diz quais portas existem.
+:local faltando ""
+:foreach n in=[:toarray ($portas . "," . $wan)] do={
+  :if ([:len [/interface find where name=$n]] = 0) do={ :set faltando ($faltando . $n . " ") }
+}
+:if ([:len $faltando] > 0) do={
+  :put ("!! Estas portas nao existem neste roteador: " . $faltando)
+  :put "!! Interfaces disponiveis:"
+  :foreach i in=[/interface find] do={ :put ("   " . [/interface get $i name]) }
+  :error "porta inexistente"
+}
+:foreach n in=[:toarray $portas] do={
+  :if ($n = $wan) do={
+    :put ("!! " . $wan . " esta na lista da rede do cliente E como internet.")
+    :put "!! Uma porta so pode ser uma coisa. Abortado."
+    :error "wan repetida na bridge"
+  }
 }
 
 # ============================================================
@@ -111,24 +148,15 @@
 :put "2/9  configuracao antiga removida"
 
 # ============================================================
-#  3) Bridge com as portas da LAN (tudo menos a ether1)
-#  Descobre as portas sozinho: serve no hEX (5 portas) e em qualquer outro
-#  modelo, com ou sem wireless.
+#  3) Bridge com as portas do cliente
+#  Lista explicita, e nao "todas menos a WAN": porta com defeito, porta de
+#  gerencia ou uplink para outro switch nao podem entrar por descuido.
 # ============================================================
 /interface bridge add name=bridge protocol-mode=rstp comment="captivedata"
-:foreach i in=[/interface ethernet find] do={
-  :local n [/interface ethernet get $i name]
-  :if ($n != $wan) do={
-    :do { /interface bridge port add bridge=bridge interface=$n } on-error={}
-  }
+:foreach n in=[:toarray $portas] do={
+  /interface bridge port add bridge=bridge interface=$n
 }
-# Wireless, quando o modelo tiver. O hEX nao tem — o on-error cobre.
-:do {
-  :foreach i in=[/interface wireless find] do={
-    /interface bridge port add bridge=bridge interface=[/interface wireless get $i name]
-  }
-} on-error={}
-:put "3/9  bridge criada com as portas da LAN"
+:put ("3/9  bridge com: " . $portas)
 
 # ============================================================
 #  4) WAN, endereco da LAN e NAT
@@ -136,7 +164,27 @@
 /ip dhcp-client add interface=$wan disabled=no use-peer-dns=no comment="captivedata"
 /ip address add address=($lan . "/24") interface=bridge comment="captivedata"
 /ip firewall nat add chain=srcnat out-interface=$wan action=masquerade comment="captivedata"
-:put ("4/9  WAN em " . $wan . " (DHCP) e LAN em " . $lan)
+
+# Espera o lease ANTES de seguir. Sem isto o script terminava "com sucesso" num
+# roteador sem internet: o leadsync nao instalava e a unica pista era uma linha
+# de aviso no meio da saida. O sintoma so aparecia dias depois, no painel.
+:local lease ""
+:for i from=1 to=20 do={
+  :if ([:len $lease] = 0) do={
+    :do { :set lease [/ip dhcp-client get [find interface=$wan] address] } on-error={}
+    :if ([:len $lease] = 0) do={ :delay 1s }
+  }
+}
+:if ([:len $lease] = 0) do={
+  :put ("!! A porta " . $wan . " nao recebeu endereco do provedor em 20s.")
+  :put "!! Onde HA cabo ligado agora:"
+  :foreach i in=[/interface ethernet find where running=yes] do={
+    :put ("   " . [/interface ethernet get $i name] . "  <- tem link")
+  }
+  :put "!! Corrija a PORTA DA INTERNET no topo do arquivo e rode de novo."
+  :error "WAN sem endereco"
+}
+:put ("4/9  WAN em " . $wan . " (" . $lease . ") e LAN em " . $lan)
 
 # ============================================================
 #  5) DHCP para os clientes
@@ -213,6 +261,13 @@
 :if ([:len [/file find where name="flash/hostsv7"]] = 0) do={
   :do { /file add name="flash/hostsv7" type=directory } on-error={}
 }
+
+# Confere em vez de anunciar: a versao anterior imprimia "hotspot no ar" mesmo
+# se o perfil tivesse sido recusado e o servidor nem existisse.
+:if ([:len [/ip hotspot find where name="cd-hotspot"]] = 0) do={
+  :put "!! O servidor de hotspot nao foi criado. Veja o erro acima."
+  :error "hotspot nao criado"
+}
 :put "8/9  hotspot no ar (walled garden liberado, pasta hostsv7 pronta)"
 
 # ============================================================
@@ -261,6 +316,16 @@
 :put ("roteador ...... " . $ident)
 :put "LAN ........... 192.168.1.1/24, DHCP de .10 a .254"
 :put "modo .......... HOSPEDAGEM (pousada, hotel)"
+:put ("internet ...... " . $wan)
+:put ("rede/hotspot .. " . $portas)
+# Scheduler herdado de uma instalacao antiga (outro intervalo, script velho)
+# faz o roteador parecer saudavel rodando codigo que nao e este. Ja aconteceu.
+:local sch [/system scheduler find name="leadsync"]
+:if ([:len $sch] = 0) do={
+  :put "leadsync ...... NAO INSTALADO (veja o aviso acima)"
+} else={
+  :put ("leadsync ...... a cada " . [/system scheduler get $sch interval])
+}
 :put "proximo ....... confira o mesmo nome no painel (tipo: Hospedagem)"
 :put ""
 :put "senha do admin ja definida por este script."
