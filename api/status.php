@@ -169,7 +169,13 @@ try {
             }
             $banda = $r['banda_limite'];
             if ($banda !== null && (int) $banda > 0) {
-                foreach ($macsL as $m) { $bw[] = $m . '=' . (int) $banda; }
+                // Um grupo por NÚMERO, não por aparelho: "mac1+mac2=30" quer
+                // dizer 30 Mbps para os dois JUNTOS. O limite sempre foi do
+                // lead (a pessoa), mas era aplicado uma vez por aparelho — quem
+                // levasse celular e notebook ficava com o dobro do contratado.
+                // Numa pousada isso é o desenho: a família cadastra um número
+                // por hóspede, e cada número tem a sua faixa.
+                $bw[] = implode('+', $macsL) . '=' . (int) $banda;
             }
         }
     }

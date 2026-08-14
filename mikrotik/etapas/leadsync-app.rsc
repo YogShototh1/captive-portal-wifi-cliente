@@ -62,20 +62,52 @@
   # 4) aplicar limite de banda por usuario (Mbps -> /queue simple max-limit)
   #    ponytail: recria as filas a cada rodada (idempotente, sem filas orfas);
   #    se a rotatividade de usuarios for alta, trocar por update incremental.
+  #
+  #    O painel manda "mac1+mac2=30": os MACs de UM numero, e o teto e dos dois
+  #    JUNTOS. Uma fila por numero, com todos os enderecos no target.
+  #
+  #    queue=pcq-*-default e o que faz a divisao ser justa SEM ser burra: o PCQ
+  #    abre uma sub-fila por endereco e so reparte quando ha disputa. Celular
+  #    baixando sozinho leva os 30; celular e notebook baixando ao mesmo tempo
+  #    ficam com 15 cada; notebook parou, o celular volta aos 30. Dividir o teto
+  #    na mao (30/2 por aparelho) daria 15 fixos mesmo com o outro desligado.
   :local orf [/queue simple find comment="captivedata"]
   :if ([:len $orf] > 0) do={ /queue simple remove $orf }
   :if ([:len $bwStr] > 0) do={
-    :foreach i in=[/ip hotspot active find] do={
-      :local mac [/ip hotspot active get $i mac-address]
-      :local addr [/ip hotspot active get $i address]
-      :foreach pair in=[:toarray $bwStr] do={
-        :local eq [:find $pair "="]
-        :if ([:typeof $eq] = "num") do={
-          :if ([:pick $pair 0 $eq] = $mac) do={
-            :local v [:pick $pair ($eq + 1) [:len $pair]]
-            /queue simple add name=("cd-" . $mac) target=$addr \
-                max-limit=($v . "M/" . $v . "M") comment="captivedata"
+    :foreach pair in=[:toarray $bwStr] do={
+      :local eq [:find $pair "="]
+      :if ([:typeof $eq] = "num") do={
+        :local grupo [:pick $pair 0 $eq]
+        :local v [:pick $pair ($eq + 1) [:len $pair]]
+        # Quebra o grupo no '+' na mao: :toarray so separa por virgula, e a
+        # virgula ja e o separador dos pares.
+        :local resto $grupo
+        :local alvos ""
+        :local nome ""
+        :while ([:len $resto] > 0) do={
+          :local corte [:find $resto "+"]
+          :local mac ""
+          :if ([:typeof $corte] = "num") do={
+            :set mac [:pick $resto 0 $corte]
+            :set resto [:pick $resto ($corte + 1) [:len $resto]]
+          } else={
+            :set mac $resto
+            :set resto ""
           }
+          :if ([:len $nome] = 0) do={ :set nome $mac }
+          :local id [/ip hotspot active find where mac-address=$mac]
+          :if ([:len $id] > 0) do={
+            :local addr [/ip hotspot active get [:pick $id 0] address]
+            :if ([:len $alvos] > 0) do={ :set alvos ($alvos . ",") }
+            :set alvos ($alvos . $addr)
+          }
+        }
+        # Sem endereco nenhum (aparelho saiu entre o relatorio e agora): nao ha
+        # o que limitar, e uma fila sem target o RouterOS recusa.
+        :if ([:len $alvos] > 0) do={
+          /queue simple add name=("cd-" . $nome) target=$alvos \
+              max-limit=($v . "M/" . $v . "M") \
+              queue=pcq-upload-default/pcq-download-default comment="captivedata"
         }
       }
     }
