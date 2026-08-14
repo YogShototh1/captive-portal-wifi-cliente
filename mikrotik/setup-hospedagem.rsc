@@ -126,12 +126,30 @@
 # ============================================================
 #  0) Sai da sessao
 #  Primeira passada (terminal): agenda e para aqui. Segunda passada (scheduler,
-#  20s depois): desliga o agendamento — para rodar UMA vez, mesmo que aborte
-#  no meio — e segue o script inteiro, ja fora da sessao.
+#  20s depois): apaga a marca e o agendamento — para rodar UMA vez, mesmo que
+#  aborte no meio — e segue o script inteiro, ja fora da sessao.
+#
+#  Quem diz em qual passada estamos e a marca cdfase, posta pelo proprio
+#  agendamento. Olhar se o scheduler existe nao servia: agendamento que falha
+#  ao iniciar fica la, ligado, e a passada do terminal se acharia a segunda.
 # ============================================================
-:if ([:len [/system scheduler find where name="cdsetup" disabled=no]] = 0) do={
+:global cdfase
+:if ([:tostr $cdfase] != "2") do={
   :do { /system scheduler remove [find name="cdsetup"] } on-error={}
-  /system scheduler add name=cdsetup interval=20s on-event="/import setup-hospedagem.rsc" comment="captivedata"
+
+  # O caminho vem de /file, nao do palpite: neste hEX o arquivo mora em
+  # flash/, e "/import setup-x.rsc" — que abre no terminal — deu "file does
+  # not exist" quando o scheduler tentou.
+  :local arq ""
+  :foreach f in=[/file find where name~"setup-hospedagem.rsc"] do={ :set arq [/file get $f name] }
+  :if ([:len $arq] = 0) do={
+    :put "!! Nao achei o setup-hospedagem.rsc em /file. Reenvie pelo Winbox (Files) e rode de novo."
+    :log warning "cdsetup ABORTOU: setup-hospedagem.rsc nao esta em /file"
+    :error "arquivo nao encontrado"
+  }
+
+  /system scheduler add name=cdsetup interval=20s comment="captivedata" \
+      on-event=(":global cdfase; :set cdfase 2; /import " . $arq)
   :log info "cdsetup agendado (roda daqui a 20s)"
   :put ""
   :put "Tudo conferido. O roteador vai se configurar sozinho em 20 segundos."
@@ -143,7 +161,10 @@
   :put "(o 'failure: agendado' na linha de baixo e so o fim desta parte)"
   :error "agendado"
 }
-/system scheduler set [find name="cdsetup"] disabled=yes interval=0
+# Marca consumida na hora: se este job morrer no meio, a proxima vez que
+# alguem rodar pelo terminal tem que ser a primeira passada de novo.
+:set cdfase 0
+:do { /system scheduler set [find name="cdsetup"] disabled=yes interval=0 } on-error={}
 
 # ============================================================
 #  1) Identidade e senha do admin
