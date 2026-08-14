@@ -55,10 +55,12 @@
 #
 #  NAO liste aqui a porta da internet.
 #
-#  Estao so ether2 e ether3 de proposito: a ether1 do aparelho de bancada
-#  esta com defeito. Roteador novo e saudavel: use "ether3,ether4,ether5".
+#  Porta que sobra fora da bridge nao tem IP nem DHCP: o AP ligado nela deixa
+#  o celular conectar no Wi-Fi e nao entregar nada. Por isso o padrao poe as
+#  tres portas livres, e o AP funciona em qualquer uma. A ether1 fica de fora
+#  porque a do aparelho de bancada esta com defeito.
 #
-:local portas "ether3"
+:local portas "ether3,ether4,ether5"
 #
 # ############################################################
 # ###          F I M   D O   Q U E   S E   M U D A         ###
