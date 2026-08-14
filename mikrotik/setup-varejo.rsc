@@ -8,11 +8,21 @@
 #    1) Reset:  /system reset-configuration no-defaults=yes skip-backup=yes
 #    2) Ajuste o bloco do topo: nome do roteador + portas (internet / rede).
 #    3) Winbox -> Files -> arraste este arquivo.
-#    4) Terminal:  /import setup-varejo.rsc
+#    4) Terminal, ESTA linha (nao use /import direto):
 #
-#  ATENCAO: a rede muda para 192.168.1.x no meio da execucao. Ligado por cabo
-#  na LAN, o Winbox cai por alguns segundos e volta em 192.168.1.1 (ou
-#  reconecte por MAC). Ligado pela ether1 (WAN) nao cai.
+#         :execute script="/import setup-varejo.rsc" file=cd-setup
+#
+#    5) A sessao vai cair. Reconecte em 192.168.1.1 (usuario admin, com a
+#       senha nova) e leia o que aconteceu:
+#
+#         /log print where message~"cdsetup"
+#
+#  POR QUE :execute E NAO /import
+#  A etapa 2 apaga o endereco de IP e a bridge — a sessao do Winbox cai junto,
+#  e leva o /import com ela, porque o import roda DENTRO da sessao. O script
+#  morria no 1/9 sem avisar ninguem e o roteador ficava pela metade.
+#  O :execute solta o script como job separado: a sessao cai, ele segue ate o
+#  fim, e cada etapa fica registrada no log (e em cd-setup.txt).
 #
 #  IDEMPOTENTE: apaga o que existe antes de criar. Rodar duas vezes nao
 #  duplica bridge, pool, DHCP nem hotspot.
@@ -77,15 +87,18 @@
 # do que um roteador intacto.
 :if ($token = "SEU_ADMIN_TOKEN_AQUI") do={
   :put "!! Token nao preenchido. Use a copia gerada com o token. Abortado."
+  :log warning "cdsetup ABORTOU: token nao configurado"
   :error "token nao configurado"
 }
 :if ($ident = "TROQUE-PELO-NOME-DO-ROTEADOR") do={
   :put "!! Voce nao trocou o NOME DO ROTEADOR no topo do arquivo."
   :put "!! Ele tem que ser igual ao cadastrado no painel. Abortado."
+  :log warning "cdsetup ABORTOU: nome do roteador nao configurado"
   :error "nome do roteador nao configurado"
 }
 :if ($senha = "SENHA_DO_ADMIN_AQUI") do={
   :put "!! Senha nao preenchida. Use a copia gerada. Abortado."
+  :log warning "cdsetup ABORTOU: senha nao configurada"
   :error "senha nao configurada"
 }
 
@@ -100,12 +113,14 @@
   :put ("!! Estas portas nao existem neste roteador: " . $faltando)
   :put "!! Interfaces disponiveis:"
   :foreach i in=[/interface find] do={ :put ("   " . [/interface get $i name]) }
+  :log warning "cdsetup ABORTOU: porta inexistente"
   :error "porta inexistente"
 }
 :foreach n in=[:toarray $portas] do={
   :if ($n = $wan) do={
     :put ("!! " . $wan . " esta na lista da rede do cliente E como internet.")
     :put "!! Uma porta so pode ser uma coisa. Abortado."
+    :log warning "cdsetup ABORTOU: wan repetida na bridge"
     :error "wan repetida na bridge"
   }
 }
@@ -125,9 +140,11 @@
   # seguir sem senha seria deixar o aparelho aberto sem avisar.
   :put "!! Nao consegui definir a senha: nao existe usuario chamado admin."
   :put "!! Defina na mao antes de por este roteador em campo. Abortado."
+  :log warning "cdsetup ABORTOU: senha do admin nao definida"
   :error "senha do admin nao definida"
 }
 :put ("1/9  identidade: " . $ident . "  (senha do admin definida)")
+:log info ("cdsetup " . ("1/9  identidade: " . $ident . "  (senha do admin definida)"))
 
 # ============================================================
 #  2) Limpeza do que veio de fabrica
@@ -146,6 +163,7 @@
 :do { /interface bridge remove [find] } on-error={}
 :do { /queue simple remove [find] } on-error={}
 :put "2/9  configuracao antiga removida"
+:log info ("cdsetup " . "2/9  configuracao antiga removida")
 
 # ============================================================
 #  3) Bridge com as portas do cliente
@@ -157,6 +175,7 @@
   /interface bridge port add bridge=bridge interface=$n
 }
 :put ("3/9  bridge com: " . $portas)
+:log info ("cdsetup " . ("3/9  bridge com: " . $portas))
 
 # ============================================================
 #  4) WAN, endereco da LAN e NAT
@@ -182,9 +201,11 @@
     :put ("   " . [/interface ethernet get $i name] . "  <- tem link")
   }
   :put "!! Corrija a PORTA DA INTERNET no topo do arquivo e rode de novo."
+  :log warning "cdsetup ABORTOU: WAN sem endereco"
   :error "WAN sem endereco"
 }
 :put ("4/9  WAN em " . $wan . " (" . $lease . ") e LAN em " . $lan)
+:log info ("cdsetup " . ("4/9  WAN em " . $wan . " (" . $lease . ") e LAN em " . $lan))
 
 # ============================================================
 #  5) DHCP para os clientes
@@ -198,6 +219,7 @@
 /ip dhcp-server network add address=$rede gateway=$lan dns-server=$lan comment="captivedata"
 /ip dns set servers=1.1.1.1,8.8.8.8 allow-remote-requests=yes
 :put ("5/9  DHCP entregando " . $faixa)
+:log info ("cdsetup " . ("5/9  DHCP entregando " . $faixa))
 
 # ============================================================
 #  6) Relogio
@@ -209,6 +231,7 @@
   :do { /system ntp client set enabled=yes primary-ntp=200.160.7.186 } on-error={}
 }
 :put "6/9  fuso e NTP"
+:log info ("cdsetup " . "6/9  fuso e NTP")
 
 # ============================================================
 #  7) Firewall minimo
@@ -222,6 +245,7 @@
 /ip firewall filter add chain=input in-interface=$wan action=drop comment="captivedata"
 :do { /ip service disable telnet,ftp,api,api-ssl } on-error={}
 :put "7/9  firewall fechado na WAN"
+:log info ("cdsetup " . "7/9  firewall fechado na WAN")
 
 # ============================================================
 #  8) Hotspot
@@ -263,9 +287,11 @@
 # se o perfil tivesse sido recusado e o servidor nem existisse.
 :if ([:len [/ip hotspot find where name="cd-hotspot"]] = 0) do={
   :put "!! O servidor de hotspot nao foi criado. Veja o erro acima."
+  :log warning "cdsetup ABORTOU: hotspot nao criado"
   :error "hotspot nao criado"
 }
 :put "8/9  hotspot no ar (walled garden liberado, pasta hostsv7 pronta)"
+:log info ("cdsetup " . "8/9  hotspot no ar (walled garden liberado, pasta hostsv7 pronta)")
 
 # ============================================================
 #  9) leadsync
@@ -283,7 +309,7 @@
 }
 
 :if ($pronto = 0) do={
-  :put "!! Sem internet na ether1. O hotspot ja esta de pe; o leadsync NAO foi"
+  :put ("!! Sem internet na " . $wan . ". O hotspot ja esta de pe; o leadsync NAO foi")
   :put "   instalado. Resolva a WAN e rode este arquivo de novo."
 } else={
   :do {
@@ -296,6 +322,7 @@
     :delay 2s
     :do { /import flash/leadsync.rsc } on-error={}
     :put "9/9  leadsync instalado, rodando a cada 1 min"
+    :log info "cdsetup 9/9  leadsync instalado"
   } on-error={
     :put "!! Falhou baixar o leadsync. Token errado ou VPS fora do ar."
   }
@@ -326,3 +353,6 @@
 :put "proximo ....... confira o mesmo nome no painel (tipo: Varejista)"
 :put ""
 :put "senha do admin ja definida por este script."
+:put ""
+:put "conferir depois:  /log print where message~\"cdsetup\""
+:log info "cdsetup FIM"
