@@ -6,6 +6,11 @@
 // Domínio já está no Walled Garden (mesmo do /api/lead).
 ini_set('display_errors', '0');
 
+// db.php porque o modo do roteador (varejo/hospedagem) vem do banco. Sem ele,
+// db() não existe, roteador_modo() estoura e o catch devolve 'varejo' calado:
+// o portal da pousada aceitava qualquer número e ninguém via por quê. O resto
+// desta página (destino, cores, logo) é lido de arquivo e não precisa do banco.
+require_once __DIR__ . '/inc/db.php';
 require_once __DIR__ . '/inc/util.php';
 
 $roteador = isset($_GET['r']) ? (string) $_GET['r'] : '';

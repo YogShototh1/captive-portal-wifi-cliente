@@ -6,11 +6,16 @@ require_once __DIR__ . '/inc/util.php';
 $admin = exigir_admin();
 
 $rows = db()->query(
-    'SELECT c.id, c.nome, c.email, c.is_admin, c.criado_em,
+    // Conta de hospedagem não tem lead para mostrar: o que existe são hóspedes.
+    // As duas contagens vêm juntas e a linha escolhe a sua — sai mais barato do
+    // que uma consulta por linha, e a lista mistura os dois tipos.
+    'SELECT c.id, c.nome, c.email, c.is_admin, c.criado_em, c.painel,
             (SELECT GROUP_CONCAT(r.identity ORDER BY r.identity SEPARATOR \', \')
                FROM roteadores r WHERE r.comprador_id = c.id) AS rots,
             (SELECT COUNT(*) FROM leads l
-              WHERE l.roteador IN (SELECT r2.identity FROM roteadores r2 WHERE r2.comprador_id = c.id)) AS total_leads
+              WHERE l.roteador IN (SELECT r2.identity FROM roteadores r2 WHERE r2.comprador_id = c.id)) AS total_leads,
+            (SELECT COUNT(*) FROM hospedes h
+              WHERE h.roteador IN (SELECT r3.identity FROM roteadores r3 WHERE r3.comprador_id = c.id)) AS total_hospedes
        FROM compradores c
       ORDER BY c.is_admin DESC, c.criado_em DESC'
 )->fetchAll();
@@ -29,7 +34,7 @@ $csrf = csrf_token();
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-    <link rel="stylesheet" href="assets/style.css?v=120">
+    <link rel="stylesheet" href="assets/style.css?v=133">
 </head>
 <body class="painel-cliente adm-tesla">
     <!-- Camadas de fundo (decorativas) -->
@@ -61,7 +66,7 @@ $csrf = csrf_token();
                                 <th>E-mail</th>
                                 <th>Roteadores (identity)</th>
                                 <th>Status</th>
-                                <th>Leads</th>
+                                <th>Leads / Hóspedes</th>
                                 <th>Tipo</th>
                                 <th>Ações</th>
                             </tr>
@@ -95,11 +100,12 @@ $csrf = csrf_token();
                                     }
                                     ?>
                                 </td>
-                                <td><?= (int) $r['total_leads'] ?></td>
+                                <?php $ehHosp = ($r['painel'] ?? '') === 'hospedagem'; ?>
+                                <td class="adm-cont<?= $ehHosp ? ' hosp' : '' ?>"><?= $ehHosp ? (int) $r['total_hospedes'] : (int) $r['total_leads'] ?></td>
                                 <td><?= ((int) $r['is_admin'] === 1) ? '<span class="pc-badge">admin</span>' : '<span class="pc-tipo-cliente">cliente</span>' ?></td>
                                 <td class="pc-actions">
                                     <?php if ((int) $r['is_admin'] !== 1): ?>
-                                        <a class="pc-link" href="admin_leads.php?id=<?= (int) $r['id'] ?>">Ver leads</a>
+                                        <a class="pc-link" href="admin_leads.php?id=<?= (int) $r['id'] ?>"><?= $ehHosp ? 'Ver hóspedes' : 'Ver leads' ?></a>
                                     <?php endif; ?>
                                     <a class="pc-link" href="admin_form.php?id=<?= (int) $r['id'] ?>">Editar</a>
                                     <?php if ((int) $r['id'] !== (int) $admin['id']): ?>

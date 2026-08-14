@@ -1295,6 +1295,12 @@ function roteador_modo(string $identity): string
         $q->execute([$identity]);
         return $q->fetchColumn() !== false ? 'hospedagem' : 'varejo';
     } catch (Throwable $e) {
+        // 'varejo' aqui é o lado ABERTO: erro nesta função libera o WiFi da
+        // pousada para qualquer número. Foi o que aconteceu quando o dst.php
+        // não carregava o db.php — e o catch mudo escondeu por dias. Continua
+        // devolvendo varejo (falha de banco não pode trancar loja nenhuma),
+        // mas agora deixa rastro no error_log.
+        error_log('roteador_modo(' . $identity . ') falhou: ' . $e->getMessage());
         return 'varejo';
     }
 }

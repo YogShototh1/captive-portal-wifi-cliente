@@ -2551,6 +2551,9 @@ html[data-tema="claro"] .adm-tesla .adm-st.meio { color: #b45309; }
     /* Sem cabecalho no celular: rotula o que sozinho fica ambiguo. */
     .adm-tesla tbody td:nth-child(3)::before { content: "mikrotik: "; color: var(--t-fg3); }
     .adm-tesla tbody td:nth-child(5)::before { content: "leads: ";    color: var(--t-fg3); }
+    /* Conta de pousada conta hóspede, não lead. O rótulo segue a classe da
+       célula porque a lista mistura os dois tipos de cliente. */
+    .adm-tesla tbody td.adm-cont.hosp::before { content: "hóspedes: "; }
 }
 
 /* Paleta das pizzas do Dashboard (dashgeral.js emite so as classes).
