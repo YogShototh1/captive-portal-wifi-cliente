@@ -311,9 +311,14 @@
 # ============================================================
 #  8) Hotspot
 #
-#  login-by=trial: e assim que a tela do painel autentica — ela chama
-#  $(link-login-only) com username=T-<mac>, sem senha. Tirar o trial do
-#  login-by faz o botao "Liberar WiFi" parar de funcionar.
+#  login-by=trial,http-chap,http-pap: a tela chama $(link-login-only) com
+#  username=T-<mac>, sem senha. O trial sozinho NAO basta — o pedido chega
+#  por HTTP e o RouterOS recusa com "configuration error (HTTP/HTTPS login is
+#  not allowed)". Foi o vermelho que apareceu na tela do cliente.
+#
+#  O http-chap ainda preenche o chap-id, e e o chap-id que faz o login.html
+#  carregar o tema local (tema.js) e a lista de aparelhos da flash: sem ele
+#  metade da pagina nem e enviada pelo roteador.
 #
 #  html-directory=hostsv7: e a pasta que o leadsync alimenta (login.html,
 #  css, fontes, tema, anuncio). Mudar o nome aqui exige mudar no leadsync.
@@ -327,7 +332,7 @@
 #  quarto e nao pode perder a sessao por isso.
 # ============================================================
 /ip hotspot profile add name=cd-perfil hotspot-address=$lan dns-name=wifi.local \
-    html-directory=hostsv7 login-by=trial trial-uptime-limit=60d00:00:00 \
+    html-directory=hostsv7 login-by=trial,http-chap,http-pap trial-uptime-limit=60d00:00:00 \
     trial-uptime-reset=61d00:00:00 trial-user-profile=default use-radius=no
 /ip hotspot add name=cd-hotspot interface=bridge address-pool=cd-pool profile=cd-perfil \
     idle-timeout=30m keepalive-timeout=5m addresses-per-mac=2 disabled=no

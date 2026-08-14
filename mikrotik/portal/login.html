@@ -507,7 +507,9 @@
         // Exibe a página intermediária de anúncio e inicia a contagem regressiva.
         // Somente ao término dos 10 segundos a autenticação (authAction) é executada.
         var adCountdownStarted = false;
-        function startAdCountdown(authAction) {
+        // adiarLead: na pousada o lead só é gravado se o número for aprovado —
+        // quem digitou errado nunca esteve hospedado ali.
+        function startAdCountdown(authAction, adiarLead) {
             if (adCountdownStarted) return;
             adCountdownStarted = true;
 
@@ -523,7 +525,7 @@
             document.body.style.overflow = 'hidden';
 
             // Envia o lead para a API assim que o anúncio aparece (antes de autenticar).
-            sendLead();
+            if (!adiarLead) sendLead();
 
             const timer = setInterval(function () {
                 seconds -= 1;
@@ -534,6 +536,23 @@
                     if (typeof authAction === 'function') authAction();
                 }
             }, 1000);
+        }
+
+        // Fecha o anúncio e devolve a tela do número com o aviso em vermelho.
+        // Zerar o adCountdownStarted é o que permite a segunda tentativa: a
+        // trava existe contra clique duplo, não contra tentar de novo.
+        function voltarDoAnuncio(aviso) {
+            var adPage = document.getElementById('ad-page');
+            if (adPage) {
+                adPage.classList.remove('active');
+                adPage.setAttribute('aria-hidden', 'true');
+            }
+            document.body.style.overflow = '';
+            adCountdownStarted = false;
+            var em = document.getElementById('error-message');
+            if (em) { em.textContent = aviso; em.classList.add('alert'); }
+            var pi = document.getElementById('celular');
+            if (pi) { pi.classList.add('input-error'); pi.focus(); }
         }
 
         // === Hospedagem (pousada/hotel): o número tem de estar na recepção ===
@@ -591,25 +610,27 @@
             phoneInput.classList.remove('input-error');
 
             if (window.PORTAL_MODO === 'hospedagem') {
-                var btn = document.getElementById('wifi-btn');
-                var rotulo = btn ? btn.textContent : '';
-                if (btn) { btn.disabled = true; btn.textContent = 'Conferindo…'; }
+                // O anúncio roda SEMPRE, inclusive com número errado: quem paga
+                // o anúncio quer a exibição, e a conferência acontece por trás
+                // enquanto ele passa. No fim dos 10s, uma de duas: entra, ou
+                // volta para esta tela com o aviso.
+                //
+                // A resposta chega em no máximo 8s (o timeout do checarHospede),
+                // então na prática já está aqui quando o anúncio acaba. Mesmo
+                // assim as duas pontas se esperam: quem chegar por último decide.
                 errorMsg.textContent = '';
                 errorMsg.classList.remove('alert');
-                checarHospede(phone, function (r) {
-                    if (btn) { btn.disabled = false; btn.textContent = rotulo; }
-                    // Sem resposta: libera. O hóspede certo não pode ficar sem
-                    // Wi-Fi porque a VPS caiu — é a mesma regra do resto do
-                    // portal (falha da API nunca tranca o cliente na porta).
-                    if (r === null) { startAdCountdown(runAuthentication); return; }
-                    if (!r.ok) {
-                        errorMsg.textContent = "Número não encontrado. Procure a recepção para liberar o Wi-Fi.";
-                        errorMsg.classList.add('alert');
-                        phoneInput.classList.add('input-error');
-                        return;
-                    }
-                    startAdCountdown(runAuthentication);
-                });
+                var resp = 'pendente', adFim = false;
+                var decidir = function () {
+                    if (!adFim || resp === 'pendente') return;
+                    // null = a API não respondeu (VPS fora, sem internet).
+                    // Libera: o hóspede certo não pode ficar sem Wi-Fi por causa
+                    // disso — falha nossa nunca tranca o cliente na porta.
+                    if (resp === null || resp.ok) { sendLead(); runAuthentication(); return; }
+                    voltarDoAnuncio('TELEFONE NÃO CADASTRADO');
+                };
+                checarHospede(phone, function (r) { resp = r; decidir(); });
+                startAdCountdown(function () { adFim = true; decidir(); }, true);
                 return false;
             }
 

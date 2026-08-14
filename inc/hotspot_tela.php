@@ -111,7 +111,11 @@ $hsClienteId = $hsClienteId ?? 0;
                 return 'Perfil <strong>' + p.nome + '</strong>: login por <code>' + (p.login || '?') + '</code>'
                      + (p.trial
                          ? ' · trial de <strong>' + (p.limite || '?') + '</strong> por aparelho, zera a cada <strong>' + (p.reset || '?') + '</strong>'
-                         : ' · <strong class="pc-hs-alerta">sem trial — o portal não consegue autenticar ninguém</strong>');
+                         : ' · <strong class="pc-hs-alerta">sem trial — o portal não consegue autenticar ninguém</strong>')
+                     // Falta sutil: o anúncio roda inteiro e só depois o
+                     // roteador recusa com "HTTP/HTTPS login is not allowed".
+                     + (p.http ? ''
+                         : ' · <strong class="pc-hs-alerta">falta http-pap/http-chap — o login é recusado depois do anúncio</strong>');
             }).join('<br>');
         } else {
             prof.textContent = '';

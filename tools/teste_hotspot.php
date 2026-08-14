@@ -82,8 +82,16 @@ $ok(($p[0]['login'] ?? '') === 'http-chap,trial', 'o ";" do :tostr vira virgula'
 $ok(($p[0]['trial'] ?? null) === true, 'trial reconhecido');
 $ok(($p[0]['limite'] ?? '') === '30m' && ($p[0]['reset'] ?? '') === '1d', 'limite e reset');
 
+$ok(($p[0]['http'] ?? null) === true, 'metodo HTTP reconhecido');
+
 $p = hotspot_perfis_parse('hsprof1~http-chap;http-pap~none~none|');
 $ok(($p[0]['trial'] ?? null) === false, 'sem trial e detectado — e a causa de ninguem entrar');
+
+// Trial sozinho: o roteador recusa com "HTTP/HTTPS login is not allowed", e o
+// pior e que so recusa DEPOIS do anuncio inteiro. Aconteceu em campo.
+$p = hotspot_perfis_parse('cd-perfil~trial~8w4d~8w5d|');
+$ok(($p[0]['trial'] ?? null) === true, 'trial ligado');
+$ok(($p[0]['http'] ?? null) === false, 'trial sem metodo HTTP e detectado');
 
 $p = hotspot_perfis_parse('a~trial~30m~1d|b~http-chap~none~none|');
 $ok(count($p) === 2, 'dois perfis', count($p));

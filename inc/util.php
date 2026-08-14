@@ -389,6 +389,11 @@ function hotspot_perfis_parse(string $bruto): array
             'nome'   => substr(preg_replace('/[^A-Za-z0-9._-]/', '', $c[0]), 0, 32),
             'login'  => substr(preg_replace('/[^a-z0-9,_-]/', '', strtolower($login)), 0, 64),
             'trial'  => strpos($login, 'trial') !== false,
+            // O trial sozinho não entra: o pedido do portal chega por HTTP e o
+            // RouterOS responde "configuration error (HTTP/HTTPS login is not
+            // allowed)" se nenhum método HTTP estiver ligado. O sintoma engana —
+            // o anúncio roda inteiro e o erro só aparece depois.
+            'http'   => strpos($login, 'http-pap') !== false || strpos($login, 'http-chap') !== false,
             'limite' => substr(preg_replace('/[^0-9a-z:.]/', '', strtolower($lim)), 0, 16),
             'reset'  => substr(preg_replace('/[^0-9a-z:.]/', '', strtolower(trim($c[3]))), 0, 16),
         ];
