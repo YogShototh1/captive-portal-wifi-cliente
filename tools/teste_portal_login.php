@@ -74,5 +74,30 @@ $posChap = strpos($html, "\n    \$(if chap-id)\n");
 $ok($posErro !== false && $posChap !== false && $posErro < $posChap,
     'a marca fica fora do $(if chap-id) — o RouterOS nao aninha $(if)');
 
+// ---------------------------------------------------------------
+// 4) O RouterOS troca $(...) por texto ANTES de existir HTML: ele nao sabe o
+//    que e comentario. Um "$(if chap-id)" escrito dentro de <!-- --> abre um
+//    condicional de verdade. Foi o que aconteceu: dois deles, num comentario
+//    explicando os condicionais, deixavam 10 aberturas para 8 $(endif). Num
+//    perfil sem http-chap (login-by=trial, o da pousada) o chap-id vem vazio,
+//    o RouterOS entrava em modo "pular" e nunca achava o fecho que faltava:
+//    a pagina inteira sumia depois daquela linha. Tela branca no celular.
+echo "\n4) condicionais do RouterOS\n";
+$ok(!preg_match('/<!--(?:(?!-->).)*?\$\(/s', $html),
+    'nenhum $( dentro de comentario de HTML');
+
+// Anda pelo texto como o RouterOS andaria e conta a profundidade.
+$prof = 0; $minProf = 0;
+if (preg_match_all('/\$\((if\b[^)]*|else|elif\b[^)]*|endif)\)/', $html, $mm)) {
+    foreach ($mm[1] as $tok) {
+        if (strncmp($tok, 'if', 2) === 0) { $prof++; }
+        elseif ($tok === 'endif') { $prof--; }
+        // else/elif nao mudam a profundidade.
+        $minProf = min($minProf, $prof);
+    }
+}
+$ok($prof === 0, 'todo $(if) tem o seu $(endif)', "sobrou profundidade $prof");
+$ok($minProf === 0, 'nenhum $(endif) sem $(if) antes', "chegou a $minProf");
+
 echo "\n" . ($falhas ? "$falhas FALHA(S)\n" : "tudo certo\n");
 exit($falhas ? 1 : 0);
