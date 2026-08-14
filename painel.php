@@ -91,6 +91,11 @@ $portalErro  = isset($_GET['portal_erro']) ? (string) $_GET['portal_erro'] : '';
 $portalFiles = ($portalHabil && $rotAtivo !== null) ? portal_files($rotAtivo) : [];
 $portalHist  = ($portalHabil && $rotAtivo !== null) ? portal_hist($rotAtivo)  : [];
 
+$lgpd    = $rotAtivo !== null ? lgpd_get($rotAtivo) : lgpd_padrao($tipoPainel);
+$lgpdOk   = isset($_GET['lgpd_ok'])   ? (string) $_GET['lgpd_ok']   : '';
+$lgpdErro = isset($_GET['lgpd_erro']) ? (string) $_GET['lgpd_erro'] : '';
+$lgpdCliente = 0;
+
 // Aviso mostrado nas abas de configuração quando a conta multi está em "todos".
 $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" aria-hidden="true"></span><div class="glow-body"><div class="pc-dst">'
     . '<h2 class="pc-anuncio-title">Selecione um roteador</h2>'
@@ -107,7 +112,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $hospedagem ? 'Painel de Hóspedes' : 'Painel de Leads' ?></title>
     <link rel="icon" href="assets/logo-icone.png?v=1" type="image/png">
-    <link rel="stylesheet" href="assets/style.css?v=134">
+    <link rel="stylesheet" href="assets/style.css?v=135">
 </head>
 <body class="painel-cliente">
     <div class="pc-bg-gradient"></div>
@@ -126,6 +131,12 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                     Painel
                 </button>
+                <?php if ($hospedagem): ?>
+                <button type="button" class="pc-side-item" data-aba="ocupacao">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>
+                    Ocupação
+                </button>
+                <?php endif; ?>
                 <?php /* As abas de recorrência não existem na pousada: hóspede não
                          "deixou de vir", ele foi embora — era o combinado. Dashboard,
                          Alertas, Informações, Relatórios e Estatísticas medem
@@ -430,6 +441,8 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
             </section>
             <?php endif; /* !hospedagem: dashboard, alertas, informações, relatórios */ ?>
 
+            <?php if ($hospedagem): require __DIR__ . '/inc/ocupacao_tela.php'; endif; ?>
+
             <!-- ============ ABA: ANÚNCIO ============ -->
             <section class="pc-tela" data-tela="anuncio">
                 <?php if ($rotAtivo !== null): ?>
@@ -538,6 +551,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                         </div>
                     </div>
                 </div>
+                <?php require __DIR__ . '/inc/lgpd_tela.php'; ?>
                 <?php require __DIR__ . '/inc/cores_avancado.php'; ?>
                 <?php require __DIR__ . '/inc/alertas_modal.php'; ?>
                 <?php else: echo $avisoRoteador; endif; ?>

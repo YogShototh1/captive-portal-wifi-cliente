@@ -58,5 +58,37 @@ $ok(sanitiza_telefone('48988290878') === '48988290878', 'celular com DDD passa')
 $ok(sanitiza_telefone('+55 (48) 98829-0878') === '48988290878', 'formatado vira o mesmo do portal');
 $ok(sanitiza_telefone('123') === null, 'numero curto e recusado no cadastro');
 
+// ---------------------------------------------------------------
+// Ocupação do dia: a mesma lista da aba Painel, contada por outro eixo.
+$ini2 = strpos($src, 'function hospedes_ocupacao');
+$fim2 = strpos($src, '// Filtro dos cartões de resumo');
+eval(substr($src, $ini2, $fim2 - $ini2));
+
+$hosp = function (array $a): array {
+    return array_merge(['nome' => 'x', 'quarto' => '', 'telefone' => '', 'entrada_em' => '2026-08-01',
+                        'saida_em' => '2026-08-20 12:00:00', 'hospedado' => 1, 'online' => 0], $a);
+};
+$lista = [
+    $hosp(['quarto' => '101', 'entrada_em' => '2026-08-14', 'saida_em' => '2026-08-15 12:00:00', 'online' => 1]),
+    $hosp(['quarto' => '101', 'entrada_em' => '2026-08-14', 'saida_em' => '2026-08-15 12:00:00']), // 2o da familia, MESMO quarto
+    $hosp(['quarto' => '203', 'saida_em' => '2026-08-14 12:00:00']),                                // sai hoje
+    $hosp(['quarto' => '204', 'saida_em' => '2026-08-16 12:00:00']),                                // fica
+    $hosp(['quarto' => '305', 'saida_em' => '2026-08-13 12:00:00', 'hospedado' => 0, 'online' => 1]), // venceu e nao saiu
+    $hosp(['quarto' => '306', 'saida_em' => '2026-08-10 12:00:00', 'hospedado' => 0]),              // foi embora
+];
+$o = hospedes_ocupacao($lista, '2026-08-14', '2026-08-15');
+
+echo "\nocupacao do dia\n";
+// 101 (dois hospedes), 203 e 204. O 305/306 ja fizeram check-out e nao ocupam.
+$ok($o['quartos'] === 3, 'quarto com dois hospedes conta UM, e quem saiu nao ocupa', 'viu ' . $o['quartos']);
+$ok($o['entram_hoje'] === 2, 'check-ins de hoje', 'viu ' . $o['entram_hoje']);
+$ok($o['saem_hoje'] === 1, 'saem hoje', 'viu ' . $o['saem_hoje']);
+$ok($o['saem_amanha'] === 2, 'saem amanha', 'viu ' . $o['saem_amanha']);
+$ok($o['conectados'] === 1, 'no wifi agora conta so quem ainda esta hospedado', 'viu ' . $o['conectados']);
+$ok(count($o['vencidos']) === 1 && $o['vencidos'][0]['quarto'] === '305',
+    'vencido E conectado entra no aviso', 'viu ' . count($o['vencidos']));
+// Quem foi embora e desligou o Wi-Fi nao e problema de ninguem.
+$ok(!in_array('306', array_column($o['vencidos'], 'quarto'), true), 'quem saiu e desconectou fica de fora');
+
 echo "\n" . ($falhas ? "$falhas FALHA(S)\n" : "tudo certo\n");
 exit($falhas ? 1 : 0);
