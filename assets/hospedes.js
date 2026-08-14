@@ -124,6 +124,7 @@
             ctx.className = 'ctx-menu';
             ctx.innerHTML = '<div class="rt-menu-title">Hóspede</div>' +
                 '<button type="button" class="rt-item" data-acao="editar"><span>Editar</span></button>' +
+                '<button type="button" class="rt-item" data-acao="renovar"><span>+1 diária</span></button>' +
                 '<button type="button" class="rt-item perigo" data-acao="excluir"><span>Apagar</span></button>';
             document.body.appendChild(ctx);
             ctx.addEventListener('click', function (e) {
@@ -133,6 +134,7 @@
                 var acao = b.getAttribute('data-acao');
                 ctxFechar();
                 if (acao === 'editar') { abrir(alvo); }
+                else if (acao === 'renovar') { renovar(alvo); }
                 else if (acao === 'excluir') { excluir(alvo); }
             });
         }
@@ -171,6 +173,35 @@
         if (ctx && ctx.classList.contains('aberto') && !(e.target.closest && e.target.closest('.ctx-menu'))) ctxFechar();
     });
     document.addEventListener('scroll', ctxFechar, true);
+
+    // Hóspede esticou a estadia: soma uma diária e pronto. Manda os mesmos
+    // campos do modal (todos estão nos data-* da linha) para o MESMO endpoint,
+    // que já recalcula a data de saída — nenhuma conta de data vive aqui.
+    function renovar(tr) {
+        if (!EP_SALVAR) return;
+        var dias = parseInt(tr.getAttribute('data-dias') || '0', 10) + 1;
+        var rotulo = tr.getAttribute('data-nome') || tr.getAttribute('data-tel') || '';
+        if (!window.confirm('Somar uma diária para ' + rotulo + '? Passa a ' + dias + '.')) return;
+        fetch(EP_SALVAR, {
+            method: 'POST', credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                csrf: CSRF,
+                cliente_id: CLIENTE,
+                id: parseInt(tr.getAttribute('data-id'), 10),
+                nome: tr.getAttribute('data-nome') || '',
+                quarto: tr.getAttribute('data-quarto') || '',
+                telefone: tr.getAttribute('data-tel') || '',
+                entrada: tr.getAttribute('data-entrada') || '',
+                dias: dias,
+                hora: tr.getAttribute('data-hora') || '12:00',
+                roteador: tr.getAttribute('data-roteador') || ROT_ATIVO
+            })
+        }).then(function (r) { return r.json(); }).then(function (d) {
+            if (!d || !d.ok) { window.alert((d && d.erro) || 'Erro ao renovar.'); return; }
+            window.location.reload();
+        }).catch(function () { window.alert('Erro ao renovar. Tente de novo.'); });
+    }
 
     function excluir(tr) {
         if (!EP_EXCLUIR) return;

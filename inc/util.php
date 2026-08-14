@@ -1325,16 +1325,42 @@ function hospedes_lista(array $roteadores): array
     }
     $ph = implode(',', array_fill(0, count($roteadores), '?'));
     try {
+        // Consumo e "está no Wi-Fi agora" saem dos leads do MESMO telefone: é o
+        // telefone que a recepção cadastra e o portal valida. Hóspede com
+        // celular e notebook tem um MAC para cada, e os dois somam — quem
+        // consome é o quarto, não o aparelho.
+        //
+        // O consumo é o DESTA estadia (conexões a partir do check-in): hóspede
+        // que já se hospedou antes não pode chegar com a conta cheia.
+        //
+        // "Online" repete a regra do resto do painel (flag + visto_em recente),
+        // senão um sync interrompido deixa o hóspede verde para sempre.
+        // ponytail: duas subconsultas por linha; uma pousada tem dezenas de
+        // hóspedes. Passando de alguns milhares, virar JOIN agrupado.
+        $tmo = MIKROTIK_TIMEOUT_SEG;
         $q = db()->prepare(
-            "SELECT id, roteador, nome, quarto, telefone, entrada_em, dias, saida_em,
-                    (saida_em > NOW()) AS hospedado
-               FROM hospedes WHERE roteador IN ($ph)
-              ORDER BY hospedado DESC, saida_em ASC"
+            "SELECT h.id, h.roteador, h.nome, h.quarto, h.telefone, h.entrada_em,
+                    h.dias, h.saida_em,
+                    (h.saida_em > NOW()) AS hospedado,
+                    COALESCE((SELECT SUM(c.bytes) FROM conexoes c
+                                JOIN leads l ON l.id = c.lead_id
+                               WHERE l.roteador = h.roteador AND l.telefone = h.telefone
+                                 AND c.conectado_em >= h.entrada_em), 0) AS bytes,
+                    COALESCE((SELECT MAX(l2.online = 1 AND l2.visto_em IS NOT NULL
+                                         AND l2.visto_em >= (NOW() - INTERVAL $tmo SECOND))
+                                FROM leads l2
+                               WHERE l2.roteador = h.roteador AND l2.telefone = h.telefone), 0) AS online
+               FROM hospedes h WHERE h.roteador IN ($ph)
+              ORDER BY hospedado DESC, h.saida_em ASC"
         );
         $q->execute($roteadores);
         return $q->fetchAll();
     } catch (Throwable $e) {
-        return []; // banco sem a tabela ainda: a tela mostra a lista vazia
+        // Banco sem a tabela ainda: a tela mostra a lista vazia, de propósito.
+        // Mas lista vazia também é o que aparece se a consulta estiver errada —
+        // e recepção sem hóspede na tela não sabe distinguir uma coisa da outra.
+        error_log('hospedes_lista falhou: ' . $e->getMessage());
+        return [];
     }
 }
 

@@ -57,12 +57,14 @@ $hoje = date('Y-m-d');
                         <th>Número</th>
                         <th>Diárias</th>
                         <th>Saída</th>
+                        <th>Consumo</th>
+                        <th>Wi-Fi</th>
                         <th>Situação</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (!$hospedes): ?>
-                        <tr class="pc-empty-row"><td colspan="6" class="pc-vazio">Nenhum hóspede cadastrado. Clique em “Cadastrar hóspede” para liberar o Wi-Fi de quem fez check-in.</td></tr>
+                        <tr class="pc-empty-row"><td colspan="8" class="pc-vazio">Nenhum hóspede cadastrado. Clique em “Cadastrar hóspede” para liberar o Wi-Fi de quem fez check-in.</td></tr>
                     <?php else: foreach ($hospedes as $g):
                         $ativo  = (int) $g['hospedado'] === 1;
                         $saiHj  = $ativo && substr((string) $g['saida_em'], 0, 10) === $hoje;
@@ -84,6 +86,16 @@ $hoje = date('Y-m-d');
                         <td><?= (int) $g['dias'] ?> <?= (int) $g['dias'] === 1 ? 'diária' : 'diárias' ?></td>
                         <td>
                             <div class="pc-dh"><span class="pc-data"><?= h($dataS) ?></span><span class="pc-hora"><?= h($horaS) ?></span></div>
+                        </td>
+                        <td class="hsp-consumo"><?= h(fmt_bytes($g['bytes'] ?? 0)) ?></td>
+                        <td class="hsp-wifi">
+                            <?php /* Conectado AGORA. Separado da situação de propósito:
+                                     "hospedado" é o contrato, "no Wi-Fi" é o aparelho —
+                                     e a pergunta do balcão ("o 203 diz que caiu") é a
+                                     segunda. Estadia vencida ainda conectada aparece
+                                     aqui como verde numa linha que diz "saiu". */ ?>
+                            <span class="pc-dot<?= (int) ($g['online'] ?? 0) === 1 ? ' on' : '' ?>"></span>
+                            <span class="hsp-sit"><?= (int) ($g['online'] ?? 0) === 1 ? 'conectado' : '—' ?></span>
                         </td>
                         <td>
                             <span class="pc-dot<?= $ativo ? ' on' : '' ?>"></span>

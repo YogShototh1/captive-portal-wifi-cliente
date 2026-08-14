@@ -2914,6 +2914,8 @@ html[data-tema="claro"] #hs-prof code { background: rgba(15,23,42,0.07); }
 .painel-cliente .pc-dot.on { background: #34d399; box-shadow: 0 0 8px rgba(52, 211, 153, 0.9); }
 .painel-cliente .hsp-sit { font-size: 12.5px; color: rgba(255, 255, 255, 0.62); }
 .painel-cliente .hsp-saida-previa { margin: 2px 0 0; font-size: 12.5px; color: rgba(255, 255, 255, 0.55); }
+/* Consumo alinhado por dígito: a coluna serve para comparar quartos de relance. */
+.painel-cliente td.hsp-consumo { font-variant-numeric: tabular-nums; white-space: nowrap; }
 html[data-tema="claro"] .painel-cliente .hsp-dica,
 html[data-tema="claro"] .painel-cliente .hsp-sit,
 html[data-tema="claro"] .painel-cliente .hsp-saida-previa { color: #5c5e62; }

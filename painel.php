@@ -107,7 +107,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $hospedagem ? 'Painel de Hóspedes' : 'Painel de Leads' ?></title>
     <link rel="icon" href="assets/logo-icone.png?v=1" type="image/png">
-    <link rel="stylesheet" href="assets/style.css?v=133">
+    <link rel="stylesheet" href="assets/style.css?v=134">
 </head>
 <body class="painel-cliente">
     <div class="pc-bg-gradient"></div>
@@ -744,7 +744,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <script src="assets/estatisticas.js?v=8"></script>
     <?php endif; ?>
     <script src="assets/leads-live.js?v=33"></script>
-    <?php if ($hospedagem): ?><script src="assets/hospedes.js?v=1"></script><?php endif; ?>
+    <?php if ($hospedagem): ?><script src="assets/hospedes.js?v=2"></script><?php endif; ?>
     <?php require __DIR__ . '/inc/tema.php'; ?>
 </body>
 </html>
