@@ -8,21 +8,19 @@
 #    1) Reset:  /system reset-configuration no-defaults=yes skip-backup=yes
 #    2) Ajuste o bloco do topo: nome do roteador + portas (internet / rede).
 #    3) Winbox -> Files -> arraste este arquivo.
-#    4) Terminal, ESTA linha (nao use /import direto):
-#
-#         :execute script="/import setup-hospedagem.rsc" file=cd-setup
-#
-#    5) A sessao vai cair. Reconecte em 192.168.1.1 (usuario admin, com a
-#       senha nova) e leia o que aconteceu:
+#    4) Terminal:  /import setup-hospedagem.rsc
+#       Ele confere tudo, se agenda para 20s depois e devolve o terminal.
+#    5) Espere ~1 min (a sessao cai no meio, e esperado). Reconecte em
+#       192.168.1.1 (admin, senha nova) e leia o que aconteceu:
 #
 #         /log print where message~"cdsetup"
 #
-#  POR QUE :execute E NAO /import
-#  A etapa 2 apaga o endereco de IP e a bridge — a sessao do Winbox cai junto,
-#  e leva o /import com ela, porque o import roda DENTRO da sessao. O script
-#  morria no 1/9 sem avisar ninguem e o roteador ficava pela metade.
-#  O :execute solta o script como job separado: a sessao cai, ele segue ate o
-#  fim, e cada etapa fica registrada no log (e em cd-setup.txt).
+#  POR QUE ELE SE AGENDA
+#  A etapa 2 apaga o endereco de IP e a bridge: a sua sessao cai junto. Tudo
+#  que roda DENTRO da sessao morre nessa hora — o /import direto morreu no
+#  1/9, e o :execute morreu no 2/9, porque job de terminal e filho do
+#  terminal. Tarefa do scheduler pertence ao sistema: a sessao cai, ela segue.
+#  Por isso a primeira passada so agenda a segunda, que faz o trabalho.
 #
 #  IDEMPOTENTE: apaga o que existe antes de criar. Rodar duas vezes nao
 #  duplica bridge, pool, DHCP nem hotspot.
@@ -126,6 +124,28 @@
 }
 
 # ============================================================
+#  0) Sai da sessao
+#  Primeira passada (terminal): agenda e para aqui. Segunda passada (scheduler,
+#  20s depois): desliga o agendamento — para rodar UMA vez, mesmo que aborte
+#  no meio — e segue o script inteiro, ja fora da sessao.
+# ============================================================
+:if ([:len [/system scheduler find where name="cdsetup" disabled=no]] = 0) do={
+  :do { /system scheduler remove [find name="cdsetup"] } on-error={}
+  /system scheduler add name=cdsetup interval=20s on-event="/import setup-hospedagem.rsc" comment="captivedata"
+  :log info "cdsetup agendado (roda daqui a 20s)"
+  :put ""
+  :put "Tudo conferido. O roteador vai se configurar sozinho em 20 segundos."
+  :put "A sua sessao VAI CAIR no meio disso — e normal, ele continua."
+  :put ""
+  :put "Espere 1 minuto, reconecte em 192.168.1.1 (admin, senha nova) e veja:"
+  :put "   /log print where message~\"cdsetup\""
+  :put ""
+  :put "(o 'failure: agendado' na linha de baixo e so o fim desta parte)"
+  :error "agendado"
+}
+/system scheduler set [find name="cdsetup"] disabled=yes interval=0
+
+# ============================================================
 #  1) Identidade e senha do admin
 #  Antes de qualquer outra coisa: e a etapa que nao pode ficar pela metade.
 # ============================================================
@@ -170,7 +190,13 @@
 #  Lista explicita, e nao "todas menos a WAN": porta com defeito, porta de
 #  gerencia ou uplink para outro switch nao podem entrar por descuido.
 # ============================================================
-/interface bridge add name=bridge protocol-mode=rstp comment="captivedata"
+:do {
+  /interface bridge add name=bridge protocol-mode=rstp comment="captivedata"
+} on-error={
+  :log warning "cdsetup ABORTOU: nao consegui criar a bridge"
+  :put "!! Nao consegui criar a bridge. Veja se sobrou uma: /interface bridge print"
+  :error "bridge nao criada"
+}
 :foreach n in=[:toarray $portas] do={
   /interface bridge port add bridge=bridge interface=$n
 }
@@ -359,3 +385,6 @@
 :put ""
 :put "conferir depois:  /log print where message~\"cdsetup\""
 :log info "cdsetup FIM"
+# So agora: apagar o agendamento pode derrubar este proprio job, e aqui ja
+# nao sobrou nada para rodar.
+:do { /system scheduler remove [find name="cdsetup"] } on-error={}
