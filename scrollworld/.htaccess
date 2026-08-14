@@ -1,0 +1,11 @@
+# CSP so desta pasta. Dois acrescimos sobre o da raiz:
+#  - media-src 'self' blob:  -> o motor entrega os clipes ao <video> como blob
+#  - a fonte do Google       -> a pagina usa Inter via fonts.googleapis.com
+<IfModule mod_headers.c>
+    Header always set Content-Security-Policy "default-src 'self'; media-src 'self' blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
+</IfModule>
+
+<IfModule mod_mime.c>
+    AddType video/mp4 .mp4
+    AddType image/webp .webp
+</IfModule>

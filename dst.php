@@ -35,3 +35,6 @@ echo 'window.ESTILO=' . json_encode($roteador !== '' ? estilo_get($roteador) : e
 // hóspedes em vez de simplesmente capturá-lo. Vai junto porque o login.html já
 // espera este script — não custa uma requisição a mais no portal.
 echo 'window.PORTAL_MODO=' . json_encode($roteador !== '' ? roteador_modo($roteador) : 'varejo') . ';';
+// Textos de LGPD (aviso da tela + finalidades da política). Mesmos nomes que o
+// tema.js usa: o login.html não precisa saber de onde vieram.
+echo 'window.LGPD=' . json_encode($roteador !== '' ? lgpd_get($roteador) : lgpd_padrao('varejo'), JSON_UNESCAPED_UNICODE) . ';';

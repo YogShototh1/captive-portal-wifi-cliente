@@ -65,6 +65,7 @@
     var qs = location.search;
     var mapa = [
         ['anuncio_', 'anuncio'],
+        ['lgpd_', 'anuncio'],
         ['dst_', 'url'],
         ['tlim_', 'limites'],
         ['banda_', 'limites'],

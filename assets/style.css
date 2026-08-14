@@ -2928,3 +2928,14 @@ html[data-tema="claro"] .painel-cliente .hsp-saida-previa { color: #5c5e62; }
 html[data-tema="claro"] .painel-cliente .pc-editar-body select.pc-dst-input option { background: #fff; color: #171a20; }
 html[data-tema="claro"] .painel-cliente .pc-editar-body input[type="date"].pc-dst-input,
 html[data-tema="claro"] .painel-cliente .pc-editar-body input[type="time"].pc-dst-input { color-scheme: light; }
+
+/* --- Textos de LGPD (aba Personalizar) ---------------------------------- */
+/* Textarea reusando o .pc-dst-input: mesma caixa dos outros campos, só que
+   alta. O height fixo do .pc-dst-input tem de sair, senão o rows= não vale. */
+.painel-cliente .pc-lgpd-form { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.painel-cliente .pc-lgpd-rot { font-size: 12.5px; color: var(--t-fg3, rgba(255,255,255,0.55)); margin-top: 6px; }
+.painel-cliente textarea.pc-lgpd-txt {
+    width: 100%; height: auto; min-height: 76px; padding: 12px 14px;
+    line-height: 1.5; resize: vertical; font-family: inherit;
+}
+.painel-cliente .pc-lgpd-nota { font-style: italic; opacity: 0.85; }

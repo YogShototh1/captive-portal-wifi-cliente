@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Captive Data — o caminho de um cliente</title>
+<link rel="icon" href="../assets/logo-icone.png?v=1" type="image/png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+  /* Tokens do engine puxados da propria landing (index.html :root) para o
+     mundo nao destoar do resto do site. O fundo casa com o das cenas
+     (#f4f4f4), senao o poster aparece dentro de uma caixa de cor diferente. */
+  :root{
+    --sw-bg:#f4f4f4;
+    --sw-ink:#171a20;
+    --sw-ink-soft:#5c5e62;
+    --sw-accent:#06b6d4;
+    --sw-font-display:'Inter',system-ui,sans-serif;
+    --sw-font-body:'Inter',system-ui,sans-serif;
+  }
+  html,body{margin:0;background:var(--sw-bg)}
+</style>
+</head>
+<body>
+<div id="world"></div>
+<script src="assets/scrub-engine.js"></script>
+<script>
+mountScrollWorld(document.getElementById('world'), {
+  brand: { name: 'Captive Data', href: '#topo' },
+  hint: 'role para voar',
+  nav: true,
+  atmosphere: true,
+  diveScroll: 1.35,
+  connScroll: 0.85,
+  sections: [
+    { id:'loja', label:'O Wi-Fi', still:'assets/poster_1.webp', clip:'assets/vid/dive_1.mp4', clipMobile:'assets/vid/dive_1-m.mp4',
+      accent:'#06b6d4', scroll:1.5, linger:0.35,
+      eyebrow:'O ponto de partida',
+      title:'Todo dia entra gente que você nunca mais vê.',
+      body:'O Wi-Fi já está lá, ligado, servindo todo mundo. Ele só não estava te contando nada.',
+      tags:['Sem instalar nada','Funciona no que você já tem'] },
+
+    { id:'login', label:'O telefone', still:'assets/poster_2.webp', clip:'assets/vid/dive_2.mp4', clipMobile:'assets/vid/dive_2-m.mp4',
+      accent:'#06b6d4', scroll:1.35, linger:0.3,
+      eyebrow:'A troca justa',
+      title:'Wi-Fi grátis em troca do telefone.',
+      body:'O cliente digita o número, vê um anúncio de 10 segundos e navega. Leva menos tempo que pedir a senha no balcão.',
+      tags:['10 segundos','Um toque'] },
+
+    { id:'dados', label:'A conexão', still:'assets/poster_3.webp', clip:'assets/vid/dive_3.mp4', clipMobile:'assets/vid/dive_3-m.mp4',
+      accent:'#06b6d4', scroll:1.2,
+      eyebrow:'Sem sair do lugar',
+      title:'O dado sai do balcão e chega no painel.',
+      body:'O roteador conversa com o servidor sozinho, de minuto em minuto. Você não abre nada, não configura nada, não aperta nada.',
+      tags:['Automático','A cada minuto'] },
+
+    { id:'painel', label:'O painel', still:'assets/poster_4.webp', clip:'assets/vid/dive_4.mp4', clipMobile:'assets/vid/dive_4-m.mp4',
+      accent:'#06b6d4', scroll:1.6, linger:0.45,
+      eyebrow:'O que você passa a enxergar',
+      title:'Quem entrou, quantas vezes, e por quanto tempo.',
+      body:'Movimento por hora e por dia, clientes que voltam, tempo de permanência. O mesmo balcão de sempre, agora com número em cima.',
+      tags:['Relatórios','Gráficos','Histórico'] },
+
+    { id:'alertas', label:'Os alertas', still:'assets/poster_5.webp', clip:'assets/vid/dive_5.mp4', clipMobile:'assets/vid/dive_5-m.mp4',
+      accent:'#06b6d4', scroll:1.45, linger:0.4,
+      eyebrow:'O painel te procura',
+      title:'Você não precisa ficar olhando.',
+      body:'Cliente fiel que sumiu, movimento em queda, gente nova na semana. Você escolhe o que quer saber e o painel avisa.',
+      tags:['Você escolhe','Chega pronto'] },
+
+    { id:'retorno', label:'A volta', still:'assets/poster_6.webp', clip:'assets/vid/dive_6.mp4', clipMobile:'assets/vid/dive_6-m.mp4',
+      accent:'#06b6d4', scroll:1.7, linger:0.5,
+      eyebrow:'É por isso que existe',
+      title:'A mesma loja. Só que cheia.',
+      body:'O número vira mensagem, a mensagem vira volta. O Wi-Fi que você já pagava passa a trazer gente de novo.',
+      tags:['Do seu jeito','Quando quiser'],
+      cta:{ primary:{label:'Chamar no WhatsApp', href:'https://wa.me/5548988290878'},
+            secondary:{label:'Acessar o painel', href:'/painel'} } },
+  ],
+  connectors: [
+    'assets/vid/conn_1.mp4','assets/vid/conn_2.mp4','assets/vid/conn_3.mp4',
+    'assets/vid/conn_4.mp4','assets/vid/conn_5.mp4'
+  ],
+  connectorsMobile: [
+    'assets/vid/conn_1-m.mp4','assets/vid/conn_2-m.mp4','assets/vid/conn_3-m.mp4',
+    'assets/vid/conn_4-m.mp4','assets/vid/conn_5-m.mp4'
+  ],
+});
+</script>
+</body>
+</html>

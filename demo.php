@@ -158,7 +158,7 @@ $D = [
     <meta name="robots" content="noindex">
     <title>Captive Data — Painel de demonstração</title>
     <link rel="icon" href="assets/logo-icone.png?v=1" type="image/png">
-    <link rel="stylesheet" href="assets/style.css?v=134">
+    <link rel="stylesheet" href="assets/style.css?v=135">
     <style>
         /* Tarja da demonstração: ninguém pode confundir esta tela com a real. */
         .demo-tarja {

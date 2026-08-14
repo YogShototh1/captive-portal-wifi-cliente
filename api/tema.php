@@ -60,8 +60,11 @@ $ig = ig_get($roteador);
 // número. Na assinatura também, senão trocar o tipo do cliente no painel não
 // chegaria ao roteador.
 $modo = roteador_modo($roteador);
+// Os textos de LGPD acompanham o tema: são da tela de login e precisam valer
+// mesmo com a internet do estabelecimento fora.
+$lgpd = lgpd_get($roteador);
 $assinatura = substr(sha1(json_encode(
-    [$cores, $estilo, $dst, $forma, carimbo($logo), carimbo($anun), $ig, $modo]
+    [$cores, $estilo, $dst, $forma, carimbo($logo), carimbo($anun), $ig, $modo, $lgpd]
 )), 0, 12);
 
 $f = (string) ($_REQUEST['f'] ?? '');
@@ -81,6 +84,7 @@ if ($f === 'js') {
     echo 'window.CORES=' . json_encode($cores) . ";\n";
     echo 'window.ESTILO=' . json_encode($estilo) . ";\n";
     echo 'window.PORTAL_MODO=' . json_encode($modo) . ";\n";
+    echo 'window.LGPD=' . json_encode($lgpd, JSON_UNESCAPED_UNICODE) . ";\n";
     // Havia aqui um window.PORTAL_DST_LOCAL, que mandava o login.html usar uma
     // cópia da página do Instagram guardada na flash. Removido: causava loop
     // infinito no portal (o porquê está no comentário do portalDst(), em

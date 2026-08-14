@@ -130,7 +130,12 @@
                     $(endif)
                 </form>
                 
-                <p class="footer-text">Ao prosseguir, você aceita os <button type="button" class="btn-link" onclick="openModal('terms')">Termos de Uso</button> e a <button type="button" class="btn-link" onclick="openModal('privacy')">Política de Privacidade</button>, e consente que seu número seja registrado como contato do estabelecimento e usado para contato comercial, inclusive por WhatsApp.</p>
+                <!-- O texto do aviso vem do painel (window.LGPD.aviso) e é escrito
+                     em #lgpd-aviso; os dois botões ficam FORA dele, para nenhum
+                     texto personalizado conseguir esconder o acesso aos
+                     documentos. O que está escrito aqui é o padrão do varejo,
+                     mostrado só se o painel não responder. -->
+                <p class="footer-text"><span id="lgpd-aviso">Ao prosseguir, você consente que seu número seja registrado como contato do estabelecimento e usado para contato comercial, inclusive por WhatsApp.</span> Veja os <button type="button" class="btn-link" onclick="openModal('terms')">Termos de Uso</button> e a <button type="button" class="btn-link" onclick="openModal('privacy')">Política de Privacidade</button>.</p>
 
             </div>
         </div>
@@ -212,7 +217,7 @@
                 <p>Ao usar este Wi-Fi, coletamos: o <strong>número de celular</strong> que você informa, o endereço MAC e o tipo/sistema do seu aparelho, o endereço IP atribuído e as datas, horários e duração das suas conexões.</p>
 
                 <h3>2. Para que usamos (finalidades)</h3>
-                <p>(a) liberar e administrar o seu acesso ao Wi-Fi, inclusive aplicar limites de uso; (b) registrar sua visita como <strong>contato comercial (lead) do estabelecimento</strong>; (c) permitir que o estabelecimento entre em contato com você para fins comerciais e promocionais, <strong>inclusive por WhatsApp</strong>, telefone ou SMS; (d) segurança da rede e cumprimento de obrigações legais.</p>
+                <p id="lgpd-finalidades">(a) liberar e administrar o seu acesso ao Wi-Fi, inclusive aplicar limites de uso; (b) registrar sua visita como <strong>contato comercial (lead) do estabelecimento</strong>; (c) permitir que o estabelecimento entre em contato com você para fins comerciais e promocionais, <strong>inclusive por WhatsApp</strong>, telefone ou SMS; (d) segurança da rede e cumprimento de obrigações legais.</p>
 
                 <h3>3. Base legal e consentimento (LGPD)</h3>
                 <p>O tratamento é feito com fundamento no seu <strong>consentimento</strong> (art. 7º, I, da Lei nº 13.709/2018 — LGPD), manifestado ao informar seu número e tocar em "Liberar WiFi". Registros de conexão também podem ser mantidos para cumprimento de obrigação legal.</p>
@@ -383,6 +388,20 @@
         // O painel só é consultado se o arquivo local não existir (roteador que
         // ainda não recebeu a primeira sincronia). Nesse caso vale a regra de
         // sempre: se não responder, fica o padrão e ninguém trava.
+        // Textos de LGPD: o padrão muda com o tipo de painel (o do varejo diz que
+        // o número vira contato comercial, o que é falso numa pousada) e o
+        // comprador pode reescrever os dois. textContent, nunca innerHTML: o
+        // texto é digitado no painel e renderizado no aparelho de quem chega.
+        function aplicarLgpd() {
+            var L = window.LGPD;
+            if (!L || typeof L !== 'object') return;
+            var a = document.getElementById('lgpd-aviso');
+            if (a && typeof L.aviso === 'string' && L.aviso) a.textContent = L.aviso;
+            var f = document.getElementById('lgpd-finalidades');
+            if (f && typeof L.finalidades === 'string' && L.finalidades) f.textContent = L.finalidades;
+        }
+        aplicarLgpd();
+
         aplicarLogoForma();
         // Sem tema local, ou com um tema.js antigo (anterior ao PORTAL_MODO):
         // nos dois casos o portal precisa perguntar ao painel. Sem a segunda
@@ -395,7 +414,9 @@
                     var s = document.createElement('script');
                     s.src = "https://captivedata.com.br/dst.php?r=" + encodeURIComponent("$(identity)") + "&t=" + Date.now();
                     s.async = true;
-                    s.onload = aplicarLogoForma;
+                    // O dst.php traz tema E textos: quando ele é a fonte (sem
+                    // tema.js na flash), os dois têm de ser aplicados na volta.
+                    s.onload = function () { aplicarLogoForma(); aplicarLgpd(); };
                     (document.head || document.documentElement).appendChild(s);
                 } catch (e) { /* mantém o padrão */ }
             })();
