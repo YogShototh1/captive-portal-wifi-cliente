@@ -320,6 +320,13 @@
 #  carregar o tema local (tema.js) e a lista de aparelhos da flash: sem ele
 #  metade da pagina nem e enviada pelo roteador.
 #
+#  SEM dns-name de proposito. Com dns-name=wifi.local o portal abria no PC
+#  e dava tela branca no iPhone: iOS trata qualquer nome .local como
+#  Bonjour/mDNS, nem pergunta ao DNS do roteador. Nao resolve, e o
+#  navegador de captive portal nao mostra erro nenhum — so o branco.
+#  Sem dns-name o RouterOS usa o proprio IP (192.168.1.1), que resolve
+#  sempre, em qualquer aparelho.
+#
 #  html-directory=hostsv7: e a pasta que o leadsync alimenta (login.html,
 #  css, fontes, tema, anuncio). Mudar o nome aqui exige mudar no leadsync.
 #
@@ -331,7 +338,7 @@
 #  idle-timeout maior pelo mesmo motivo: celular de hospede dorme no
 #  quarto e nao pode perder a sessao por isso.
 # ============================================================
-/ip hotspot profile add name=cd-perfil hotspot-address=$lan dns-name=wifi.local \
+/ip hotspot profile add name=cd-perfil hotspot-address=$lan \
     html-directory=hostsv7 login-by=trial,http-chap,http-pap trial-uptime-limit=60d00:00:00 \
     trial-uptime-reset=61d00:00:00 trial-user-profile=default use-radius=no
 /ip hotspot add name=cd-hotspot interface=bridge address-pool=cd-pool profile=cd-perfil \

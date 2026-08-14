@@ -65,8 +65,15 @@
         })();
     </script>
     <style>
-        #cd-cover { position: fixed; inset: 0; background: #e6ecf5; z-index: 99999; }
-        html.cd-unknown #cd-cover { display: none; }
+        /* A capa nasce ESCONDIDA e só aparece para o aparelho já cadastrado.
+           Era o contrário — visível por padrão, escondida pela classe. Bastava
+           o script acima não rodar (ou a classe não pegar) para o cliente ver
+           uma tela de cor lisa, sem nada, sem saber o que fazer: a mesma tela
+           branca relatada no iPhone. Se algo falhar agora, aparece a tela do
+           número, que é o pior caso aceitável. */
+        #cd-cover { display: none; position: fixed; top: 0; right: 0; bottom: 0; left: 0;
+                    background: #e6ecf5; z-index: 99999; }
+        html.cd-known #cd-cover { display: block; }
         html.cd-known .main { visibility: hidden; }
     </style>
     <div id="cd-cover"></div>
@@ -766,6 +773,10 @@
                 // Espera curta pro limite.php (injetado async) chegar; se atrasar,
                 // segue pro anúncio (se vier bloqueado depois, o onload dele corrige).
                 window.addEventListener('load', function () { setTimeout(seguir, 500); });
+                // E nunca depender só do 'load': no navegador de captive portal
+                // uma imagem ou script externo pendurado segura esse evento para
+                // sempre — a capa ficaria por cima da tela inteira, sem saída.
+                setTimeout(seguir, 4000);
             })();
         }
     </script>
