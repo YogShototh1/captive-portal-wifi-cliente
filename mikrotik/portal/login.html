@@ -14,12 +14,16 @@
 <body>
 
     <!-- O hotspot RECUSOU o login anterior (trial esgotado, trial fora do
-         login-by, etc.). Marcado aqui, fora do $(if chap-id), para nao aninhar
-         dois $(if) — o RouterOS nao lida bem com isso.
+         login-by, etc.). Marcado aqui, fora do bloco condicional do chap-id, para nao aninhar
+         dois condicionais — o RouterOS nao lida bem com isso.
+
+         (Nunca escreva cifrao-parentese dentro de comentario: o RouterOS
+         substitui variavel por TEXTO, sem saber o que e comentario de HTML.
+         Um condicional escrito aqui vira condicional de verdade.)
 
          Por que importa: o aparelho ja cadastrado entra pelo caminho rapido, que
          cobre a tela com o #cd-cover, esconde o .main e vai direto pro anuncio.
-         O $(error) do hotspot mora DENTRO desse .main. Recusado o login, o
+         O erro do hotspot mora DENTRO desse .main. Recusado o login, o
          cliente via anuncio -> recusa -> anuncio, sem nunca ver o motivo: o
          ciclo infinito relatado na loja. Com esta marca o caminho rapido e
          desligado e a tela aparece com a mensagem do proprio roteador. -->
@@ -295,7 +299,7 @@
             //
             // Nao e escolha nossa: e a convencao do proprio RouterOS. O link de
             // fabrica logo acima nesta pagina usa exatamente isso
-            // (username=T-$(mac-esc)), e o roteador recusa qualquer outro nome
+            // (username=T-<mac>), e o roteador recusa qualquer outro nome
             // num login por trial.
             //
             // Em 05/08/2026 (commit 2520074) foi grudado "-<telefone>" no fim,
@@ -429,7 +433,7 @@
         }
 
 
-        // Envia o lead (telefone + $(mac)/$(ip)/$(identity)) para a API ANTES de liberar
+        // Envia o lead (telefone + mac/ip/identity) para a API ANTES de liberar
         // o WiFi. Roda durante o anúncio; keepalive garante o envio mesmo quando a
         // autenticação navega a página. Se a API falhar, o WiFi é liberado mesmo assim.
         // ===== Fila de leads que nao conseguiram sair =====
@@ -616,7 +620,7 @@
         }
 
         // Carrega o banner do anúncio a partir da VPS (servido por ad.php, isolado por
-        // roteador via $(identity)). A troca é feita pelo comprador no painel, sem
+        // roteador via identity). A troca é feita pelo comprador no painel, sem
         // reenviar este arquivo ao MikroTik. O domínio já está liberado no Walled
         // Garden (mesmo do /api/lead). Se não houver anúncio para este roteador — ou a
         // VPS não responder — mantém o espaço reservado ("Seu anúncio aqui") sem exibir
