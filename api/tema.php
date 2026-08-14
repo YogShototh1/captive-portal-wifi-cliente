@@ -4,6 +4,7 @@
 // para ficar NA FLASH do roteador.
 //   sem &f    : versão curta — o roteador compara e só rebaixa quando muda.
 //   &f=js     : tema.js  -> window.CORES / window.ESTILO / window.PORTAL_DST
+//                           / window.PORTAL_MODO
 //   &f=logo   : a imagem da logo do comprador (ou 404 se não tiver)
 //   &f=ad     : a imagem do anúncio do comprador (ou 404 se não tiver)
 //
@@ -53,8 +54,14 @@ function carimbo(?string $f): string
 // A config da página de Instagram entra na conta: trocou a cor ou o texto dela
 // no painel, o roteador rebaixa o ig.html na rodada seguinte.
 $ig = ig_get($roteador);
+// O MODO (varejo/hospedagem) vem junto porque o login.html só consulta o
+// dst.php quando NÃO existe tema.js na flash — e existindo, o portal ficava sem
+// saber o modo e tratava todo mundo como varejo: a pousada liberava qualquer
+// número. Na assinatura também, senão trocar o tipo do cliente no painel não
+// chegaria ao roteador.
+$modo = roteador_modo($roteador);
 $assinatura = substr(sha1(json_encode(
-    [$cores, $estilo, $dst, $forma, carimbo($logo), carimbo($anun), $ig]
+    [$cores, $estilo, $dst, $forma, carimbo($logo), carimbo($anun), $ig, $modo]
 )), 0, 12);
 
 $f = (string) ($_REQUEST['f'] ?? '');
@@ -73,6 +80,7 @@ if ($f === 'js') {
     echo 'window.LOGO_FORMA=' . json_encode($forma) . ";\n";
     echo 'window.CORES=' . json_encode($cores) . ";\n";
     echo 'window.ESTILO=' . json_encode($estilo) . ";\n";
+    echo 'window.PORTAL_MODO=' . json_encode($modo) . ";\n";
     // Havia aqui um window.PORTAL_DST_LOCAL, que mandava o login.html usar uma
     // cópia da página do Instagram guardada na flash. Removido: causava loop
     // infinito no portal (o porquê está no comentário do portalDst(), em

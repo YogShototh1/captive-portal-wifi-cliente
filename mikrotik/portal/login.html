@@ -384,7 +384,12 @@
         // ainda não recebeu a primeira sincronia). Nesse caso vale a regra de
         // sempre: se não responder, fica o padrão e ninguém trava.
         aplicarLogoForma();
-        if (!window.CD_TEMA_LOCAL) {
+        // Sem tema local, ou com um tema.js antigo (anterior ao PORTAL_MODO):
+        // nos dois casos o portal precisa perguntar ao painel. Sem a segunda
+        // condição, roteador já sincronizado ficava com o modo indefinido para
+        // sempre — e modo indefinido é tratado como varejo, ou seja, entra
+        // qualquer número na pousada.
+        if (!window.CD_TEMA_LOCAL || typeof window.PORTAL_MODO === 'undefined') {
             (function () {
                 try {
                     var s = document.createElement('script');
