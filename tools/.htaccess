@@ -14,6 +14,7 @@
 #   migrar_nome.php
 #   migrar_roteador_compartilhado.php
 #   migrar_hospedagem.php
+#   migrar_estadias.php
 #   gerar_hash.php       (nem chega a subir: o deploy.ps1 o exclui)
 #
 # Os teste_*.php ficam de fora da lista de propósito: só rodam por linha de
@@ -22,14 +23,14 @@
 
 <IfModule mod_authz_core.c>
     Require all denied
-    <FilesMatch "^(criar_comprador|limpar_antigos|migrar_bytes|migrar_nome|migrar_roteador_compartilhado|migrar_hospedagem|gerar_hash)\.php$">
+    <FilesMatch "^(criar_comprador|limpar_antigos|migrar_bytes|migrar_nome|migrar_roteador_compartilhado|migrar_hospedagem|migrar_estadias|gerar_hash)\.php$">
         Require all granted
     </FilesMatch>
 </IfModule>
 <IfModule !mod_authz_core.c>
     Order allow,deny
     Deny from all
-    <FilesMatch "^(criar_comprador|limpar_antigos|migrar_bytes|migrar_nome|migrar_roteador_compartilhado|migrar_hospedagem|gerar_hash)\.php$">
+    <FilesMatch "^(criar_comprador|limpar_antigos|migrar_bytes|migrar_nome|migrar_roteador_compartilhado|migrar_hospedagem|migrar_estadias|gerar_hash)\.php$">
         Order deny,allow
         Allow from all
     </FilesMatch>
