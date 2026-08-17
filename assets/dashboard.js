@@ -43,10 +43,35 @@
     // ===== Calendário de visitas (abre no mês atual a cada consulta) =====
     var calAno = 0, calMes = 0, visitasSet = {};
 
+    function p2(n) { return (n < 10 ? '0' : '') + n; }
+    function isoDe(d) { return d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate()); }
+
+    // Pousada: o calendário marca a ESTADIA INTEIRA, não só os dias em que o
+    // aparelho conectou. Quem ficou do 14 ao 15 esteve lá nos dois dias, tenha
+    // usado o Wi-Fi ou não — e é o dia no quarto que a recepção procura aqui.
+    // Entrada e saída entram as duas (a diária da saída é do hóspede até o
+    // check-out).
+    function marcarEstadias(lista) {
+        for (var i = 0; i < (lista || []).length; i++) {
+            var a = String(lista[i].entrada_em || '').slice(0, 10);
+            var b = String(lista[i].saida_em || '').slice(0, 10);
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(a) || !/^\d{4}-\d{2}-\d{2}$/.test(b)) continue;
+            var p = a.split('-');
+            var d = new Date(+p[0], +p[1] - 1, +p[2]);
+            // Trava de 400 voltas: as diárias vão até 365, e data invertida no
+            // banco não pode virar laço infinito na tela de quem está no balcão.
+            for (var n = 0; n < 400; n++) {
+                var dia = isoDe(d);
+                visitasSet[dia] = true;
+                if (dia >= b) break;
+                d.setDate(d.getDate() + 1);
+            }
+        }
+    }
+
     function desenharCal() {
         var el = document.getElementById('dash-cal');
         if (!el) return;
-        function p2(n) { return (n < 10 ? '0' : '') + n; }
         function iso(a, m, d) { return a + '-' + p2(m + 1) + '-' + p2(d); }
         var hoje = new Date();
         var hojeIso = iso(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
@@ -231,6 +256,7 @@
         // Calendário: guarda as datas visitadas e SEMPRE reabre no mês atual.
         visitasSet = {};
         for (var i = 0; i < (d.datas || []).length; i++) visitasSet[d.datas[i]] = true;
+        marcarEstadias(d.estadias);
         var hoje = new Date();
         calAno = hoje.getFullYear();
         calMes = hoje.getMonth();

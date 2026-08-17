@@ -817,7 +817,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <script src="assets/estatisticas.js?v=8"></script>
     <?php endif; ?>
     <?php /* Informações existe nos dois painéis. */ ?>
-    <script src="assets/dashboard.js?v=12"></script>
+    <script src="assets/dashboard.js?v=13"></script>
     <script src="assets/speedtest.js?v=11"></script>
     <script src="assets/leads-live.js?v=33"></script>
     <?php if ($hospedagem): ?><script src="assets/hospedes.js?v=3"></script><?php endif; ?>
