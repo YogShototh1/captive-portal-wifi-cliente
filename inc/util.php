@@ -1336,9 +1336,16 @@ function hospedes_lista(array $roteadores): array
         // O consumo é o DESTA estadia (conexões a partir do check-in): hóspede
         // que já se hospedou antes não pode chegar com a conta cheia.
         //
-        // "Online" repete a regra do resto do painel (flag + visto_em recente),
-        // senão um sync interrompido deixa o hóspede verde para sempre.
-        // ponytail: duas subconsultas por linha; uma pousada tem dezenas de
+        // `online_desde` é a MENOR hora de conexão entre os aparelhos que estão
+        // no Wi-Fi agora (flag + visto_em recente, a mesma regra do resto do
+        // painel — senão um sync interrompido deixa o hóspede verde para
+        // sempre). MIN e não MAX porque a pergunta do balcão é "está conectado
+        // há quanto tempo", e quem responde isso é o primeiro aparelho a entrar.
+        // Vazio = ninguém no Wi-Fi; é daí que sai o flag `online`.
+        //
+        // `lead_ids` alimenta o botão "ver conexões", que aceita vários ids
+        // separados por vírgula (celular e notebook do mesmo número).
+        // ponytail: três subconsultas por linha; uma pousada tem dezenas de
         // hóspedes. Passando de alguns milhares, virar JOIN agrupado.
         $tmo = MIKROTIK_TIMEOUT_SEG;
         $q = db()->prepare(
@@ -1349,15 +1356,21 @@ function hospedes_lista(array $roteadores): array
                                 JOIN leads l ON l.id = c.lead_id
                                WHERE l.roteador = h.roteador AND l.telefone = h.telefone
                                  AND c.conectado_em >= h.entrada_em), 0) AS bytes,
-                    COALESCE((SELECT MAX(l2.online = 1 AND l2.visto_em IS NOT NULL
-                                         AND l2.visto_em >= (NOW() - INTERVAL $tmo SECOND))
-                                FROM leads l2
-                               WHERE l2.roteador = h.roteador AND l2.telefone = h.telefone), 0) AS online
+                    (SELECT MIN(l2.conectado_em) FROM leads l2
+                      WHERE l2.roteador = h.roteador AND l2.telefone = h.telefone
+                        AND l2.online = 1 AND l2.visto_em IS NOT NULL
+                        AND l2.visto_em >= (NOW() - INTERVAL $tmo SECOND)) AS online_desde,
+                    (SELECT GROUP_CONCAT(l3.id) FROM leads l3
+                      WHERE l3.roteador = h.roteador AND l3.telefone = h.telefone) AS lead_ids
                FROM hospedes h WHERE h.roteador IN ($ph)
               ORDER BY hospedado DESC, h.saida_em ASC"
         );
         $q->execute($roteadores);
-        return $q->fetchAll();
+        $linhas = $q->fetchAll();
+        foreach ($linhas as $i => $l) {
+            $linhas[$i]['online'] = $l['online_desde'] !== null ? 1 : 0;
+        }
+        return $linhas;
     } catch (Throwable $e) {
         // Banco sem a tabela ainda: a tela mostra a lista vazia, de propósito.
         // Mas lista vazia também é o que aparece se a consulta estiver errada —
@@ -1394,8 +1407,13 @@ function hospedes_ocupacao(array $hospedes, ?string $hoje = null, ?string $amanh
     $hoje   = $hoje   ?? date('Y-m-d');
     $amanha = $amanha ?? date('Y-m-d', strtotime($hoje . ' +1 day'));
 
+    // Cada cartão tem a sua lista, e o número do cartão é o tamanho dela — a
+    // tela mostra a lista quando o cartão é clicado, e um contador que não
+    // batesse com a lista embaixo seria pior que não ter contador.
     $r = ['quartos' => 0, 'entram_hoje' => 0, 'saem_hoje' => 0, 'saem_amanha' => 0,
-          'conectados' => 0, 'vencidos' => []];
+          'conectados' => 0, 'vencidos' => [],
+          'listas' => ['quartos' => [], 'entram_hoje' => [], 'saem_hoje' => [],
+                       'saem_amanha' => [], 'conectados' => []]];
     $quartos = [];
     foreach ($hospedes as $h) {
         $ativo  = (int) ($h['hospedado'] ?? 0) === 1;
@@ -1406,21 +1424,39 @@ function hospedes_ocupacao(array $hospedes, ?string $hoje = null, ?string $amanh
             $q = trim((string) ($h['quarto'] ?? ''));
             // strtoupper e não mb_: número de quarto é ASCII ("12", "204A"), e
             // assim a função roda no teste de linha de comando (sem mbstring).
-            if ($q !== '') { $quartos[strtoupper($q)] = true; }
-            if ($saida === $hoje)   { $r['saem_hoje']++; }
-            if ($saida === $amanha) { $r['saem_amanha']++; }
-            if ($online) { $r['conectados']++; }
+            //
+            // O quarto vaga quando o ÚLTIMO hóspede dele sai: guarda a maior
+            // data de saída, não a primeira que aparecer.
+            if ($q !== '') {
+                $k = strtoupper($q);
+                if (!isset($quartos[$k]) || (string) $h['saida_em'] > $quartos[$k]['saida_em']) {
+                    $quartos[$k] = ['quarto' => $q, 'saida_em' => (string) $h['saida_em'], 'hospedes' => 0];
+                }
+                $quartos[$k]['hospedes']++;
+            }
+            if ($saida === $hoje)   { $r['listas']['saem_hoje'][] = $h; }
+            if ($saida === $amanha) { $r['listas']['saem_amanha'][] = $h; }
         } elseif ($online) {
             // Check-out passou e o aparelho segue no Wi-Fi. O leadsync derruba
-            // na rodada seguinte; até lá, quem está no balcão vê aqui — e se
-            // aparecer sempre o mesmo nome, o problema é outro.
+            // na rodada seguinte; até lá aparece na lista do Wi-Fi marcado como
+            // vencido — e se for sempre o mesmo nome, não é atraso, é cadastro
+            // errado.
             $r['vencidos'][] = $h;
         }
+        // "No Wi-Fi agora" é literal: quem está conectado, tenha ou não passado
+        // da hora. Um hóspede consumindo a internet da pousada fora do cartão
+        // que diz quantos estão consumindo seria justamente o que a recepção
+        // não veria.
+        if ($online) { $r['listas']['conectados'][] = $h; }
         if (substr((string) ($h['entrada_em'] ?? ''), 0, 10) === $hoje) {
-            $r['entram_hoje']++;
+            $r['listas']['entram_hoje'][] = $h;
         }
     }
-    $r['quartos'] = count($quartos);
+    ksort($quartos);
+    $r['listas']['quartos'] = array_values($quartos);
+    foreach ($r['listas'] as $k => $l) {
+        $r[$k] = count($l);
+    }
     return $r;
 }
 

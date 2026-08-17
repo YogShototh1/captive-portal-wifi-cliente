@@ -112,7 +112,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $hospedagem ? 'Painel de Hóspedes' : 'Painel de Leads' ?></title>
     <link rel="icon" href="assets/logo-icone.png?v=1" type="image/png">
-    <link rel="stylesheet" href="assets/style.css?v=136">
+    <link rel="stylesheet" href="assets/style.css?v=137">
 </head>
 <body class="painel-cliente">
     <div class="pc-bg-gradient"></div>
@@ -288,7 +288,6 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                              data-endpoint="api/leads_online.php?roteador=<?= urlencode((string) $rotAtivo) ?>&amp;filtro=<?= urlencode($filtro) ?>"
                              data-limite-endpoint="api/set_limite.php"
                              data-banda-endpoint="api/set_banda.php"
-                             data-conexoes-endpoint="api/conexoes.php"
                              data-editar-endpoint="api/lead_editar.php"
                              data-excluir-endpoint="api/lead_excluir.php"
                              data-esquecer-endpoint="api/lead_esquecer.php"
@@ -739,7 +738,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     </div>
 
     <!-- Pop-up: histórico de conexões de um número -->
-    <div class="pc-modal" id="conexoes-modal" aria-hidden="true">
+    <div class="pc-modal" id="conexoes-modal" aria-hidden="true" data-conexoes-endpoint="api/conexoes.php">
         <div class="pc-modal-backdrop" data-close></div>
         <div class="pc-modal-card glow-card">
             <span class="glow-fx" aria-hidden="true"></span>
@@ -763,10 +762,11 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <script src="assets/dashgeral.js?v=14"></script>
     <script src="assets/estatisticas.js?v=8"></script>
     <?php endif; ?>
-    <?php /* Informações existe nos dois painéis. */ ?>
+    <?php /* Informações e o pop-up de conexões existem nos dois painéis. */ ?>
     <script src="assets/dashboard.js?v=13"></script>
-    <script src="assets/leads-live.js?v=33"></script>
-    <?php if ($hospedagem): ?><script src="assets/hospedes.js?v=3"></script><?php endif; ?>
+    <script src="assets/conexoes.js?v=1"></script>
+    <script src="assets/leads-live.js?v=34"></script>
+    <?php if ($hospedagem): ?><script src="assets/hospedes.js?v=3"></script><script src="assets/ocupacao.js?v=1"></script><?php endif; ?>
     <?php require __DIR__ . '/inc/tema.php'; ?>
 </body>
 </html>

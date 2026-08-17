@@ -6,7 +6,6 @@
     var EP_LEADS    = root.getAttribute('data-endpoint');
     var EP_LIMITE   = root.getAttribute('data-limite-endpoint');
     var EP_BANDA    = root.getAttribute('data-banda-endpoint');
-    var EP_CONEXOES = root.getAttribute('data-conexoes-endpoint');
     var EP_ACESSOS  = root.getAttribute('data-acessos-endpoint'); // só admin
     var CSRF        = root.getAttribute('data-csrf');
     var PAGINA      = parseInt(root.getAttribute('data-pagina') || '1', 10);
@@ -191,14 +190,13 @@
         return tr;
     }
 
-    // --- Pop-up "ver conexões" (paginado, setas ‹ ›) ---
-    var modal      = document.getElementById('conexoes-modal');
-    var modalTel   = document.getElementById('conexoes-tel');
-    var modalLista = document.getElementById('conexoes-lista');
-    var modalNav   = document.getElementById('conexoes-nav'); // setas FORA da área que corta
-    var modalLead  = null; // lead aberto no modal (para as setas refazerem o fetch)
-    var modalPorPag = 10;  // recalculado a cada abertura conforme a altura da tela
-    // Quantas linhas cabem SEM rolar. O modal (.pc-modal-body) não tem scroll:
+    // O pop-up "ver conexões" mora em assets/conexoes.js: a aba Ocupação da
+    // pousada abre o MESMO pop-up pelo mesmo botão, e lá não existe tabela de
+    // leads. Ele escuta o clique em .pc-ver-conexoes no documento inteiro — os
+    // botões desenhados aqui continuam funcionando sem nenhuma ligação extra.
+
+    // Quantas linhas cabem SEM rolar (usado pelo pop-up de acessos, do admin).
+    // O modal (.pc-modal-body) não tem scroll:
     // a lista é paginada pra caber. Estimativa CONSERVADORA — parte fixa ~170px
     // (cabeçalho + header da lista + setas + margem). Linha: 46px no desktop;
     // no celular 62px, porque "120 MB" etc. quebram em 2 linhas na coluna estreita.
@@ -207,58 +205,6 @@
         var util = Math.min(window.innerHeight * 0.8, window.innerHeight - 40) - 170;
         return Math.max(3, Math.min(15, Math.floor(util / linha)));
     }
-    function fecharModal() {
-        if (modal) { modal.classList.remove('aberto'); modal.setAttribute('aria-hidden', 'true'); }
-    }
-    function abrirConexoes(leadId, pagina) {
-        if (!modal || !EP_CONEXOES) return;
-        modalLead = leadId;
-        modalLista.innerHTML = '<p class="pc-modal-info">Carregando…</p>';
-        if (modalNav) modalNav.innerHTML = '';
-        modal.classList.add('aberto');
-        modal.setAttribute('aria-hidden', 'false');
-        fetch(EP_CONEXOES + '?lead_id=' + encodeURIComponent(leadId) + '&pagina=' + (pagina || 1) + '&por_pagina=' + modalPorPag, { credentials: 'same-origin' })
-            .then(function (r) { return r.json(); })
-            .then(function (d) {
-                if (!d || !d.ok) { modalLista.innerHTML = '<p class="pc-modal-info">' + esc((d && d.erro) || 'Erro ao carregar.') + '</p>'; return; }
-                if (modalTel) modalTel.textContent = d.telefone || '';
-                if (!d.conexoes || !d.conexoes.length) { modalLista.innerHTML = '<p class="pc-modal-info">Nenhuma conexão registrada.</p>'; return; }
-                var html = '<div class="pc-conex-head"><span>Data e hora</span><span>Tempo online</span><span>Consumo</span><span>Dispositivo</span></div><ul class="pc-conex-list">';
-                d.conexoes.forEach(function (c) {
-                    html += '<li><span class="pc-conex-data">' + esc(fmtData(c.conectado_em)) + '</span>' +
-                            '<span class="pc-conex-tempo">' + (c.segundos == null ? '—' : fmt(c.segundos)) + '</span>' +
-                            '<span class="pc-conex-uso">' + fmtBytes(c.bytes) + '</span>' +
-                            '<span class="pc-conex-ap">' + esc(c.dispositivo || '—') + '</span></li>';
-                });
-                html += '</ul>';
-                modalLista.innerHTML = html;
-                // Setas no container FIXO (fora do corpo com overflow): sempre visíveis,
-                // mesmo se a lista estourar a estimativa e for cortada.
-                if (modalNav) {
-                    modalNav.innerHTML = d.paginas > 1
-                        ? '<div class="pc-conex-nav">' +
-                          (d.pagina > 1 ? '<button type="button" class="pc-conex-seta" data-pag="' + (d.pagina - 1) + '" aria-label="Página anterior">&lsaquo;</button>' : '') +
-                          (d.pagina < d.paginas ? '<button type="button" class="pc-conex-seta" data-pag="' + (d.pagina + 1) + '" aria-label="Próxima página">&rsaquo;</button>' : '') +
-                          '</div>'
-                        : '';
-                }
-            }).catch(function () { modalLista.innerHTML = '<p class="pc-modal-info">Erro ao carregar.</p>'; });
-    }
-    tbody.addEventListener('click', function (e) {
-        var btn = e.target.closest ? e.target.closest('.pc-ver-conexoes') : null;
-        if (btn) {
-            e.preventDefault();
-            modalPorPag = conexoesPorPagina(); // mede a tela na abertura; as setas reutilizam
-            abrirConexoes(btn.getAttribute('data-lead'), 1);
-        }
-    });
-    if (modalNav) {
-        modalNav.addEventListener('click', function (e) {
-            var seta = e.target.closest ? e.target.closest('.pc-conex-seta') : null;
-            if (seta && modalLead != null) abrirConexoes(modalLead, parseInt(seta.getAttribute('data-pag'), 10) || 1);
-        });
-    }
-
     // --- Pop-up "acessos" (botão "!", só admin) — hora / ip / destino / aparelho ---
     var COPIA_BTN = '<button type="button" class="pc-copia" title="Copiar destino" aria-label="Copiar destino">' +
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>';
@@ -390,12 +336,6 @@
             aModal.addEventListener('click', function (e) { if (e.target && e.target.hasAttribute && e.target.hasAttribute('data-close')) fecharAcessos(); });
             document.addEventListener('keydown', function (e) { if (e.key === 'Escape') fecharAcessos(); });
         }
-    }
-    if (modal) {
-        modal.addEventListener('click', function (e) {
-            if (e.target && e.target.hasAttribute && e.target.hasAttribute('data-close')) fecharModal();
-        });
-        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') fecharModal(); });
     }
 
     // --- Menu de contexto na linha (botão direito / segurar no celular) ---

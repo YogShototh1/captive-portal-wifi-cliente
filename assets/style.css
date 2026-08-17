@@ -2938,6 +2938,25 @@ html[data-tema="claro"] #hs-prof code { background: rgba(15,23,42,0.07); }
 /* A dica encosta na direita; os dois botões ficam juntos à esquerda. */
 .painel-cliente .hsp-dica { margin: 0 0 0 auto; font-size: 12px; color: rgba(255, 255, 255, 0.45); }
 
+/* Aba Ocupação: os cartões são botões (trocam a lista embaixo, sem recarregar).
+   Herdam .pc-metric — aqui só o que o navegador põe por ser <button>. */
+.painel-cliente .ocp-card {
+    display: block; text-align: left; font: inherit; color: inherit;
+    background: none; border: 0; padding: 0; -webkit-appearance: none; appearance: none;
+}
+.painel-cliente .ocp-card .glow-body { height: 100%; }
+/* Estadia vencida e ainda no Wi-Fi: o roteador derruba na próxima rodada; o
+   selo existe para o caso de ser sempre o mesmo nome (aí é cadastro errado). */
+.painel-cliente .ocp-tag-venc {
+    display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 999px;
+    font-size: 11px; font-weight: 700; white-space: nowrap;
+    background: rgba(248, 113, 113, 0.16); border: 1px solid rgba(248, 113, 113, 0.5); color: #f87171;
+}
+.painel-cliente .ocp-painel .pc-ver-conexoes { display: inline-flex; align-items: center; gap: 6px; }
+html[data-tema="claro"] .painel-cliente .ocp-tag-venc {
+    background: rgba(220, 38, 38, 0.10); border-color: rgba(220, 38, 38, 0.45); color: #b91c1c;
+}
+
 /* Lista do "Hóspede já cadastrado": rolagem própria, item por pessoa. */
 .painel-cliente .hsp-lista {
     display: flex; flex-direction: column; gap: 8px;

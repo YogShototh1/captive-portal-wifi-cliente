@@ -84,11 +84,30 @@ $ok($o['quartos'] === 3, 'quarto com dois hospedes conta UM, e quem saiu nao ocu
 $ok($o['entram_hoje'] === 2, 'check-ins de hoje', 'viu ' . $o['entram_hoje']);
 $ok($o['saem_hoje'] === 1, 'saem hoje', 'viu ' . $o['saem_hoje']);
 $ok($o['saem_amanha'] === 2, 'saem amanha', 'viu ' . $o['saem_amanha']);
-$ok($o['conectados'] === 1, 'no wifi agora conta so quem ainda esta hospedado', 'viu ' . $o['conectados']);
+// "No Wi-Fi agora" e literal: conta quem esta conectado, tenha ou nao passado
+// da hora. O 101 (um dos dois) e o 305, que venceu e nao desconectou.
+$ok($o['conectados'] === 2, 'no wifi agora conta TODO mundo conectado', 'viu ' . $o['conectados']);
 $ok(count($o['vencidos']) === 1 && $o['vencidos'][0]['quarto'] === '305',
     'vencido E conectado entra no aviso', 'viu ' . count($o['vencidos']));
 // Quem foi embora e desligou o Wi-Fi nao e problema de ninguem.
 $ok(!in_array('306', array_column($o['vencidos'], 'quarto'), true), 'quem saiu e desconectou fica de fora');
+
+echo "\ncada cartao tem a sua lista, e o numero e o tamanho dela\n";
+// A tela mostra a lista do cartao clicado: contador que nao bate com a lista
+// embaixo seria pior que nao ter contador.
+foreach (['entram_hoje', 'saem_hoje', 'saem_amanha', 'conectados', 'quartos'] as $k) {
+    $ok($o[$k] === count($o['listas'][$k]), "o numero de '$k' e o tamanho da lista",
+        'viu ' . $o[$k] . ' vs ' . count($o['listas'][$k]));
+}
+// O quarto vaga quando o ULTIMO hospede dele sai.
+$q101 = null;
+foreach ($o['listas']['quartos'] as $q) { if ($q['quarto'] === '101') { $q101 = $q; } }
+$ok($q101 !== null && $q101['hospedes'] === 2, 'o quarto sabe quantos hospedes tem',
+    'viu ' . ($q101 === null ? 'nenhum' : $q101['hospedes']));
+$ok(array_column($o['listas']['quartos'], 'quarto') === ['101', '203', '204'],
+    'quartos em ordem, sem repetir', implode(',', array_column($o['listas']['quartos'], 'quarto')));
+$ok(array_column($o['listas']['saem_hoje'], 'quarto') === ['203'], 'a lista de saem hoje e o 203');
+$ok(array_column($o['listas']['saem_amanha'], 'quarto') === ['101', '101'], 'os dois do 101 saem amanha');
 
 // ---------------------------------------------------------------
 // Seletor "Hospede ja cadastrado": uma linha por PESSOA.
