@@ -852,6 +852,21 @@ footer{background:var(--ink);color:rgba(255,255,255,.5);padding:24px 0 34px;font
     else if (vid.webkitEnterFullscreen) vid.webkitEnterFullscreen();
   });
 })();
+
+/* ---------- ?ref: de qual Wi-Fi veio esta visita ----------
+   A assinatura "Wi-Fi por Captive Data" na tela de destino do hotspot (ig.php)
+   traz ?ref=<8 primeiros dígitos do hash da loja>. Como todo contato acontece
+   pelo WhatsApp, a atribuição vai junto na mensagem — sem cookie, sem analytics,
+   sem backend. O hash é o mesmo que nomeia os arquivos em ads/. */
+(function () {
+  var ref = new URLSearchParams(location.search).get('ref') || '';
+  if (!/^[0-9a-f]{4,16}$/.test(ref)) return;
+  var msg = encodeURIComponent('Olá! Vim pela tela do Wi-Fi (ref ' + ref + ') e quero saber mais sobre o Captive Data.');
+  var links = document.querySelectorAll('a[href^="https://wa.me/"]');
+  for (var i = 0; i < links.length; i++) {
+    links[i].href = links[i].href.split('?')[0] + '?text=' + msg;
+  }
+})();
 </script>
 </body>
 </html>

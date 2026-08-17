@@ -184,6 +184,14 @@ input[type="tel"]:focus{
 }
 .btn-link:hover{color:var(--primary-600);border-bottom-color:currentColor}
 
+/* Assinatura da plataforma: discreta de propósito — a tela é do
+   estabelecimento, não nossa. Menor e mais apagada que o aviso da LGPD. */
+.marca-plataforma{
+  margin-top:14px;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--fg-3);opacity:.6;
+}
+.marca-plataforma b{font-weight:700}
+
 /* ===== Botões genéricos das telas auxiliares (status/logout: input submit) ===== */
 input[type="submit"],
 button:not(.btn-glass):not(.btn-link):not(.btn-secondary):not(.modal-close-btn){

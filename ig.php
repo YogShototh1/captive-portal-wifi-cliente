@@ -151,6 +151,9 @@ h1{font-size:22px;letter-spacing:-.02em;margin-bottom:5px;line-height:1.25}
 .btn-2 svg{width:16px;height:16px}
 .dica{font-size:12px;color:var(--fg2);opacity:.85;margin-top:12px;line-height:1.5;max-width:330px}
 .rodape{margin-top:22px;font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--fg2)}
+.marca-cd{margin-top:18px;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--fg2);opacity:.55;text-decoration:none}
+.marca-cd b{font-weight:700}
 
 /* --- Efeitos ligáveis. Cada flag desligada vira uma classe cd-no-* no <html>,
        igual ao que a tela de login já faz. --- */
@@ -206,6 +209,16 @@ html:not(.cd-no-logoredonda) #cd-logo{border-radius:50%;object-fit:cover}
     <?php if (trim($cfg['rodape']) !== '' || $previa): ?>
     <footer class="rodape" id="cd-rodape"<?= trim($cfg['rodape']) === '' ? ' style="display:none"' : '' ?>><?= h($cfg['rodape']) ?></footer>
     <?php endif; ?>
+
+    <?php
+    // Assinatura da plataforma. É AQUI que ela é clicável, e não na tela de
+    // login: quando esta página abre o hotspot já autenticou, então sair dela
+    // não custa o acesso. O ref é o começo do hash da página (o mesmo que
+    // nomeia os arquivos em ads/) — identifica a loja sem expor o identity.
+    $ref = preg_match('/^[0-9a-f]{40}$/', $hash) === 1 ? substr($hash, 0, 8) : '';
+    ?>
+    <a class="marca-cd" href="https://captivedata.com.br/<?= $ref !== '' ? '?ref=' . h($ref) : '' ?>"
+       target="_blank" rel="noopener">Wi-Fi por <b>Captive Data</b></a>
 
 <script>
 // Copia o @ para a área de transferência (clipboard API + fallback antigo).
