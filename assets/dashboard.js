@@ -177,6 +177,25 @@
         return montarDonut(fatias, horaTop || '—', '');
     }
 
+    // Pousada: no lugar dos dois donuts (dia da semana / horário — hábito de
+    // freguês de loja, que não diz nada sobre quem se hospeda) vai o log das
+    // estadias, mais recente em cima e rolagem para as antigas.
+    function logEstadias(lista) {
+        if (!lista || !lista.length) {
+            return '<p class="dash-log-vazio">Nenhuma estadia registrada ainda.</p>';
+        }
+        var h = '<ul class="dash-log">';
+        for (var i = 0; i < lista.length; i++) {
+            var e = lista[i];
+            var n = parseInt(e.dias, 10) || 0;
+            h += '<li>' +
+                 '<span class="log-datas">' + fmtData(e.entrada_em) + ' <b>&rarr;</b> ' + fmtData(e.saida_em) + '</span>' +
+                 '<span class="log-meta">quarto ' + esc(e.quarto) + ' · ' + n + (n === 1 ? ' diária' : ' diárias') + '</span>' +
+                 '</li>';
+        }
+        return h + '</ul>';
+    }
+
     function ligarDonuts() {
         var wraps = res.querySelectorAll('.dash-donut-wrap');
         for (var i = 0; i < wraps.length; i++) {
@@ -216,15 +235,20 @@
         calAno = hoje.getFullYear();
         calMes = hoje.getMonth();
 
+        var hosp = d.modo === 'hospedagem';
+        var coluna = hosp
+            ? '<div class="dash-card dash-log-card"><span>histórico de estadias</span>' + logEstadias(d.estadias) + '</div>'
+            : '<div class="dash-donuts-col">' +
+                  '<div class="dash-card dash-card-donut"><span>dia da semana que mais frequenta</span>' + donutSemana(d.visitas_por_dia, d.dia_semana) + '</div>' +
+                  '<div class="dash-card dash-card-donut"><span>horário que mais frequenta</span>' + donutHoras(d.faixas_hora, d.hora_top) + '</div>' +
+              '</div>';
+
         res.innerHTML =
             '<p class="dash-titular">' + titular +
             (d.ultima_visita ? ' <small>— última visita ' + fmtData(d.ultima_visita) + '</small>' : '') + '</p>' +
             '<div class="dash-top">' +
                 '<div class="dash-cal-card"><div id="dash-cal"></div></div>' +
-                '<div class="dash-donuts-col">' +
-                    '<div class="dash-card dash-card-donut"><span>dia da semana que mais frequenta</span>' + donutSemana(d.visitas_por_dia, d.dia_semana) + '</div>' +
-                    '<div class="dash-card dash-card-donut"><span>horário que mais frequenta</span>' + donutHoras(d.faixas_hora, d.hora_top) + '</div>' +
-                '</div>' +
+                coluna +
             '</div>' +
             '<div class="dash-grid">' +
             '<div class="dash-card"><span>tempo médio por dia</span><b>' + fmtTempo(d.total_dias > 0 ? Math.round(d.tempo_total / d.total_dias) : 0) + '</b></div>' +

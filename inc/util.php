@@ -1424,6 +1424,83 @@ function hospedes_ocupacao(array $hospedes, ?string $hoje = null, ?string $amanh
     return $r;
 }
 
+// Uma linha por PESSOA para o seletor "Hóspede já cadastrado". Numa conta com
+// vários roteadores o mesmo número tem um cadastro em cada um, e no balcão é
+// uma pessoa só; fica o cadastro de entrada mais recente (é dele que saem o
+// nome atual e a data mostrada). Ordena por nome — a lista é para procurar.
+//
+// Função pura: recebe a lista que a tela já carregou, não vai ao banco.
+function hospedes_unicos(array $hospedes): array
+{
+    $porTel = [];
+    foreach ($hospedes as $g) {
+        $tel = (string) ($g['telefone'] ?? '');
+        if ($tel === '') {
+            continue;
+        }
+        if (!isset($porTel[$tel]) || (string) ($g['entrada_em'] ?? '') > (string) $porTel[$tel]['entrada_em']) {
+            $porTel[$tel] = $g;
+        }
+    }
+    $r = array_values($porTel);
+    usort($r, function ($a, $b) {
+        return strcasecmp((string) ($a['nome'] ?? ''), (string) ($b['nome'] ?? ''));
+    });
+    return $r;
+}
+
+// Registra (ou corrige) a estadia de um check-in. Chamado depois de gravar o
+// hóspede — nunca antes, porque a chave é o id da linha em `hospedes`.
+//
+// A UNIQUE (hospede_id, entrada_em) faz o trabalho: editar o cadastro ou somar
+// uma diária ATUALIZA a estadia daquela data; mudar a data de entrada (hóspede
+// que voltou) abre uma linha nova. Nenhum "é visita nova?" para decidir aqui.
+//
+// Não lança: o hóspede já está salvo e o Wi-Fi dele já funciona. Banco sem a
+// tabela (migração não rodada) não pode derrubar o check-in — mas deixa rastro.
+function estadia_registrar(int $hospedeId, string $roteador, string $telefone, string $nome,
+                           string $quarto, string $entrada, int $dias, string $saida): bool
+{
+    if ($hospedeId <= 0) {
+        return false;
+    }
+    try {
+        $q = db()->prepare(
+            'INSERT INTO estadias (hospede_id, roteador, telefone, nome, quarto, entrada_em, dias, saida_em)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE nome = VALUES(nome), quarto = VALUES(quarto),
+                     dias = VALUES(dias), saida_em = VALUES(saida_em), roteador = VALUES(roteador)'
+        );
+        $q->execute([$hospedeId, $roteador, $telefone, $nome, $quarto, $entrada, $dias, $saida]);
+        return true;
+    } catch (Throwable $e) {
+        error_log('estadia_registrar falhou: ' . $e->getMessage());
+        return false;
+    }
+}
+
+// Estadias de um número, mais recente primeiro. Isolamento pelos roteadores da
+// conta, como todo o resto do painel.
+function estadias_lista(array $roteadores, string $telefone, int $limite = 200): array
+{
+    if (!$roteadores || $telefone === '') {
+        return [];
+    }
+    $ph = implode(',', array_fill(0, count($roteadores), '?'));
+    try {
+        $q = db()->prepare(
+            "SELECT quarto, entrada_em, dias, saida_em FROM estadias
+              WHERE roteador IN ($ph) AND telefone = ?
+              ORDER BY entrada_em DESC LIMIT " . max(1, $limite)
+        );
+        $q->execute(array_merge($roteadores, [$telefone]));
+        return $q->fetchAll();
+    } catch (Throwable $e) {
+        error_log('estadias_lista falhou: ' . $e->getMessage());
+        return [];
+    }
+}
+
 // Filtro dos cartões de resumo ('' = todos | online | hoje | cadastrados).
 // Valida o valor vindo da URL e devolve a condição SQL extra da tabela de
 // leads — MESMOS critérios dos contadores, para a tabela bater com o cartão.

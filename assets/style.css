@@ -1259,6 +1259,30 @@ body.pc-menu-fechado .pc-sidebar { margin-left: calc(-1 * var(--sb-w)); }
 .dash-donuts-col .dash-card { flex: 1; display: flex; flex-direction: column; align-items: center; }
 .dash-donuts-col .dash-card span { align-self: stretch; text-align: left; }
 
+/* Pousada: no lugar da coluna dos dois donuts, o log de estadias. Ocupa o mesmo
+   espaço e ganha a mesma altura do calendário (align-items:stretch do .dash-top);
+   passando disso, a lista rola dentro do cartão — as antigas ficam embaixo. */
+.dash-log-card { flex: 1 1 240px; min-width: 0; display: flex; flex-direction: column; }
+.dash-log {
+    list-style: none; margin: 10px 0 0; padding: 0 6px 0 0;
+    flex: 1 1 auto; min-height: 0; max-height: 300px; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 8px;
+}
+.dash-log li {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+    padding: 8px 12px; border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.10);
+}
+.dash-log .log-datas { font-size: 13.5px; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; }
+.dash-log .log-datas b { color: #22d3ee; font-weight: 700; }
+.dash-log .log-meta { font-size: 12px; color: rgba(255, 255, 255, 0.55); }
+.dash-log-vazio { margin: 10px 0 0; font-size: 13px; color: rgba(255, 255, 255, 0.5); }
+html[data-tema="claro"] .dash-log li { background: rgba(255, 255, 255, 0.55); border-color: rgba(100, 116, 139, 0.24); }
+html[data-tema="claro"] .dash-log .log-datas { color: var(--g-fg); }
+html[data-tema="claro"] .dash-log .log-datas b { color: var(--g-cyan); }
+html[data-tema="claro"] .dash-log .log-meta,
+html[data-tema="claro"] .dash-log-vazio { color: var(--g-fg3); }
+
 /* Calendário de visitas (compacto; visitado = roxo no escuro / rosa no claro) */
 .dash-cal-card {
     flex: 0 0 auto; width: 300px; max-width: 100%; margin: 0; padding: 14px 16px; border-radius: 16px;
@@ -2903,12 +2927,38 @@ html[data-tema="claro"] #hs-prof code { background: rgba(15,23,42,0.07); }
    não existia: barra do botão "Cadastrar hóspede" e a coluna de situação.
    ============================================================ */
 .painel-cliente .hsp-topo {
-    display: flex; align-items: center; justify-content: space-between;
+    display: flex; align-items: center;
     gap: 14px; flex-wrap: wrap; padding: 14px 18px 4px;
 }
-.painel-cliente .hsp-novo { display: inline-flex; align-items: center; gap: 8px; width: auto; margin: 0; }
-.painel-cliente .hsp-novo svg { width: 17px; height: 17px; }
-.painel-cliente .hsp-dica { margin: 0; font-size: 12px; color: rgba(255, 255, 255, 0.45); }
+.painel-cliente .hsp-novo,
+.painel-cliente .hsp-repetir { display: inline-flex; align-items: center; gap: 8px; width: auto; margin: 0; }
+.painel-cliente .hsp-novo svg,
+.painel-cliente .hsp-repetir svg { width: 17px; height: 17px; }
+.painel-cliente .hsp-repetir { cursor: pointer; font-family: inherit; }
+/* A dica encosta na direita; os dois botões ficam juntos à esquerda. */
+.painel-cliente .hsp-dica { margin: 0 0 0 auto; font-size: 12px; color: rgba(255, 255, 255, 0.45); }
+
+/* Lista do "Hóspede já cadastrado": rolagem própria, item por pessoa. */
+.painel-cliente .hsp-lista {
+    display: flex; flex-direction: column; gap: 8px;
+    max-height: 46vh; overflow-y: auto; margin-top: 12px; padding-right: 4px;
+}
+.painel-cliente .hsp-item {
+    display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; text-align: left;
+    padding: 10px 14px; border-radius: 10px; cursor: pointer; font-family: inherit;
+    background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.10);
+    color: #fff; transition: background .15s, border-color .15s;
+}
+.painel-cliente .hsp-item:hover { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.25); }
+.painel-cliente .hsp-item-nome { font-size: 14px; font-weight: 700; }
+.painel-cliente .hsp-item-tel { font-size: 13px; font-variant-numeric: tabular-nums; color: rgba(255, 255, 255, 0.75); }
+.painel-cliente .hsp-item-ult { grid-column: 1 / -1; font-size: 11.5px; color: rgba(255, 255, 255, 0.5); }
+html[data-tema="claro"] .painel-cliente .hsp-item {
+    background: rgba(255, 255, 255, 0.62); border-color: rgba(100, 116, 139, 0.28); color: var(--g-fg);
+}
+html[data-tema="claro"] .painel-cliente .hsp-item:hover { background: rgba(255, 255, 255, 0.9); }
+html[data-tema="claro"] .painel-cliente .hsp-item-tel { color: var(--g-fg2); }
+html[data-tema="claro"] .painel-cliente .hsp-item-ult { color: var(--g-fg3); }
 .painel-cliente td.hsp-quarto { font-weight: 600; font-variant-numeric: tabular-nums; }
 /* Quem ainda está hospedado acende o ponto, igual ao "online" dos leads. */
 .painel-cliente .pc-dot.on { background: #34d399; box-shadow: 0 0 8px rgba(52, 211, 153, 0.9); }

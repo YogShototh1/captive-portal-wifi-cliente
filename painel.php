@@ -112,7 +112,7 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $hospedagem ? 'Painel de Hóspedes' : 'Painel de Leads' ?></title>
     <link rel="icon" href="assets/logo-icone.png?v=1" type="image/png">
-    <link rel="stylesheet" href="assets/style.css?v=135">
+    <link rel="stylesheet" href="assets/style.css?v=136">
 </head>
 <body class="painel-cliente">
     <div class="pc-bg-gradient"></div>
@@ -139,9 +139,10 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                 <?php endif; ?>
                 <?php /* As abas de recorrência não existem na pousada: hóspede não
                          "deixou de vir", ele foi embora — era o combinado. Dashboard,
-                         Alertas, Informações, Relatórios e Estatísticas medem
-                         fidelidade de consumidor de loja e ficariam no menu sem
-                         responder nada. Alertas volta quando tiver aviso de pousada
+                         Alertas, Relatórios e Estatísticas medem fidelidade de
+                         consumidor de loja e ficariam no menu sem responder nada.
+                         Informações fica nas duas: na pousada ela mostra o histórico
+                         de estadias. Alertas volta quando tiver aviso de pousada
                          (estadia vencida ainda conectada, roteador fora do ar). */ ?>
                 <?php if (!$hospedagem): ?>
                 <button type="button" class="pc-side-item" data-aba="dashboard">
@@ -152,10 +153,12 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg>
                     Alertas
                 </button>
+                <?php endif; ?>
                 <button type="button" class="pc-side-item" data-aba="informacoes">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
                     Informações
                 </button>
+                <?php if (!$hospedagem): ?>
                 <button type="button" class="pc-side-item" data-aba="relatorios">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M7 16v-5"/><path d="M12 16V8"/><path d="M17 16v-8"/></svg>
                     Relatórios
@@ -379,16 +382,6 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
             <!-- ============ ABA: ALERTAS ============ -->
             <?php require __DIR__ . '/inc/alertas_tela.php'; ?>
 
-            <!-- ============ ABA: INFORMAÇÕES (hábitos de um lead) ============ -->
-            <section class="pc-tela" data-tela="informacoes">
-                <div class="glow-card pc-dst-card">
-                    <span class="glow-fx" aria-hidden="true"></span>
-                    <div class="glow-body">
-                        <?php $infoEndpoint = 'api/dashboard.php?roteador=' . urlencode((string) $rotAtivo) . ''; require __DIR__ . '/inc/info_tela.php'; ?>
-                    </div>
-                </div>
-            </section>
-
             <!-- ============ ABA: RELATÓRIOS ============ -->
             <section class="pc-tela" data-tela="relatorios">
                 <div class="glow-card pc-dst-card">
@@ -439,7 +432,21 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
                     </div>
                 </div>
             </section>
-            <?php endif; /* !hospedagem: dashboard, alertas, informações, relatórios */ ?>
+            <?php endif; /* !hospedagem: dashboard, alertas, relatórios */ ?>
+
+            <!-- ============ ABA: INFORMAÇÕES (hábitos de um lead / estadias do hóspede) ============ -->
+            <section class="pc-tela" data-tela="informacoes">
+                <div class="glow-card pc-dst-card">
+                    <span class="glow-fx" aria-hidden="true"></span>
+                    <div class="glow-body">
+                        <?php
+                        $infoEndpoint = 'api/dashboard.php?roteador=' . urlencode((string) $rotAtivo);
+                        $infoHosp     = $hospedagem;
+                        require __DIR__ . '/inc/info_tela.php';
+                        ?>
+                    </div>
+                </div>
+            </section>
 
             <?php if ($hospedagem): require __DIR__ . '/inc/ocupacao_tela.php'; endif; ?>
 
@@ -753,12 +760,13 @@ $avisoRoteador = '<section class="glow-card pc-dst-card"><span class="glow-fx" a
     <?php if (!$hospedagem): /* donos das abas que a pousada não tem */ ?>
     <script src="assets/relatorio.js?v=17"></script>
     <script src="assets/alertas.js?v=3"></script>
-    <script src="assets/dashboard.js?v=11"></script>
     <script src="assets/dashgeral.js?v=14"></script>
     <script src="assets/estatisticas.js?v=8"></script>
     <?php endif; ?>
+    <?php /* Informações existe nos dois painéis. */ ?>
+    <script src="assets/dashboard.js?v=12"></script>
     <script src="assets/leads-live.js?v=33"></script>
-    <?php if ($hospedagem): ?><script src="assets/hospedes.js?v=2"></script><?php endif; ?>
+    <?php if ($hospedagem): ?><script src="assets/hospedes.js?v=3"></script><?php endif; ?>
     <?php require __DIR__ . '/inc/tema.php'; ?>
 </body>
 </html>

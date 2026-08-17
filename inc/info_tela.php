@@ -7,12 +7,18 @@
 // contatos) e o RESULTADO (hábitos do contato aberto + botão de voltar). Os ids
 // dash-tel / dash-consultar / dash-erro / dash-resultado são os mesmos de antes
 // — o assets/dashboard.js continua achando tudo onde procurava.
+//
+// $infoHosp (opcional) troca só o texto: na pousada a grade lista hóspedes e o
+// resultado traz o histórico de estadias no lugar dos donuts de frequência.
+$infoHosp = !empty($infoHosp);
 ?>
 <div class="pc-dst" id="dashboard-box" data-endpoint="<?= h($infoEndpoint) ?>">
-    <h2 class="pc-anuncio-title">Informações do lead</h2>
+    <h2 class="pc-anuncio-title"><?= $infoHosp ? 'Informações do hóspede' : 'Informações do lead' ?></h2>
 
     <div id="dash-escolha">
-        <p class="pc-anuncio-desc pc-info-desc">Clique num contato para ver os hábitos de visita dele. Digite acima para filtrar por número ou nome — ou clique com o botão direito num lead na aba Painel e escolha "Informações".</p>
+        <p class="pc-anuncio-desc pc-info-desc"><?= $infoHosp
+            ? 'Clique num hóspede para ver o histórico de estadias e o uso do Wi-Fi dele. Digite acima para filtrar por número ou nome.'
+            : 'Clique num contato para ver os hábitos de visita dele. Digite acima para filtrar por número ou nome — ou clique com o botão direito num lead na aba Painel e escolha "Informações".' ?></p>
         <div class="pc-dst-form pc-info-form">
             <input type="tel" id="dash-tel" class="pc-dst-input" inputmode="numeric" placeholder="Filtrar por número ou nome" aria-label="Filtrar contatos">
             <button type="button" class="pc-btn-primary" id="dash-consultar">Consultar</button>

@@ -90,5 +90,24 @@ $ok(count($o['vencidos']) === 1 && $o['vencidos'][0]['quarto'] === '305',
 // Quem foi embora e desligou o Wi-Fi nao e problema de ninguem.
 $ok(!in_array('306', array_column($o['vencidos'], 'quarto'), true), 'quem saiu e desconectou fica de fora');
 
+// ---------------------------------------------------------------
+// Seletor "Hospede ja cadastrado": uma linha por PESSOA.
+// (hospedes_unicos entra no mesmo eval do bloco acima.)
+echo "\nlista do 'hospede ja cadastrado'\n";
+$u = hospedes_unicos([
+    $hosp(['nome' => 'Bruno', 'telefone' => '48911111111', 'quarto' => '10', 'entrada_em' => '2026-08-01']),
+    $hosp(['nome' => 'Ana',   'telefone' => '48922222222', 'quarto' => '11', 'entrada_em' => '2026-07-01']),
+    // Mesma pessoa noutro roteador da conta, e com a estadia mais nova.
+    $hosp(['nome' => 'Bruno', 'telefone' => '48911111111', 'quarto' => '20', 'entrada_em' => '2026-08-10']),
+    $hosp(['nome' => '',      'telefone' => '',            'quarto' => '99', 'entrada_em' => '2026-08-11']),
+]);
+$ok(count($u) === 2, 'mesmo numero em dois roteadores vira UMA pessoa', 'viu ' . count($u));
+$ok($u[0]['nome'] === 'Ana' && $u[1]['nome'] === 'Bruno', 'ordenado por nome',
+    'viu ' . implode(',', array_column($u, 'nome')));
+// Vence a entrada mais recente: e dela que sai a data mostrada no item.
+$ok($u[1]['entrada_em'] === '2026-08-10', 'fica o cadastro de entrada mais recente', 'viu ' . $u[1]['entrada_em']);
+$ok(!in_array('99', array_column($u, 'quarto'), true), 'cadastro sem telefone fica de fora');
+$ok(hospedes_unicos([]) === [], 'lista vazia nao quebra');
+
 echo "\n" . ($falhas ? "$falhas FALHA(S)\n" : "tudo certo\n");
 exit($falhas ? 1 : 0);

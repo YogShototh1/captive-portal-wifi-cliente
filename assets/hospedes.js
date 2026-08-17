@@ -57,13 +57,15 @@
         if (el) el.addEventListener('input', previa);
     });
 
-    function abrir(tr) {
+    // tr = linha da tabela (editar) ou null (cadastro novo). `pre` só existe na
+    // volta de um hóspede: nome e número vêm prontos, o resto é check-in novo.
+    function abrir(tr, pre) {
         if (!modal) return;
         editId = tr ? tr.getAttribute('data-id') : null;
-        if (elTit) elTit.textContent = tr ? 'Editar hóspede' : 'Cadastrar hóspede';
-        if (elNome) elNome.value = tr ? (tr.getAttribute('data-nome') || '') : '';
+        if (elTit) elTit.textContent = tr ? 'Editar hóspede' : (pre ? 'Nova estadia' : 'Cadastrar hóspede');
+        if (elNome) elNome.value = tr ? (tr.getAttribute('data-nome') || '') : ((pre && pre.nome) || '');
         if (elQto)  elQto.value  = tr ? (tr.getAttribute('data-quarto') || '') : '';
-        if (elTel)  elTel.value  = tr ? (tr.getAttribute('data-tel') || '') : '';
+        if (elTel)  elTel.value  = tr ? (tr.getAttribute('data-tel') || '') : ((pre && pre.tel) || '');
         if (elEnt)  elEnt.value  = tr ? (tr.getAttribute('data-entrada') || hoje()) : hoje();
         if (elDias) elDias.value = tr ? (tr.getAttribute('data-dias') || '1') : '1';
         if (elHora) elHora.value = tr ? (tr.getAttribute('data-hora') || '12:00') : '12:00';
@@ -72,7 +74,10 @@
         previa();
         modal.classList.add('aberto');
         modal.setAttribute('aria-hidden', 'false');
-        if (elNome) elNome.focus();
+        // Volta de hóspede: nome e número já estão certos, o cursor vai para o
+        // primeiro campo que a recepção tem de digitar.
+        var foco = pre && !tr ? elQto : elNome;
+        if (foco) foco.focus();
     }
     function fechar() {
         if (modal) { modal.classList.remove('aberto'); modal.setAttribute('aria-hidden', 'true'); }
@@ -86,6 +91,52 @@
     }
     var btnNovo = document.getElementById('hsp-novo');
     if (btnNovo) btnNovo.addEventListener('click', function () { abrir(null); });
+
+    // --- "Hóspede já cadastrado": escolher quem volta ---
+    //
+    // A lista já veio no HTML (o painel carrega os hóspedes de qualquer jeito),
+    // então filtrar é esconder linha — nada de ida ao servidor a cada tecla.
+    var lModal = document.getElementById('hsp-lista-modal');
+    var lBusca = document.getElementById('hsp-busca');
+    var lLista = document.getElementById('hsp-lista');
+    var lVazia = document.getElementById('hsp-lista-vazia');
+    var btnRep = document.getElementById('hsp-repetir');
+
+    function lFechar() {
+        if (!lModal) return;
+        lModal.classList.remove('aberto');
+        lModal.setAttribute('aria-hidden', 'true');
+    }
+    function lFiltrar() {
+        if (!lLista) return;
+        var q = ((lBusca && lBusca.value) || '').trim().toLowerCase();
+        var itens = lLista.querySelectorAll('.hsp-item');
+        var vis = 0;
+        for (var i = 0; i < itens.length; i++) {
+            var bate = !q || (itens[i].getAttribute('data-busca') || '').indexOf(q) >= 0;
+            itens[i].style.display = bate ? '' : 'none';
+            if (bate) vis++;
+        }
+        if (lVazia) lVazia.style.display = (itens.length && !vis) ? '' : 'none';
+    }
+    if (btnRep && lModal) {
+        btnRep.addEventListener('click', function () {
+            if (lBusca) lBusca.value = '';
+            lFiltrar();
+            lModal.classList.add('aberto');
+            lModal.setAttribute('aria-hidden', 'false');
+            if (lBusca) lBusca.focus();
+        });
+        lModal.addEventListener('click', function (e) {
+            if (e.target && e.target.hasAttribute && e.target.hasAttribute('data-close')) { lFechar(); return; }
+            var it = e.target.closest ? e.target.closest('.hsp-item') : null;
+            if (!it) return;
+            lFechar();
+            abrir(null, { nome: it.getAttribute('data-nome') || '', tel: it.getAttribute('data-tel') || '' });
+        });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') lFechar(); });
+    }
+    if (lBusca) lBusca.addEventListener('input', lFiltrar);
 
     if (btnSalv) {
         btnSalv.addEventListener('click', function () {

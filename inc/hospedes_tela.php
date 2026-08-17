@@ -41,6 +41,12 @@ $hoje = date('Y-m-d');
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
                 Cadastrar hóspede
             </button>
+            <?php /* Quem já se hospedou: nome e número saem da lista, a recepção
+                     só digita quarto, data e diárias. */ ?>
+            <button type="button" class="pc-btn hsp-repetir" id="hsp-repetir">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 2v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 8"/></svg>
+                Hóspede já cadastrado
+            </button>
             <p class="hsp-dica">Clique com o botão direito num hóspede para editar ou apagar.</p>
         </div>
         <div class="pc-table-wrap" id="hospedes-live"

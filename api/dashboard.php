@@ -30,6 +30,15 @@ if ($isAdmin) {
     }
 }
 
+// Pousada ou loja. Vem do ROTEADOR, não da conta: o admin abre esta tela com
+// ?roteador= e sem cliente_id, e roteador_modo() já resolve o caso do MikroTik
+// compartilhado entre contas. Na pousada a grade lista HÓSPEDES (é lá que está
+// o nome) e o resultado ganha o log de estadias no lugar dos dois donuts.
+$hosp = false;
+foreach ($lista as $r) {
+    if (roteador_modo((string) $r) === 'hospedagem') { $hosp = true; break; }
+}
+
 // --- Lista de leads para a grade de escolha (?f=lista) -------------------
 //
 // Mesma autenticação e o mesmo isolamento do resto do arquivo — por isso mora
@@ -58,8 +67,13 @@ if ((string) ($_GET['f'] ?? '') === 'lista') {
         $args = array_merge($args, [$like, $like]);
     }
 
+    // Pousada: a grade sai de `hospedes` (quem a recepção cadastrou), loja: de
+    // `leads`. Os dois nomes são literais nossos, não entram por parâmetro.
+    $tab  = $hosp ? 'hospedes' : 'leads';
+    $data = $hosp ? 'entrada_em' : 'conectado_em';
+
     try {
-        $qt = db()->prepare("SELECT COUNT(DISTINCT telefone) FROM leads WHERE roteador IN ($ph)$cond");
+        $qt = db()->prepare("SELECT COUNT(DISTINCT telefone) FROM $tab WHERE roteador IN ($ph)$cond");
         $qt->execute($args);
         $total   = (int) $qt->fetchColumn();
         $paginas = max(1, (int) ceil($total / $POR_PAG));
@@ -68,8 +82,8 @@ if ((string) ($_GET['f'] ?? '') === 'lista') {
         // MAX(nome): numa conta com vários roteadores só um dos registros costuma
         // ter o apelido; MAX ignora NULL e traz o que existir.
         $ql = db()->prepare(
-            "SELECT telefone, MAX(nome) AS nome, MAX(conectado_em) AS ultima
-               FROM leads WHERE roteador IN ($ph)$cond
+            "SELECT telefone, MAX(nome) AS nome, MAX($data) AS ultima
+               FROM $tab WHERE roteador IN ($ph)$cond
               GROUP BY telefone
               ORDER BY ultima DESC
               LIMIT $POR_PAG OFFSET " . (($pagina - 1) * $POR_PAG)
@@ -97,7 +111,7 @@ try {
     $q = db()->prepare("SELECT id, nome FROM leads WHERE roteador IN ($ph) AND telefone = ?");
     $q->execute(array_merge($lista, [$tel]));
     $leadsDoTel = $q->fetchAll();
-    if (!$leadsDoTel) {
+    if (!$leadsDoTel && !$hosp) {
         http_response_code(404);
         exit(json_encode(['ok' => false, 'erro' => 'Nenhum lead com esse número.']));
     }
@@ -105,6 +119,18 @@ try {
     $nome = null;
     foreach ($leadsDoTel as $r) {
         if ($r['nome'] !== null && $r['nome'] !== '') { $nome = (string) $r['nome']; break; }
+    }
+    // Hóspede cadastrado que ainda não conectou não tem lead: a tela abre do
+    // mesmo jeito, com o histórico de estadias e o resto zerado. O id 0 não
+    // existe em `leads`, então as consultas de conexão devolvem vazio sozinhas.
+    if ($hosp) {
+        if (!$ids) { $ids = [0]; }
+        if ($nome === null) {
+            $qh = db()->prepare("SELECT nome FROM hospedes WHERE roteador IN ($ph) AND telefone = ? LIMIT 1");
+            $qh->execute(array_merge($lista, [$tel]));
+            $n = $qh->fetchColumn();
+            if ($n !== false && $n !== '') { $nome = (string) $n; }
+        }
     }
     $phi = implode(',', array_fill(0, count($ids), '?'));
 
@@ -184,6 +210,9 @@ try {
 
     echo json_encode([
         'ok'            => true,
+        'modo'          => $hosp ? 'hospedagem' : 'varejo',
+        // Só na pousada: entrou, saiu, quarto e diárias de cada visita.
+        'estadias'      => $hosp ? estadias_lista($lista, $tel) : [],
         'telefone'      => $tel,
         'nome'          => $nome,
         'total_dias'    => count($datas),

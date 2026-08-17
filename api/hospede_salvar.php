@@ -88,6 +88,7 @@ try {
                     entrada_em = ?, dias = ?, saida_em = ? WHERE id = ?'
         );
         $u->execute([$roteador, $nome, $quarto, $telefone, $entrada, $dias, $saida, $id]);
+        estadia_registrar($id, $roteador, $telefone, $nome, $quarto, $entrada, $dias, $saida);
         exit(json_encode(['ok' => true, 'id' => $id]));
     }
 
@@ -101,7 +102,15 @@ try {
                  entrada_em = VALUES(entrada_em), dias = VALUES(dias), saida_em = VALUES(saida_em)'
     );
     $ins->execute([$roteador, $nome, $quarto, $telefone, $entrada, $dias, $saida]);
-    echo json_encode(['ok' => true, 'id' => (int) db()->lastInsertId()]);
+
+    // lastInsertId() só vale quando a linha é NOVA: no ramo ON DUPLICATE KEY
+    // UPDATE o MySQL não toca o AUTO_INCREMENT e devolve 0. E é justamente esse
+    // ramo (hóspede que voltou) que precisa do id para gravar a estadia.
+    $sel = db()->prepare('SELECT id FROM hospedes WHERE roteador = ? AND telefone = ?');
+    $sel->execute([$roteador, $telefone]);
+    $novoId = (int) $sel->fetchColumn();
+    estadia_registrar($novoId, $roteador, $telefone, $nome, $quarto, $entrada, $dias, $saida);
+    echo json_encode(['ok' => true, 'id' => $novoId]);
 } catch (Throwable $e) {
     http_response_code(500);
     exit(json_encode(['ok' => false, 'erro' => 'Falha ao salvar. Banco atualizado? Rode tools/migrar_hospedagem.php.']));
