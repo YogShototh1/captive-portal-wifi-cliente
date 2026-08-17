@@ -287,3 +287,8 @@ a:hover{color:var(--primary-600)}
   .brand-mark{width:54px;height:54px}
   .brand-mark svg{width:27px;height:27px}
 }
+
+/* Documentos de LGPD (Termos e Política): texto puro vindo do painel, com as
+   quebras preservadas. O comprador escreve num textarea; o pre-wrap é o que
+   faz o que ele digitou aparecer igual aqui. */
+.lgpd-doc{white-space:pre-wrap;line-height:1.6;font-size:14px}

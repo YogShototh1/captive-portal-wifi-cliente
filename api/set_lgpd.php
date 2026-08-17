@@ -1,5 +1,6 @@
 <?php
-// Salva os dois textos de LGPD da tela de login, por roteador.
+// Salva os dois documentos de LGPD do portal (Termos de Uso e Política de
+// Privacidade), por roteador.
 // Mesmo isolamento do set_dst.php: o roteador do POST é validado contra a lista
 // da conta (cliente) ou do cliente aberto (admin) — nunca um identity qualquer.
 require_once __DIR__ . '/../inc/auth.php';
@@ -33,16 +34,16 @@ if ($roteador === '') {
     voltar_msg($voltar, 'lgpd_erro', 'Este cliente não tem roteador vinculado.');
 }
 
-$aviso = (string) ($_POST['lgpd_aviso'] ?? '');
-$fins  = (string) ($_POST['lgpd_finalidades'] ?? '');
+$termos = (string) ($_POST['lgpd_termos'] ?? '');
+$priv   = (string) ($_POST['lgpd_privacidade'] ?? '');
 
-// Teto generoso, mas teto: o texto vai para a flash do roteador dentro do
-// tema.js, e a flash do hEX tem 16 MB no total.
-if (mb_strlen($aviso) > 900 || mb_strlen($fins) > 900) {
-    voltar_msg($voltar, 'lgpd_erro', 'Texto muito longo (máx. 900 caracteres em cada campo).');
+// Teto generoso, mas teto: os dois textos vão para a flash do roteador dentro
+// do tema.js, e a flash do hEX tem 16 MB no total.
+if (mb_strlen($termos) > LGPD_MAX || mb_strlen($priv) > LGPD_MAX) {
+    voltar_msg($voltar, 'lgpd_erro', 'Documento muito longo (máx. ' . LGPD_MAX . ' caracteres em cada um).');
 }
 
-if (!lgpd_set($roteador, $aviso, $fins)) {
-    voltar_msg($voltar, 'lgpd_erro', 'Não foi possível salvar os textos.');
+if (!lgpd_set($roteador, $termos, $priv)) {
+    voltar_msg($voltar, 'lgpd_erro', 'Não foi possível salvar os documentos.');
 }
-voltar_msg($voltar, 'lgpd_ok', 'Textos salvos. O roteador aplica em até 1 minuto.');
+voltar_msg($voltar, 'lgpd_ok', 'Documentos salvos. O roteador aplica em até 1 minuto.');

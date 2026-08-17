@@ -180,24 +180,26 @@
                 <h2>Termos de Uso</h2>
                 <button type="button" class="modal-close-btn" onclick="closeModal('terms')" aria-label="Fechar modal">&times;</button>
             </header>
-            <div class="modal-body">
-                <h3>1. O serviço</h3>
-                <p>Este estabelecimento oferece acesso gratuito à internet via Wi-Fi. Em contrapartida, o acesso é liberado mediante o fornecimento do seu número de celular e a exibição de um anúncio antes da conexão.</p>
+            <!-- O texto vem do painel (window.LGPD.termos), escrito com
+                 textContent em #lgpd-termos. O que está aqui dentro é o padrão
+                 do varejo, mostrado só se o painel não responder. -->
+            <div class="modal-body"><div class="lgpd-doc" id="lgpd-termos">1. O serviço
+Este estabelecimento oferece acesso gratuito à internet via Wi-Fi. Em contrapartida, o acesso é liberado mediante o fornecimento do seu número de celular e a exibição de um anúncio antes da conexão.
 
-                <h3>2. Aceite e consentimento</h3>
-                <p>Ao informar seu número e tocar em "Liberar WiFi", você declara que leu e aceitou estes Termos de Uso e a Política de Privacidade, e <strong>consente</strong> com a coleta e o uso do seu número de celular para as finalidades descritas na Política — incluindo o recebimento de contatos comerciais do estabelecimento, inclusive por WhatsApp.</p>
+2. Aceite e consentimento
+Ao informar seu número e tocar em "Liberar WiFi", você declara que leu e aceitou estes Termos de Uso e a Política de Privacidade.
 
-                <h3>3. Veracidade dos dados</h3>
-                <p>Você se compromete a informar um número de celular verdadeiro e de sua titularidade. Números inválidos ou de terceiros podem ter o acesso recusado ou encerrado.</p>
+3. Veracidade dos dados
+Você se compromete a informar um número de celular verdadeiro e de sua titularidade.
 
-                <h3>4. Uso responsável da rede</h3>
-                <p>O usuário se compromete a utilizar a rede de forma ética e responsável, respeitando as leis vigentes e os direitos de terceiros. É proibido usar a rede para atividades ilegais, difamatórias, invasivas, distribuição de malware ou violação de direitos autorais.</p>
+4. Uso responsável da rede
+É proibido usar a rede para atividades ilegais, difamatórias, invasivas, distribuição de malware ou violação de direitos autorais.
 
-                <h3>5. Limites de uso e suspensão</h3>
-                <p>O estabelecimento pode aplicar limites de tempo de uso diário e de velocidade por aparelho, e pode suspender ou bloquear o acesso de qualquer dispositivo que faça uso indevido da rede ou viole estes termos.</p>
+5. Limites de uso e suspensão
+O estabelecimento pode aplicar limites de uso e suspender o acesso de quem violar estes termos.
 
-                <h3>6. Disponibilidade</h3>
-                <p>O serviço é fornecido no estado em que se encontra, sem garantia de velocidade mínima, estabilidade ou disponibilidade ininterrupta da conexão.</p>
+6. Disponibilidade
+O serviço é fornecido no estado em que se encontra, sem garantia de velocidade mínima ou disponibilidade ininterrupta.</div>
             </div>
             <footer class="modal-footer">
                 <button type="button" class="btn-secondary" onclick="closeModal('terms')">Fechar</button>
@@ -212,27 +214,27 @@
                 <h2>Política de Privacidade</h2>
                 <button type="button" class="modal-close-btn" onclick="closeModal('privacy')" aria-label="Fechar modal">&times;</button>
             </header>
-            <div class="modal-body">
-                <h3>1. Quais dados coletamos</h3>
-                <p>Ao usar este Wi-Fi, coletamos: o <strong>número de celular</strong> que você informa, o endereço MAC e o tipo/sistema do seu aparelho, o endereço IP atribuído e as datas, horários e duração das suas conexões.</p>
+            <!-- Idem: window.LGPD.privacidade escreve aqui. -->
+            <div class="modal-body"><div class="lgpd-doc" id="lgpd-privacidade">1. Quais dados coletamos
+Ao usar este Wi-Fi, coletamos: o número de celular que você informa, o endereço MAC e o tipo do seu aparelho, o endereço IP atribuído e as datas, horários e duração das suas conexões.
 
-                <h3>2. Para que usamos (finalidades)</h3>
-                <p id="lgpd-finalidades">(a) liberar e administrar o seu acesso ao Wi-Fi, inclusive aplicar limites de uso; (b) registrar sua visita como <strong>contato comercial (lead) do estabelecimento</strong>; (c) permitir que o estabelecimento entre em contato com você para fins comerciais e promocionais, <strong>inclusive por WhatsApp</strong>, telefone ou SMS; (d) segurança da rede e cumprimento de obrigações legais.</p>
+2. Para que usamos (finalidades)
+(a) liberar e administrar o seu acesso ao Wi-Fi; (b) registrar sua visita como contato do estabelecimento; (c) permitir contato comercial, inclusive por WhatsApp; (d) segurança da rede e obrigações legais.
 
-                <h3>3. Base legal e consentimento (LGPD)</h3>
-                <p>O tratamento é feito com fundamento no seu <strong>consentimento</strong> (art. 7º, I, da Lei nº 13.709/2018 — LGPD), manifestado ao informar seu número e tocar em "Liberar WiFi". Registros de conexão também podem ser mantidos para cumprimento de obrigação legal.</p>
+3. Base legal e consentimento (LGPD)
+O tratamento é feito com fundamento no seu consentimento (art. 7º, I, da Lei nº 13.709/2018).
 
-                <h3>4. Quem trata os dados</h3>
-                <p>O <strong>controlador</strong> dos dados é o estabelecimento que oferece este Wi-Fi. A plataforma Captive Data atua como <strong>operadora</strong>, armazenando os dados de forma segura por conta e ordem do estabelecimento. Seus dados não são vendidos nem compartilhados com terceiros estranhos a esta operação, salvo obrigação legal ou ordem de autoridade competente.</p>
+4. Quem trata os dados
+O controlador é o estabelecimento que oferece este Wi-Fi. A plataforma Captive Data atua como operadora, por conta e ordem dele.
 
-                <h3>5. Por quanto tempo guardamos</h3>
-                <p>Os dados de contato e de conexão são mantidos por até <strong>6 (seis) meses</strong> a contar da sua última conexão e depois são excluídos, salvo prazo maior exigido por lei.</p>
+5. Por quanto tempo guardamos
+Até 6 (seis) meses a contar da sua última conexão, salvo prazo maior exigido por lei.
 
-                <h3>6. Seus direitos</h3>
-                <p>Nos termos do art. 18 da LGPD, você pode, a qualquer momento: confirmar a existência de tratamento, acessar e corrigir seus dados, solicitar a exclusão, e <strong>revogar o consentimento</strong> — inclusive pedir para não receber mais contatos (opt-out). Para exercer esses direitos, fale diretamente com o estabelecimento onde você usou o Wi-Fi.</p>
+6. Seus direitos
+Você pode acessar, corrigir, excluir seus dados e revogar o consentimento. Fale com o estabelecimento onde usou o Wi-Fi.
 
-                <h3>7. Segurança</h3>
-                <p>Adotamos medidas técnicas e administrativas para proteger seus dados contra acessos não autorizados, perda ou alteração, em conformidade com a LGPD e demais legislações brasileiras aplicáveis.</p>
+7. Segurança
+Adotamos medidas técnicas e administrativas para proteger seus dados, em conformidade com a LGPD.</div>
             </div>
             <footer class="modal-footer">
                 <button type="button" class="btn-secondary" onclick="closeModal('privacy')">Fechar</button>
@@ -395,10 +397,15 @@
         function aplicarLgpd() {
             var L = window.LGPD;
             if (!L || typeof L !== 'object') return;
-            var a = document.getElementById('lgpd-aviso');
-            if (a && typeof L.aviso === 'string' && L.aviso) a.textContent = L.aviso;
-            var f = document.getElementById('lgpd-finalidades');
-            if (f && typeof L.finalidades === 'string' && L.finalidades) f.textContent = L.finalidades;
+            [['lgpd-aviso', 'aviso'],
+             ['lgpd-termos', 'termos'],
+             ['lgpd-privacidade', 'privacidade']].forEach(function (par) {
+                var el = document.getElementById(par[0]);
+                var txt = L[par[1]];
+                // textContent, nunca innerHTML: o texto e digitado no painel e
+                // renderizado no aparelho de quem chega.
+                if (el && typeof txt === 'string' && txt) el.textContent = txt;
+            });
         }
         aplicarLgpd();
 

@@ -1,4 +1,7 @@
 <?php
+// Textos de LGPD do portal (dois documentos longos, editaveis por roteador).
+require_once __DIR__ . '/lgpd.php';
+
 // Helpers compartilhados.
 
 // Escapa texto para HTML.
@@ -1379,86 +1382,6 @@ function hospedes_resumo(array $roteadores): array
         }
     }
     return $r;
-}
-
-// --- Textos de LGPD da tela de login ---------------------------------------
-//
-// Dois textos, e só dois: o AVISO que aparece embaixo do botão (o único que o
-// cliente lê de verdade) e as FINALIDADES da política (o item que diz para que
-// o número será usado — o coração jurídico e a única parte que muda de um
-// negócio para outro). O resto da política e os Termos são iguais em qualquer
-// estabelecimento e continuam no login.html.
-//
-// O padrão muda com o tipo de painel porque a frase do varejo é FALSA numa
-// pousada: lá o número não vira contato comercial, ele é a chave que libera o
-// acesso de quem fez check-in. Consentimento obtido com descrição errada não
-// vale nada.
-function lgpd_padrao(string $modo): array
-{
-    if ($modo === 'hospedagem') {
-        return [
-            'aviso' => 'Ao prosseguir, você concorda que o número informado no check-in seja usado para liberar e administrar o seu acesso ao Wi-Fi durante a sua hospedagem.',
-            'finalidades' => '(a) conferir se o número informado corresponde a uma hospedagem ativa e liberar o seu acesso ao Wi-Fi; (b) administrar esse acesso enquanto durar a sua estadia, inclusive aplicar limites de velocidade; (c) segurança da rede e cumprimento de obrigações legais. O seu número não é usado para contato comercial nem para publicidade.',
-        ];
-    }
-    return [
-        'aviso' => 'Ao prosseguir, você consente que seu número seja registrado como contato do estabelecimento e usado para contato comercial, inclusive por WhatsApp.',
-        'finalidades' => '(a) liberar e administrar o seu acesso ao Wi-Fi, inclusive aplicar limites de uso; (b) registrar sua visita como contato comercial (lead) do estabelecimento; (c) permitir que o estabelecimento entre em contato com você para fins comerciais e promocionais, inclusive por WhatsApp, telefone ou SMS; (d) segurança da rede e cumprimento de obrigações legais.',
-    ];
-}
-
-function lgpd_file(string $roteador): string
-{
-    return anuncio_base($roteador) . '.lgpd';
-}
-
-// Texto em uso: o que o comprador escreveu, ou o padrão do tipo de painel.
-function lgpd_get(string $roteador): array
-{
-    $def = lgpd_padrao(roteador_modo($roteador));
-    if (trim($roteador) === '') { return $def; }
-    $j = json_decode((string) @file_get_contents(lgpd_file($roteador)), true);
-    if (!is_array($j)) { return $def; }
-    $out = $def;
-    foreach (['aviso', 'finalidades'] as $k) {
-        // Vazio = "usar o padrão". É assim que o comprador desfaz a alteração
-        // dele sem precisar lembrar o texto original.
-        if (isset($j[$k]) && is_string($j[$k]) && trim($j[$k]) !== '') {
-            $out[$k] = lgpd_limpa($j[$k]);
-        }
-    }
-    return $out;
-}
-
-// Texto puro, sempre. Ele é escrito na tela do hotspot, então HTML aqui seria
-// injeção na página do portal — e o portal roda no aparelho de quem chega, não
-// no do comprador.
-function lgpd_limpa(string $t): string
-{
-    $t = strip_tags($t);
-    $t = str_replace(["\r", "\n", "\t"], ' ', $t);
-    $t = preg_replace('/\s+/u', ' ', $t);
-    return trim(mb_substr((string) $t, 0, 900));
-}
-
-function lgpd_set(string $roteador, string $aviso, string $finalidades): bool
-{
-    if (trim($roteador) === '') { return false; }
-    $def = lgpd_padrao(roteador_modo($roteador));
-    $j = [];
-    // Igual ao padrão? Não grava — assim o arquivo só existe quando há mesmo
-    // uma escolha, e o padrão pode melhorar depois sem ficar congelado.
-    if (trim($aviso) !== '' && lgpd_limpa($aviso) !== $def['aviso']) {
-        $j['aviso'] = lgpd_limpa($aviso);
-    }
-    if (trim($finalidades) !== '' && lgpd_limpa($finalidades) !== $def['finalidades']) {
-        $j['finalidades'] = lgpd_limpa($finalidades);
-    }
-    if (!$j) {
-        @unlink(lgpd_file($roteador));
-        return true;
-    }
-    return @file_put_contents(lgpd_file($roteador), json_encode($j, JSON_UNESCAPED_UNICODE)) !== false;
 }
 
 // Ocupação do dia, a partir da lista que a tela já carregou — sem ida extra ao
