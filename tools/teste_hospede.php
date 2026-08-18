@@ -128,5 +128,45 @@ $ok($u[1]['entrada_em'] === '2026-08-10', 'fica o cadastro de entrada mais recen
 $ok(!in_array('99', array_column($u, 'quarto'), true), 'cadastro sem telefone fica de fora');
 $ok(hospedes_unicos([]) === [], 'lista vazia nao quebra');
 
+// ---------------------------------------------------------------
+// Coluna "Banda" da tabela de hospedes.
+//
+// A banda mora nos LEADS do telefone, nao no hospede: a celula so pode abrir
+// para edicao quando a linha carrega os ids desses leads. O perigo e o
+// data-id da linha ser o do HOSPEDE — mandar esse numero para set_banda.php
+// gravaria limite no lead de outra pessoa.
+function h(?string $v): string { return htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8'); }
+function fmt_bytes($b): string { return $b ? round($b / 1048576, 1) . ' MB' : '-'; }
+
+$hResumo = ['hospedados' => 1, 'saem_hoje' => 0, 'total' => 3];
+$rotAtivo = 'POUSADA'; $csrf = 'x'; $hspCliente = 0;
+$linha = function (array $a): array {
+    return array_merge(['id' => 0, 'roteador' => 'POUSADA', 'nome' => 'x', 'quarto' => '1',
+                        'telefone' => '48999999999', 'entrada_em' => '2026-08-14',
+                        'dias' => 1, 'saida_em' => '2026-08-15 12:00:00', 'hospedado' => 1,
+                        'bytes' => 0, 'online' => 0, 'lead_ids' => '', 'banda' => null], $a);
+};
+$hospedes = [
+    $linha(['id' => 77, 'nome' => 'Com lead',       'lead_ids' => '901,902', 'banda' => 10]),
+    $linha(['id' => 78, 'nome' => 'Sem limite',     'lead_ids' => '903']),
+    $linha(['id' => 79, 'nome' => 'Nunca conectou']),
+];
+ob_start();
+require __DIR__ . '/../inc/hospedes_tela.php';
+$html = (string) ob_get_clean();
+preg_match_all('/<tr data-id="(\d+)"\s+data-ids="([^"]*)"\s+data-banda="([^"]*)"/', $html, $m, PREG_SET_ORDER);
+
+echo "\ncoluna da banda na tabela de hospedes\n";
+$ok(count($m) === 3, 'as tres linhas saem com data-ids e data-banda', 'viu ' . count($m));
+$ok(($m[0][2] ?? '') === '901,902', 'a linha leva os ids dos LEADS', $m[0][2] ?? '');
+$ok(($m[0][1] ?? '') !== ($m[0][2] ?? ''), 'data-ids nunca e o data-id do hospede');
+$ok(($m[2][2] ?? 'x') === '', 'hospede que nunca conectou fica sem ids');
+$ok(substr_count($html, 'class="pc-banda"') === 2, 'so as linhas com lead abrem para edicao',
+    'viu ' . substr_count($html, 'class="pc-banda"'));
+$ok(strpos($html, '>10 Mbps<') !== false, 'mostra a banda gravada');
+$ok(substr_count($html, '>sem limite<') === 1, 'lead sem banda mostra "sem limite"');
+// Cabecalho e linha vazia contam as MESMAS colunas, senao a tabela torce.
+$ok(substr_count($html, '<th>') === 9, 'nove colunas no cabecalho', 'viu ' . substr_count($html, '<th>'));
+
 echo "\n" . ($falhas ? "$falhas FALHA(S)\n" : "tudo certo\n");
 exit($falhas ? 1 : 0);

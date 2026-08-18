@@ -196,6 +196,11 @@
         ctx.style.left = Math.max(8, Math.min(x, window.innerWidth - ctx.offsetWidth - 8)) + 'px';
         ctx.style.top  = Math.max(8, Math.min(y, window.innerHeight - ctx.offsetHeight - 8)) + 'px';
     }
+    // A celula da banda tem edicao propria (assets/inline-edit.js): um clique
+    // abre o campo. Sem esta guarda o duplo clique abriria o campo E o modal do
+    // hospede por cima dele, e o toque longo faria o mesmo no celular.
+    function naBanda(e) { return !!(e.target.closest && e.target.closest('.pc-banda')); }
+
     if (tbody) {
         tbody.addEventListener('contextmenu', function (e) {
             var tr = e.target.closest ? e.target.closest('tr[data-id]') : null;
@@ -207,7 +212,7 @@
         var lp = null;
         tbody.addEventListener('touchstart', function (e) {
             var tr = e.target.closest ? e.target.closest('tr[data-id]') : null;
-            if (!tr || e.touches.length !== 1) return;
+            if (!tr || e.touches.length !== 1 || naBanda(e)) return;
             var t = e.touches[0], tx = t.clientX, ty = t.clientY;
             lp = setTimeout(function () { lp = null; ctxAbrir(tr, tx, ty); }, 550);
         }, { passive: true });
@@ -217,7 +222,7 @@
         // Duplo clique também edita — atalho de quem usa mouse o dia inteiro.
         tbody.addEventListener('dblclick', function (e) {
             var tr = e.target.closest ? e.target.closest('tr[data-id]') : null;
-            if (tr) abrir(tr);
+            if (tr && !naBanda(e)) abrir(tr);
         });
     }
     document.addEventListener('click', function (e) {

@@ -4,8 +4,6 @@
     var root = document.getElementById('leads-live');
     if (!root) return;
     var EP_LEADS    = root.getAttribute('data-endpoint');
-    var EP_LIMITE   = root.getAttribute('data-limite-endpoint');
-    var EP_BANDA    = root.getAttribute('data-banda-endpoint');
     var EP_ACESSOS  = root.getAttribute('data-acessos-endpoint'); // só admin
     var CSRF        = root.getAttribute('data-csrf');
     var PAGINA      = parseInt(root.getAttribute('data-pagina') || '1', 10);
@@ -97,56 +95,10 @@
         }
     }, 1000);
 
-    // --- Edição inline dos limites (tempo e banda, mesma mecânica) ---
-    var EDITAVEIS = {
-        limite: { sel: 'pc-limite', attr: 'data-limite', ep: EP_LIMITE, key: 'limite', ph: 'min',  texto: limiteTexto },
-        banda:  { sel: 'pc-banda',  attr: 'data-banda',  ep: EP_BANDA,  key: 'banda',  ph: 'Mbps', texto: bandaTexto }
-    };
-    tbody.addEventListener('click', function (e) {
-        if (!e.target.closest) return;
-        var cell = e.target.closest('.pc-limite, .pc-banda');
-        if (!cell || cell.classList.contains('editing')) return;
-        var cfg = cell.classList.contains('pc-banda') ? EDITAVEIS.banda : EDITAVEIS.limite;
-        if (!cfg.ep) return;
-        var tr = cell.closest('tr');
-        var ids = idsDe(tr);
-        var atual = tr.getAttribute(cfg.attr) || '';
-        cell.classList.add('editing');
-        cell.innerHTML = '';
-        var inp = document.createElement('input');
-        inp.type = 'number'; inp.min = '0'; inp.placeholder = cfg.ph; inp.value = atual;
-        cell.appendChild(inp);
-        inp.focus(); inp.select();
-        var done = false;
-        function fim(texto) { done = true; cell.classList.remove('editing'); cell.textContent = texto; }
-        function salvar() {
-            if (done) return;
-            var val = inp.value.trim();
-            var valor = (val === '') ? null : Math.max(0, parseInt(val, 10) || 0);
-            done = true;
-            var body = { csrf: CSRF, id: ids[0], ids: ids };
-            body[cfg.key] = valor;
-            fetch(cfg.ep, {
-                method: 'POST', credentials: 'same-origin',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            }).then(function (r) { return r.json(); }).then(function (d) {
-                var novo = (d && d.ok) ? d[cfg.key] : valor;
-                var v = (novo == null ? '' : novo);
-                tr.setAttribute(cfg.attr, v);
-                cell.classList.remove('editing');
-                cell.textContent = cfg.texto(v);
-            }).catch(function () {
-                cell.classList.remove('editing');
-                cell.textContent = cfg.texto(atual);
-            });
-        }
-        inp.addEventListener('keydown', function (ev) {
-            if (ev.key === 'Enter') { ev.preventDefault(); salvar(); }
-            else if (ev.key === 'Escape') { ev.preventDefault(); fim(cfg.texto(atual)); }
-        });
-        inp.addEventListener('blur', salvar);
-    });
+    // A edição inline do limite e da banda mora em assets/inline-edit.js: a
+    // tabela de hóspedes da pousada tem as MESMAS células e não carrega este
+    // arquivo. Ela escuta o clique em .pc-limite/.pc-banda no documento inteiro
+    // e lê o endpoint do #leads-live — as linhas montadas aqui já vêm prontas.
 
     // Célula da conexão: ícone (abre "ver conexões") + data em cima / hora embaixo.
     var GLOBO = '<svg class="pc-conex-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>';

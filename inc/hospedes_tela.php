@@ -52,6 +52,7 @@ $hoje = date('Y-m-d');
         <div class="pc-table-wrap" id="hospedes-live"
              data-salvar-endpoint="api/hospede_salvar.php"
              data-excluir-endpoint="api/hospede_excluir.php"
+             data-banda-endpoint="api/set_banda.php"
              data-roteador="<?= h((string) $rotAtivo) ?>"
              data-cliente="<?= (int) ($hspCliente ?? 0) ?>"
              data-csrf="<?= h($csrf) ?>">
@@ -64,21 +65,30 @@ $hoje = date('Y-m-d');
                         <th>Diárias</th>
                         <th>Saída</th>
                         <th>Consumo</th>
+                        <th>Banda <span class="pc-th-hint">(clique p/ editar)</span></th>
                         <th>Wi-Fi</th>
                         <th>Situação</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (!$hospedes): ?>
-                        <tr class="pc-empty-row"><td colspan="8" class="pc-vazio">Nenhum hóspede cadastrado. Clique em “Cadastrar hóspede” para liberar o Wi-Fi de quem fez check-in.</td></tr>
+                        <tr class="pc-empty-row"><td colspan="9" class="pc-vazio">Nenhum hóspede cadastrado. Clique em “Cadastrar hóspede” para liberar o Wi-Fi de quem fez check-in.</td></tr>
                     <?php else: foreach ($hospedes as $g):
                         $ativo  = (int) $g['hospedado'] === 1;
                         $saiHj  = $ativo && substr((string) $g['saida_em'], 0, 10) === $hoje;
                         $dhS    = explode(' ', (string) $g['saida_em']);
                         $dataS  = date('d/m/Y', strtotime((string) $g['saida_em']));
                         $horaS  = substr($dhS[1] ?? '', 0, 5);
+                        // A banda é gravada NOS LEADS do telefone (é o lead que
+                        // o roteador enxerga), então a linha carrega os ids
+                        // deles. Hóspede que ainda não conectou não tem lead:
+                        // fica sem ids e a célula não abre para edição.
+                        $lids   = (string) ($g['lead_ids'] ?? '');
+                        $banda  = ($g['banda'] ?? null) === null ? '' : (int) $g['banda'];
                     ?>
                     <tr data-id="<?= (int) $g['id'] ?>"
+                        data-ids="<?= h($lids) ?>"
+                        data-banda="<?= $banda ?>"
                         data-nome="<?= h($g['nome']) ?>"
                         data-quarto="<?= h($g['quarto']) ?>"
                         data-tel="<?= h($g['telefone']) ?>"
@@ -94,6 +104,7 @@ $hoje = date('Y-m-d');
                             <div class="pc-dh"><span class="pc-data"><?= h($dataS) ?></span><span class="pc-hora"><?= h($horaS) ?></span></div>
                         </td>
                         <td class="hsp-consumo"><?= h(fmt_bytes($g['bytes'] ?? 0)) ?></td>
+                        <td class="<?= $lids === '' ? 'hsp-consumo' : 'pc-banda' ?>"><?= $lids === '' ? '—' : ($banda === '' ? 'sem limite' : $banda . ' Mbps') ?></td>
                         <td class="hsp-wifi">
                             <?php /* Conectado AGORA. Separado da situação de propósito:
                                      "hospedado" é o contrato, "no Wi-Fi" é o aparelho —
