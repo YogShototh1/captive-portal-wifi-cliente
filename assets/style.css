@@ -2981,12 +2981,20 @@ html[data-tema="claro"] .painel-cliente .hsp-item-ult { color: var(--g-fg3); }
 .painel-cliente td.hsp-quarto { font-weight: 600; font-variant-numeric: tabular-nums; }
 /* Quem ainda está hospedado acende o ponto, igual ao "online" dos leads. */
 .painel-cliente .pc-dot.on { background: #34d399; box-shadow: 0 0 8px rgba(52, 211, 153, 0.9); }
-.painel-cliente .hsp-sit { font-size: 12.5px; color: rgba(255, 255, 255, 0.62); }
+/* Coluna Status: uma bolinha por hospede. Verde = no Wi-Fi agora, vermelho =
+   fora, traco = cadastrado e nunca conectou (nao e "offline", e "ainda nao
+   apareceu" — e por isso nao ganha cor). A coluna e estreita de proposito: o
+   olho da recepcao percorre uma fila de pontos, nao le palavra por palavra. */
+.painel-cliente td.hsp-status { width: 1%; white-space: nowrap; text-align: center; }
+.painel-cliente td.hsp-status .pc-dot { margin: 0; }
+.painel-cliente .pc-dot.off { background: #f87171; box-shadow: 0 0 8px rgba(248, 113, 113, 0.75); }
+.painel-cliente .hsp-nunca { color: rgba(255, 255, 255, 0.35); }
+html[data-tema] .painel-cliente .hsp-nunca { color: var(--t-fg3); }
+html[data-tema="claro"] .painel-cliente .hsp-nunca { color: var(--g-fg3); }
 .painel-cliente .hsp-saida-previa { margin: 2px 0 0; font-size: 12.5px; color: rgba(255, 255, 255, 0.55); }
 /* Consumo alinhado por dígito: a coluna serve para comparar quartos de relance. */
 .painel-cliente td.hsp-consumo { font-variant-numeric: tabular-nums; white-space: nowrap; }
 html[data-tema="claro"] .painel-cliente .hsp-dica,
-html[data-tema="claro"] .painel-cliente .hsp-sit,
 html[data-tema="claro"] .painel-cliente .hsp-saida-previa { color: #5c5e62; }
 /* <select>/<input type=date|time> dentro do modal: o navegador desenha a lista
    e o iconezinho com as cores do sistema — sem isto vira texto branco em fundo
@@ -3008,3 +3016,14 @@ html[data-tema="claro"] .painel-cliente .pc-editar-body input[type="time"].pc-ds
     line-height: 1.5; resize: vertical; font-family: inherit;
 }
 .painel-cliente .pc-lgpd-nota { font-style: italic; opacity: 0.85; }
+
+/* Cor da bolinha de status, tema a tema.
+   Precisa estar aqui no fim e com este peso: a regra que pinta .pc-dot de
+   cinza no tema claro (html[data-tema="claro"] .painel-cliente .pc-dot) tem
+   especificidade maior que .painel-cliente .pc-dot.on, e vinha apagando o
+   verde. Enquanto isso era so decoracao passava batido; na coluna Status a
+   cor E a informacao. */
+html[data-tema] .painel-cliente .pc-dot.on { background: #34d399; }
+html[data-tema] .painel-cliente .pc-dot.off { background: #f87171; }
+html[data-tema="claro"] .painel-cliente .pc-dot.on { background: #16a34a; }
+html[data-tema="claro"] .painel-cliente .pc-dot.off { background: #dc2626; }

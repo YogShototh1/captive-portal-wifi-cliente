@@ -154,6 +154,22 @@ try {
         // Novo número herda os limites-padrão do roteador (definidos no painel).
         $tlDefault    = roteador_cfg_get($roteador, 'tlimit');
         $bandaDefault = roteador_cfg_get($roteador, 'banda');
+        // Hóspede com teto próprio definido no check-in vence o padrão da casa.
+        // Try isolado: instalação de varejo pode não ter a tabela, e nenhuma
+        // falha aqui pode derrubar a liberação do Wi-Fi.
+        try {
+            $qh = db()->prepare(
+                'SELECT banda_limite FROM hospedes
+                  WHERE roteador = ? AND telefone = ? AND banda_limite IS NOT NULL LIMIT 1'
+            );
+            $qh->execute([$roteador, $telefone]);
+            $bh = $qh->fetchColumn();
+            if ($bh !== false && $bh !== null) {
+                $bandaDefault = (int) $bh;
+            }
+        } catch (Throwable $e) {
+            // segue com o padrão do roteador
+        }
         $ins = db()->prepare(
             'INSERT INTO leads (roteador, telefone, mac, ip, dispositivo, conectado_em, primeira_conexao, total_conexoes, consentimento, tempo_limite_min, banda_limite)
              VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)'

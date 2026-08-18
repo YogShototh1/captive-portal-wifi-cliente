@@ -7,7 +7,6 @@
 //
 // Espera vindo de quem inclui: $hospedes, $hResumo, $rotLista, $rotAtivo, $csrf
 // e $hspCliente (id da conta dona; 0 no painel do proprio comprador).
-$hoje = date('Y-m-d');
 ?>
 <div class="pc-summary">
     <div class="glow-card pc-metric">
@@ -52,13 +51,17 @@ $hoje = date('Y-m-d');
         <div class="pc-table-wrap" id="hospedes-live"
              data-salvar-endpoint="api/hospede_salvar.php"
              data-excluir-endpoint="api/hospede_excluir.php"
-             data-banda-endpoint="api/set_banda.php"
+             data-banda-endpoint="api/hospede_banda.php"
              data-roteador="<?= h((string) $rotAtivo) ?>"
              data-cliente="<?= (int) ($hspCliente ?? 0) ?>"
              data-csrf="<?= h($csrf) ?>">
             <table>
                 <thead>
                     <tr>
+                        <?php /* Status junta o que eram duas colunas ("Wi-Fi" e
+                                 "Situação"): verde = no Wi-Fi agora, vermelho =
+                                 fora, traço = cadastrado e nunca conectou. */ ?>
+                        <th>Status</th>
                         <th>Hóspede</th>
                         <th>Quarto</th>
                         <th>Número</th>
@@ -66,28 +69,23 @@ $hoje = date('Y-m-d');
                         <th>Saída</th>
                         <th>Consumo</th>
                         <th>Banda <span class="pc-th-hint">(clique p/ editar)</span></th>
-                        <th>Wi-Fi</th>
-                        <th>Situação</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (!$hospedes): ?>
-                        <tr class="pc-empty-row"><td colspan="9" class="pc-vazio">Nenhum hóspede cadastrado. Clique em “Cadastrar hóspede” para liberar o Wi-Fi de quem fez check-in.</td></tr>
+                        <tr class="pc-empty-row"><td colspan="8" class="pc-vazio">Nenhum hóspede cadastrado. Clique em “Cadastrar hóspede” para liberar o Wi-Fi de quem fez check-in.</td></tr>
                     <?php else: foreach ($hospedes as $g):
-                        $ativo  = (int) $g['hospedado'] === 1;
-                        $saiHj  = $ativo && substr((string) $g['saida_em'], 0, 10) === $hoje;
                         $dhS    = explode(' ', (string) $g['saida_em']);
                         $dataS  = date('d/m/Y', strtotime((string) $g['saida_em']));
                         $horaS  = substr($dhS[1] ?? '', 0, 5);
-                        // A banda é gravada NOS LEADS do telefone (é o lead que
-                        // o roteador enxerga), então a linha carrega os ids
-                        // deles. Hóspede que ainda não conectou não tem lead:
-                        // fica sem ids e a célula não abre para edição.
-                        $lids   = (string) ($g['lead_ids'] ?? '');
+                        // O traço do status é para quem NUNCA conectou: sem
+                        // lead nenhum, não é "offline", é "ainda não apareceu".
+                        // Bolinha só existe depois da primeira conexão.
+                        $jaVeio = (string) ($g['lead_ids'] ?? '') !== '';
+                        $onl    = (int) ($g['online'] ?? 0) === 1;
                         $banda  = ($g['banda'] ?? null) === null ? '' : (int) $g['banda'];
                     ?>
                     <tr data-id="<?= (int) $g['id'] ?>"
-                        data-ids="<?= h($lids) ?>"
                         data-banda="<?= $banda ?>"
                         data-nome="<?= h($g['nome']) ?>"
                         data-quarto="<?= h($g['quarto']) ?>"
@@ -96,6 +94,15 @@ $hoje = date('Y-m-d');
                         data-dias="<?= (int) $g['dias'] ?>"
                         data-hora="<?= h($horaS) ?>"
                         data-roteador="<?= h($g['roteador']) ?>">
+                        <td class="hsp-status">
+                            <?php if (!$jaVeio): ?>
+                                <span class="hsp-nunca" title="ainda nao conectou no Wi-Fi">—</span>
+                            <?php else: ?>
+                                <span class="pc-dot <?= $onl ? 'on' : 'off' ?>" role="img"
+                                      aria-label="<?= $onl ? 'no Wi-Fi agora' : 'fora do Wi-Fi' ?>"
+                                      title="<?= $onl ? 'no Wi-Fi agora' : 'fora do Wi-Fi' ?>"></span>
+                            <?php endif; ?>
+                        </td>
                         <td><span class="pc-lead-nome"><?= h($g['nome']) ?></span></td>
                         <td class="hsp-quarto"><?= h($g['quarto']) ?></td>
                         <td><?= h($g['telefone']) ?></td>
@@ -104,20 +111,9 @@ $hoje = date('Y-m-d');
                             <div class="pc-dh"><span class="pc-data"><?= h($dataS) ?></span><span class="pc-hora"><?= h($horaS) ?></span></div>
                         </td>
                         <td class="hsp-consumo"><?= h(fmt_bytes($g['bytes'] ?? 0)) ?></td>
-                        <td class="<?= $lids === '' ? 'hsp-consumo' : 'pc-banda' ?>"><?= $lids === '' ? '—' : ($banda === '' ? 'sem limite' : $banda . ' Mbps') ?></td>
-                        <td class="hsp-wifi">
-                            <?php /* Conectado AGORA. Separado da situação de propósito:
-                                     "hospedado" é o contrato, "no Wi-Fi" é o aparelho —
-                                     e a pergunta do balcão ("o 203 diz que caiu") é a
-                                     segunda. Estadia vencida ainda conectada aparece
-                                     aqui como verde numa linha que diz "saiu". */ ?>
-                            <span class="pc-dot<?= (int) ($g['online'] ?? 0) === 1 ? ' on' : '' ?>"></span>
-                            <span class="hsp-sit"><?= (int) ($g['online'] ?? 0) === 1 ? 'conectado' : '—' ?></span>
-                        </td>
-                        <td>
-                            <span class="pc-dot<?= $ativo ? ' on' : '' ?>"></span>
-                            <span class="hsp-sit"><?= $ativo ? ($saiHj ? 'sai hoje' : 'hospedado') : 'saiu' ?></span>
-                        </td>
+                        <?php /* Editável mesmo sem lead: o teto fica guardado no
+                                 cadastro e api/lead.php o aplica na primeira conexão. */ ?>
+                        <td class="pc-banda"><?= $banda === '' ? 'sem limite' : $banda . ' Mbps' ?></td>
                     </tr>
                     <?php endforeach; endif; ?>
                 </tbody>

@@ -1345,9 +1345,12 @@ function hospedes_lista(array $roteadores): array
         //
         // `lead_ids` alimenta o botão "ver conexões" e a edição da banda, que
         // aceitam vários ids separados por vírgula (celular e notebook do mesmo
-        // número). A banda é MAX e não SUM: o teto é do hóspede, e o painel
-        // grava o mesmo valor em todos os aparelhos dele de uma vez — o MAX só
-        // existe para um aparelho novo, ainda sem limite, não zerar a coluna.
+        // número).
+        //
+        // A banda vem do CADASTRO, não dos leads: o hóspede pode ter o teto
+        // definido no check-in, antes de existir lead nenhum. Quem grava
+        // (api/hospede_banda.php) escreve nos dois lugares, e api/lead.php
+        // copia o valor para o lead que nascer na primeira conexão.
         // ponytail: três subconsultas por linha; uma pousada tem dezenas de
         // hóspedes. Passando de alguns milhares, virar JOIN agrupado.
         $tmo = MIKROTIK_TIMEOUT_SEG;
@@ -1365,8 +1368,7 @@ function hospedes_lista(array $roteadores): array
                         AND l2.visto_em >= (NOW() - INTERVAL $tmo SECOND)) AS online_desde,
                     (SELECT GROUP_CONCAT(l3.id) FROM leads l3
                       WHERE l3.roteador = h.roteador AND l3.telefone = h.telefone) AS lead_ids,
-                    (SELECT MAX(l4.banda_limite) FROM leads l4
-                      WHERE l4.roteador = h.roteador AND l4.telefone = h.telefone) AS banda
+                    h.banda_limite AS banda
                FROM hospedes h WHERE h.roteador IN ($ph)
               ORDER BY hospedado DESC, h.saida_em ASC"
         );

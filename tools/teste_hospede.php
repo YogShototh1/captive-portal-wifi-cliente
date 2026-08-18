@@ -147,26 +147,45 @@ $linha = function (array $a): array {
                         'bytes' => 0, 'online' => 0, 'lead_ids' => '', 'banda' => null], $a);
 };
 $hospedes = [
-    $linha(['id' => 77, 'nome' => 'Com lead',       'lead_ids' => '901,902', 'banda' => 10]),
-    $linha(['id' => 78, 'nome' => 'Sem limite',     'lead_ids' => '903']),
+    $linha(['id' => 77, 'nome' => 'No wifi agora',  'lead_ids' => '901,902', 'banda' => 10, 'online' => 1]),
+    $linha(['id' => 78, 'nome' => 'Ja conectou',    'lead_ids' => '903']),
     $linha(['id' => 79, 'nome' => 'Nunca conectou']),
 ];
 ob_start();
 require __DIR__ . '/../inc/hospedes_tela.php';
 $html = (string) ob_get_clean();
-preg_match_all('/<tr data-id="(\d+)"\s+data-ids="([^"]*)"\s+data-banda="([^"]*)"/', $html, $m, PREG_SET_ORDER);
+preg_match_all('/<tr data-id="(\d+)"\s+data-banda="([^"]*)"/', $html, $m, PREG_SET_ORDER);
 
-echo "\ncoluna da banda na tabela de hospedes\n";
-$ok(count($m) === 3, 'as tres linhas saem com data-ids e data-banda', 'viu ' . count($m));
-$ok(($m[0][2] ?? '') === '901,902', 'a linha leva os ids dos LEADS', $m[0][2] ?? '');
-$ok(($m[0][1] ?? '') !== ($m[0][2] ?? ''), 'data-ids nunca e o data-id do hospede');
-$ok(($m[2][2] ?? 'x') === '', 'hospede que nunca conectou fica sem ids');
-$ok(substr_count($html, 'class="pc-banda"') === 2, 'so as linhas com lead abrem para edicao',
+echo "\ncoluna Status\n";
+// Verde/vermelho/traco. O traco NAO e "offline": e quem ainda nao apareceu.
+// Confundir os dois faz a recepcao ligar para um hospede que nunca chegou.
+$ok(substr_count($html, 'pc-dot on') === 1, 'so o conectado fica verde',
+    'viu ' . substr_count($html, 'pc-dot on'));
+$ok(substr_count($html, 'pc-dot off') === 1, 'quem ja conectou e esta fora fica vermelho',
+    'viu ' . substr_count($html, 'pc-dot off'));
+$ok(substr_count($html, 'hsp-nunca') === 1, 'quem nunca conectou nao ganha bolinha',
+    'viu ' . substr_count($html, 'hsp-nunca'));
+// As colunas "Wi-Fi" e "Situacao" sairam: Status ocupa o lugar das duas.
+$ok(strpos($html, '<th>Status</th>') !== false, 'Status esta no cabecalho');
+$ok(strpos($html, '<th>Wi-Fi</th>') === false && strpos($html, '<th>Situação</th>') === false,
+    'Wi-Fi e Situacao sairam');
+$ok(strpos($html, '<th>Status</th>') < strpos($html, '<th>Hóspede</th>'), 'Status e a primeira coluna');
+$ok(substr_count($html, '<th>') === 8, 'oito colunas no cabecalho', 'viu ' . substr_count($html, '<th>'));
+
+echo "\ncoluna da banda\n";
+$ok(count($m) === 3, 'as tres linhas saem com data-banda', 'viu ' . count($m));
+// O que mudou: o teto agora e do CADASTRO, entao a celula abre mesmo para quem
+// nunca conectou — e e assim que a recepcao deixa o limite pronto no check-in.
+$ok(substr_count($html, 'class="pc-banda"') === 3, 'todas as linhas abrem para edicao',
     'viu ' . substr_count($html, 'class="pc-banda"'));
 $ok(strpos($html, '>10 Mbps<') !== false, 'mostra a banda gravada');
-$ok(substr_count($html, '>sem limite<') === 1, 'lead sem banda mostra "sem limite"');
-// Cabecalho e linha vazia contam as MESMAS colunas, senao a tabela torce.
-$ok(substr_count($html, '<th>') === 9, 'nove colunas no cabecalho', 'viu ' . substr_count($html, '<th>'));
+$ok(substr_count($html, '>sem limite<') === 2, 'sem banda gravada mostra "sem limite"',
+    'viu ' . substr_count($html, '>sem limite<'));
+// O id que vai para api/hospede_banda.php e o do HOSPEDE, e nao pode sair
+// junto um data-ids de lead: o endpoint de hospede nem olha para ele.
+$ok(($m[0][1] ?? '') === '77', 'a linha leva o id do hospede', $m[0][1] ?? '');
+$ok(strpos($html, 'data-ids=') === false, 'linha de hospede nao carrega id de lead');
+$ok(strpos($html, 'api/hospede_banda.php') !== false, 'a tabela aponta para o endpoint de hospede');
 
 echo "\n" . ($falhas ? "$falhas FALHA(S)\n" : "tudo certo\n");
 exit($falhas ? 1 : 0);

@@ -5,9 +5,12 @@
    (#leads-live / #hospedes-live), então cada tela liga o que oferece: sem
    data-banda-endpoint, a célula simplesmente não abre.
 
-   Os ids são SEMPRE os de data-ids, nunca o data-id da linha: na hospedagem o
-   data-id é do hóspede, e mandá-lo como id de lead gravaria banda na pessoa
-   errada. Linha sem data-ids (hóspede que ainda não conectou) não edita. */
+   Manda id (data-id) e ids (data-ids) e deixa o endpoint escolher: o de leads
+   (api/set_banda.php, api/set_limite.php) usa os ids e confere dono lead a
+   lead; o de hospedagem (api/hospede_banda.php) usa o id do hóspede e confere
+   pelo roteador da conta. Quem valida é sempre o servidor — nenhum dos dois
+   confia no que a página mandou. cliente_id acompanha quando existe: é o admin
+   olhando a tela de um cliente. */
 (function () {
     var CFG = {
         banda:  { attr: 'data-banda',  ep: 'data-banda-endpoint',  key: 'banda',  ph: 'Mbps', un: ' Mbps' },
@@ -25,10 +28,11 @@
         var EP = box.getAttribute(cfg.ep);
         var CSRF = box.getAttribute('data-csrf');
         var tr = cell.closest('tr');
+        var id = parseInt((tr && tr.getAttribute('data-id')) || '0', 10) || 0;
         var ids = String((tr && tr.getAttribute('data-ids')) || '')
             .split(',').map(function (v) { return parseInt(v, 10); })
             .filter(function (v) { return v > 0; });
-        if (!EP || !ids.length) return;
+        if (!EP || (!id && !ids.length)) return;
 
         var atual = tr.getAttribute(cfg.attr) || '';
         cell.classList.add('editing');
@@ -45,7 +49,9 @@
             var val = inp.value.trim();
             var valor = (val === '') ? null : Math.max(0, parseInt(val, 10) || 0);
             done = true;
-            var body = { csrf: CSRF, id: ids[0], ids: ids };
+            var body = { csrf: CSRF, id: id || ids[0], ids: ids };
+            var cli = box.getAttribute('data-cliente');
+            if (cli) body.cliente_id = parseInt(cli, 10) || 0;
             body[cfg.key] = valor;
             fetch(EP, {
                 method: 'POST', credentials: 'same-origin',
