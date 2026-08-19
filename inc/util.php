@@ -1003,6 +1003,10 @@ const MIKROTIK_TIMEOUT_SEG = 15;
 // internet -- foi o que apareceu no historico de um numero real. Somando com
 // teto, aquele buraco vale um passo e mais nada.
 //
+// O teto vale tambem para o PRIMEIRO passo, que conta do login ate a primeira
+// confirmacao. Sem ele a sessao comecaria em zero, e sessao confirmada uma
+// unica vez aparecia como 00:00:00 na tela mesmo tendo consumido dados.
+//
 // ponytail: 120s = 2x o intervalo de 1m que o setup instala. Roteador em 5s
 //           tambem cabe. Mexer aqui se o scheduler do MikroTik mudar.
 const SESSAO_PASSO_MAX_SEG = 120;

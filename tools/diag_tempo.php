@@ -39,6 +39,24 @@ echo "roteador: $rot   |  MIKROTIK_TIMEOUT_SEG = " . MIKROTIK_TIMEOUT_SEG
 $tem = db()->query("SHOW COLUMNS FROM conexoes LIKE 'seg_ac'")->fetch();
 echo 'coluna conexoes.seg_ac: ' . ($tem ? 'existe' : 'NAO EXISTE') . "\n\n";
 
+// 0) O que o roteador REPORTOU em cada rodada com gente online. E a unica
+//    forma de responder se o aparelho sai da lista de ativos logo depois de
+//    entrar — o visto_em sozinho nao conta essa historia porque e sobrescrito.
+$lg = anuncio_base($rot) . '.diag';
+echo "== rodadas reportadas pelo roteador (ultimas 30) ==\n";
+if (!is_file($lg)) {
+    echo "  (nada ainda — o registro so grava quando ha alguem online)\n\n";
+} else {
+    $lin = array_slice(array_filter(explode("\n", (string) @file_get_contents($lg))), -30);
+    $ant = null;
+    foreach ($lin as $l) {
+        $ts = strtotime(substr($l, 0, 19));
+        echo '  ' . $l . ($ant === null ? '' : '   (+' . ($ts - $ant) . 's)') . "\n";
+        $ant = $ts;
+    }
+    echo '  linhas guardadas: ' . count($lin) . "\n\n";
+}
+
 // 1) Cadencia real do polling: os instantes distintos de visto_em sao as
 //    rodadas do status.php que encontraram alguem online.
 $q = db()->prepare(
