@@ -34,7 +34,10 @@ $f = mikrotik_seen_file($rot);
 $idade = is_file($f) ? (time() - (int) @filemtime($f)) : null;
 echo "agora (banco): $now\n";
 echo 'ultima chamada do status.php: ' . ($idade === null ? 'NUNCA' : $idade . 's atras') . "\n";
-echo "roteador: $rot   |  MIKROTIK_TIMEOUT_SEG = " . MIKROTIK_TIMEOUT_SEG . "\n\n";
+echo "roteador: $rot   |  MIKROTIK_TIMEOUT_SEG = " . MIKROTIK_TIMEOUT_SEG
+     . '  |  SESSAO_PASSO_MAX_SEG = ' . SESSAO_PASSO_MAX_SEG . "\n";
+$tem = db()->query("SHOW COLUMNS FROM conexoes LIKE 'seg_ac'")->fetch();
+echo 'coluna conexoes.seg_ac: ' . ($tem ? 'existe' : 'NAO EXISTE') . "\n\n";
 
 // 1) Cadencia real do polling: os instantes distintos de visto_em sao as
 //    rodadas do status.php que encontraram alguem online.

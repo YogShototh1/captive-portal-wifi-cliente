@@ -994,6 +994,19 @@ function dst_atual(string $roteador): ?string
 //           do scheduler do MikroTik.
 const MIKROTIK_TIMEOUT_SEG = 15;
 
+// Maior pedaco de tempo que UMA rodada do polling pode creditar a uma sessao.
+//
+// A duracao de uma sessao e somada rodada a rodada (o passo desde a
+// confirmacao anterior), nunca calculada como "ultima confirmacao menos hora
+// do login". A diferenca aparece quando o polling para: pela subtracao, uma
+// linha aberta no dia 08 e confirmada de novo no dia 12 valia 95 HORAS de
+// internet -- foi o que apareceu no historico de um numero real. Somando com
+// teto, aquele buraco vale um passo e mais nada.
+//
+// ponytail: 120s = 2x o intervalo de 1m que o setup instala. Roteador em 5s
+//           tambem cabe. Mexer aqui se o scheduler do MikroTik mudar.
+const SESSAO_PASSO_MAX_SEG = 120;
+
 // Arquivo-marcador do último contato do roteador (fica junto do anúncio/dst).
 function mikrotik_seen_file(string $roteador): string
 {
@@ -1058,35 +1071,38 @@ function roteador_cfg_set(string $roteador, string $chave, ?int $val): void
 }
 
 // Estado real de um lead (online + tempo), contra a hora do banco.
-// Correção do "online preso": a flag online=1 só é confiável se o sync confirmou
-// há pouco (visto_em recente). Se o MikroTik/sync parou, a flag fica travada e o
-// tempo cresceria pra sempre — então tratamos como offline e CONGELAMOS o tempo
-// no último instante confirmado (visto_em), em vez de "agora".
+//
+// O tempo NAO e "agora menos a hora do login". Duas razoes, as duas medidas em
+// producao: o login e gravado ANTES do anuncio de 10s (entao toda sessao vinha
+// com 10-15s a mais, e sessao confirmada uma unica vez marcava exatamente a
+// duracao do anuncio), e a flag online=1 fica presa quando o sync para (o tempo
+// crescia sozinho para sempre).
+//
+// O valor bom e `segundos_conectado`, que o api/status.php soma rodada a rodada
+// enquanto CONFIRMA o aparelho na lista de ativos do roteador. Aqui so somamos
+// o pedaco que falta desde a ultima confirmacao, com o mesmo teto.
 // Requer que o SELECT traga: conectado_em, online, segundos_conectado, visto_em.
 function lead_estado(array $l, int $nowTs): array
 {
     $online = (int) $l['online'];
-    $conTs  = strtotime((string) ($l['conectado_em'] ?? ''));
     $segRaw = $l['segundos_conectado'] ?? null;
     $seg    = ($segRaw === null || $segRaw === '') ? null : (int) $segRaw;
     $vRaw   = $l['visto_em'] ?? null;
     $vTs    = ($vRaw === null || $vRaw === '') ? null : strtotime((string) $vRaw);
 
-    // Online travado (sync não confirma dentro da janela) -> vira offline e congela.
-    // Só estimamos a duração se houve confirmação (visto_em); sem ela, fica "—".
+    // Online travado (sync não confirma dentro da janela) -> vira offline. O
+    // tempo ja esta somado, entao nao ha o que congelar: ele simplesmente para.
     if ($online === 1 && ($vTs === null || ($nowTs - $vTs) > MIKROTIK_TIMEOUT_SEG)) {
         $online = 0;
-        if ($seg === null && $vTs !== null) {
-            $seg = max(0, $vTs - $conTs);
-        }
     }
 
     if ($online === 1) {
-        $elapsed = max(0, $nowTs - $conTs);
-    } elseif ($seg !== null) {
-        $elapsed = max(0, $seg);
+        $elapsed = max(0, ($seg ?? 0) + min(max(0, $nowTs - $vTs), SESSAO_PASSO_MAX_SEG));
     } else {
-        $elapsed = max(0, $nowTs - $conTs);
+        // Sem nenhuma confirmacao a duracao e desconhecida, e quem chama mostra
+        // "—". Chutar "agora menos o login" era o que enchia a tela de sessao
+        // eterna de aparelho que nunca chegou a entrar.
+        $elapsed = max(0, (int) $seg);
     }
     return ['online' => $online, 'seg' => $seg, 'elapsed' => $elapsed];
 }

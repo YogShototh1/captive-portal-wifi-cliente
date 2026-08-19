@@ -65,6 +65,11 @@ try {
     // Auto-heal: sessao rastreada POR CONEXAO precisa de visto_em em conexoes.
     // ADD COLUMN em coluna existente da erro (1060), ignorado. Roda 1x na pratica.
     try { db()->exec('ALTER TABLE conexoes ADD COLUMN visto_em TIMESTAMP NULL AFTER bytes'); } catch (Throwable $e) {}
+    // `seg_ac` e o tempo JA CONFIRMADO da sessao, somado rodada a rodada. Fica
+    // separado de `segundos` de proposito: `segundos IS NULL` continua sendo o
+    // unico sinal de "sessao aberta", e nenhuma consulta do painel precisou
+    // mudar por causa disto.
+    try { db()->exec('ALTER TABLE conexoes ADD COLUMN seg_ac INT NULL AFTER segundos'); } catch (Throwable $e) {}
 
     // Sessao ABERTA (conexoes.segundos NULL) de cada MAC online, chaveada pelo
     // MAC — nao pelo lead. Assim 2 aparelhos no mesmo numero contam separado.
@@ -72,7 +77,8 @@ try {
     $leadIdsOnline = []; // leads com >=1 aparelho online (agregado p/ o painel)
     foreach ($macs as $mac) {
         $q = db()->prepare(
-            'SELECT c.id, c.lead_id, c.conectado_em FROM conexoes c JOIN leads l ON l.id = c.lead_id
+            'SELECT c.id, c.lead_id, c.conectado_em, c.visto_em, c.seg_ac
+               FROM conexoes c JOIN leads l ON l.id = c.lead_id
               WHERE l.roteador = ? AND c.mac = ? AND c.segundos IS NULL
               ORDER BY c.id DESC LIMIT 1'
         );
@@ -80,52 +86,91 @@ try {
         $row = $q->fetch();
         if ($row) {
             $cid = (int) $row['id'];
-            $onlineConx[$cid] = ['mac' => $mac, 'lead' => (int) $row['lead_id'], 'ini' => $row['conectado_em']];
+            $onlineConx[$cid] = [
+                'mac'   => $mac,
+                'lead'  => (int) $row['lead_id'],
+                'ini'   => $row['conectado_em'],
+                'visto' => $row['visto_em'],
+                'ac'    => (int) ($row['seg_ac'] ?? 0),
+            ];
             $leadIdsOnline[(int) $row['lead_id']] = true;
         }
     }
 
     // Marca as conexoes online como vistas agora + grava o consumo de cada uma.
-    $upSeen = db()->prepare('UPDATE conexoes SET visto_em = ? WHERE id = ?');
+    //
+    // O tempo cresce SOMANDO o passo desde a confirmacao anterior, com teto de
+    // SESSAO_PASSO_MAX_SEG. E o que impede um buraco de polling de virar tempo
+    // de internet: parou de confirmar por quatro dias, a sessao ganha um passo.
+    // A primeira confirmacao credita zero -- ate ali so existe o POST do
+    // portal, que acontece ANTES do anuncio e antes do login no hotspot.
+    $upSeen = db()->prepare('UPDATE conexoes SET visto_em = ?, seg_ac = ? WHERE id = ?');
     foreach ($onlineConx as $cid => $o) {
-        $upSeen->execute([$dbNow, $cid]);
+        $vAnt  = $o['visto'] === null ? null : strtotime((string) $o['visto']);
+        $passo = $vAnt === null ? 0 : min(max(0, $nowTs - $vAnt), SESSAO_PASSO_MAX_SEG);
+        $upSeen->execute([$dbNow, $o['ac'] + $passo, $cid]);
         if (isset($usoMap[$o['mac']])) {
             try { db()->prepare('UPDATE conexoes SET bytes = ? WHERE id = ?')->execute([$usoMap[$o['mac']], $cid]); }
             catch (Throwable $e) { /* banco sem a coluna bytes: ignora */ }
         }
     }
 
-    // Fecha as conexoes que estavam abertas+vistas mas cujo MAC sumiu. O fim e o
-    // ULTIMO instante confirmado (visto_em) daquela conexao — nao "agora".
+    // Fecha as conexoes que estavam abertas+vistas mas cujo MAC sumiu. A duracao
+    // e o que foi CONFIRMADO (seg_ac), nao "ultima confirmacao menos login".
     $open = db()->prepare(
-        'SELECT c.id, c.conectado_em, c.visto_em FROM conexoes c JOIN leads l ON l.id = c.lead_id
+        'SELECT c.id, c.seg_ac FROM conexoes c JOIN leads l ON l.id = c.lead_id
           WHERE l.roteador = ? AND c.segundos IS NULL AND c.visto_em IS NOT NULL'
     );
     $open->execute([$roteador]);
     $closeC = db()->prepare('UPDATE conexoes SET segundos = ? WHERE id = ?');
     foreach ($open->fetchAll() as $r) {
         if (isset($onlineConx[(int) $r['id']])) { continue; } // ainda online
-        $seg = max(0, strtotime((string) $r['visto_em']) - strtotime((string) $r['conectado_em']));
-        $closeC->execute([$seg, (int) $r['id']]);
+        $closeC->execute([max(0, (int) $r['seg_ac']), (int) $r['id']]);
     }
+
+    // Linha que NENHUMA rodada confirmou ficava aberta para sempre: o fecho
+    // acima exige visto_em. Eram 77 de 189 num roteador e 39 de 86 noutro --
+    // lixo que some do relatorio e, pior, era reaproveitada como "sessao
+    // aberta" quando o mesmo MAC voltava dias depois. Era assim que nascia a
+    // sessao de 95 horas. Uma hora sem nunca ter sido vista = o login nao
+    // chegou a acontecer, e a duracao e zero.
+    try {
+        db()->prepare(
+            'UPDATE conexoes c JOIN leads l ON l.id = c.lead_id
+                SET c.segundos = 0
+              WHERE l.roteador = ? AND c.segundos IS NULL AND c.visto_em IS NULL
+                AND c.conectado_em < (NOW() - INTERVAL 3600 SECOND)'
+        )->execute([$roteador]);
+    } catch (Throwable $e) { /* nao pode derrubar a rodada */ }
 
     // Agregado por NUMERO (para a tabela principal / contador online): online se
     // qualquer aparelho do numero estiver online.
-    $prev = db()->prepare('SELECT id, conectado_em, visto_em FROM leads WHERE roteador = ? AND online = 1');
+    $prev = db()->prepare('SELECT id, visto_em, segundos_conectado FROM leads WHERE roteador = ? AND online = 1');
     $prev->execute([$roteador]);
     $upOff = db()->prepare('UPDATE leads SET online = 0, desconectado_em = ?, segundos_conectado = ? WHERE id = ?');
     foreach ($prev->fetchAll() as $r) {
         if (isset($leadIdsOnline[(int) $r['id']])) { continue; } // ainda tem aparelho online
-        $fimTs = $r['visto_em'] ? strtotime((string) $r['visto_em']) : $nowTs;
-        $fim   = $r['visto_em'] ?: $dbNow;
-        $seg   = max(0, $fimTs - strtotime($r['conectado_em']));
-        $upOff->execute([$fim, $seg, (int) $r['id']]);
+        $fim = $r['visto_em'] ?: $dbNow;
+        $upOff->execute([$fim, max(0, (int) $r['segundos_conectado']), (int) $r['id']]);
     }
     if ($leadIdsOnline) {
+        // Mesma soma da conexao, um nivel acima (o numero, nao o aparelho).
+        // Passo maior que o teto = o numero sumiu e voltou: sessao nova, zera.
         $ids = array_keys($leadIdsOnline);
         $ph  = implode(',', array_fill(0, count($ids), '?'));
-        db()->prepare("UPDATE leads SET online = 1, visto_em = ?, desconectado_em = NULL WHERE id IN ($ph)")
-            ->execute(array_merge([$dbNow], $ids));
+        $qOn = db()->prepare("SELECT id, visto_em, segundos_conectado FROM leads WHERE id IN ($ph)");
+        $qOn->execute($ids);
+        $upOn = db()->prepare(
+            'UPDATE leads SET online = 1, visto_em = ?, desconectado_em = NULL, segundos_conectado = ? WHERE id = ?'
+        );
+        foreach ($qOn->fetchAll() as $r) {
+            $vAnt  = $r['visto_em'] === null ? null : strtotime((string) $r['visto_em']);
+            $passo = $vAnt === null ? null : ($nowTs - $vAnt);
+            $novo  = ($passo !== null && $passo >= 0 && $passo <= SESSAO_PASSO_MAX_SEG)
+                ? (int) $r['segundos_conectado'] + $passo
+                : 0;
+            $upOn->execute([$dbNow, $novo, (int) $r['id']]);
+        }
     }
 
     // kick = quem passou do tempo (desconectar); bw = mac=Mbps por aparelho.

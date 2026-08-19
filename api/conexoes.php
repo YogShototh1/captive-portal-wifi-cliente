@@ -38,24 +38,37 @@ $qt->execute($ids);
 $paginas = max(1, (int) ceil(((int) $qt->fetchColumn()) / $POR_PAG));
 $pagina  = min($paginas, max(1, (int) ($_GET['pagina'] ?? 1)));
 
-try {
-    $c = db()->prepare(
-        "SELECT conectado_em, dispositivo, ip, segundos, bytes, visto_em FROM conexoes WHERE lead_id IN ($ph)
+$sel = "SELECT conectado_em, dispositivo, ip, segundos, seg_ac, bytes, visto_em FROM conexoes WHERE lead_id IN ($ph)
           ORDER BY conectado_em DESC, id DESC
-          LIMIT " . $POR_PAG . ' OFFSET ' . (($pagina - 1) * $POR_PAG)
-    );
+          LIMIT " . $POR_PAG . ' OFFSET ' . (($pagina - 1) * $POR_PAG);
+try {
+    $c = db()->prepare($sel);
     $c->execute($ids);
     $conexoes = $c->fetchAll();
 } catch (Throwable $e) {
-    // Causa clássica: banco antigo, sem a coluna `segundos` (tempo por conexão).
-    http_response_code(500);
-    exit(json_encode(['ok' => false, 'erro' => 'Banco desatualizado: rode sql/migracao_conexoes.sql no phpMyAdmin.']));
+    try {
+        // Banco que ainda nao recebeu o `seg_ac` (quem cria a coluna e a
+        // primeira rodada do api/status.php). Sem ela so da para mostrar as
+        // sessoes ja fechadas — melhor que devolver erro e sumir com a lista.
+        $c = db()->prepare(str_replace(', seg_ac', '', $sel));
+        $c->execute($ids);
+        $conexoes = $c->fetchAll();
+    } catch (Throwable $e2) {
+        // Causa clássica: banco antigo, sem a coluna `segundos` (tempo por conexão).
+        http_response_code(500);
+        exit(json_encode(['ok' => false, 'erro' => 'Banco desatualizado: rode sql/migracao_conexoes.sql no phpMyAdmin.']));
+    }
 }
 
 // Sessão em andamento POR APARELHO: cada conexão aberta (segundos NULL) que
 // ainda está online (visto_em recente) mostra o tempo correndo dela — assim,
 // com 2 aparelhos no mesmo número, os DOIS aparecem com o tempo certo (antes só
-// o mais recente; o outro ficava "—"). Aberta sem confirmação recente = "—".
+// o mais recente; o outro ficava "—").
+//
+// O tempo é o CONFIRMADO (seg_ac, somado pelo api/status.php) mais o pedaço
+// desde a última confirmação. Nunca "agora menos a hora do login": o login é
+// gravado antes do anúncio de 10s, e numa linha esquecida aberta essa conta
+// devolvia dias de internet que não existiram. Aberta e nunca confirmada = "—".
 $nowTs = strtotime(db_now());
 foreach ($conexoes as &$cx) {
     $cx['bytes'] = $cx['bytes'] === null ? null : (int) $cx['bytes'];
@@ -63,11 +76,15 @@ foreach ($conexoes as &$cx) {
         $cx['segundos'] = (int) $cx['segundos'];
     } else {
         $vt = ($cx['visto_em'] === null || $cx['visto_em'] === '') ? null : strtotime((string) $cx['visto_em']);
-        $cx['segundos'] = ($vt !== null && ($nowTs - $vt) <= MIKROTIK_TIMEOUT_SEG)
-            ? max(0, $nowTs - strtotime((string) $cx['conectado_em']))
-            : null;
+        if ($vt === null) {
+            $cx['segundos'] = null;
+        } elseif (($nowTs - $vt) <= MIKROTIK_TIMEOUT_SEG) {
+            $cx['segundos'] = max(0, (int) ($cx['seg_ac'] ?? 0) + min($nowTs - $vt, SESSAO_PASSO_MAX_SEG));
+        } else {
+            $cx['segundos'] = max(0, (int) ($cx['seg_ac'] ?? 0));
+        }
     }
-    unset($cx['visto_em']); // não vai para o cliente
+    unset($cx['visto_em'], $cx['seg_ac']); // não vão para o cliente
 }
 unset($cx);
 
