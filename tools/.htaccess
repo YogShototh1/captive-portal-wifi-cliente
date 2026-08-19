@@ -24,14 +24,14 @@
 
 <IfModule mod_authz_core.c>
     Require all denied
-    <FilesMatch "^(criar_comprador|limpar_antigos|migrar_bytes|migrar_nome|migrar_roteador_compartilhado|migrar_hospedagem|migrar_estadias|migrar_banda_hospede|gerar_hash)\.php$">
+    <FilesMatch "^(criar_comprador|limpar_antigos|migrar_bytes|migrar_nome|migrar_roteador_compartilhado|migrar_hospedagem|migrar_estadias|migrar_banda_hospede|diag_tempo|gerar_hash)\.php$">
         Require all granted
     </FilesMatch>
 </IfModule>
 <IfModule !mod_authz_core.c>
     Order allow,deny
     Deny from all
-    <FilesMatch "^(criar_comprador|limpar_antigos|migrar_bytes|migrar_nome|migrar_roteador_compartilhado|migrar_hospedagem|migrar_estadias|migrar_banda_hospede|gerar_hash)\.php$">
+    <FilesMatch "^(criar_comprador|limpar_antigos|migrar_bytes|migrar_nome|migrar_roteador_compartilhado|migrar_hospedagem|migrar_estadias|migrar_banda_hospede|diag_tempo|gerar_hash)\.php$">
         Order deny,allow
         Allow from all
     </FilesMatch>
